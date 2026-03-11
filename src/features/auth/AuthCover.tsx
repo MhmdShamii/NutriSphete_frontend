@@ -38,11 +38,11 @@ export default function AuthCover() {
         >
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent rounded-2xl" />
             <div
-                className="relative w-full h-[90px] bg-black/10 backdrop-blur-lg rounded-xl p-3 flex flex-col gap-2"
+                className="relative w-full h-[90px] bg-black/10 backdrop-blur-sm rounded-xl p-3 flex flex-col gap-2"
                 style={{ border: "1px solid var(--glass-border)" }}
             >
                 <div className="flex gap-2 items-center">
-                    <img src={logo} alt="NutriSphere logo" className="h-[30px] w-[30px]" />
+                    <img src={logo} alt="NutriSphere logo" className="h-[30px] w-[30px] rounded-md" />
                     <p className="text-white font-semibold">NutriSphere</p>
                 </div>
 
