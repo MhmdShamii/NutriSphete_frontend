@@ -2,6 +2,7 @@ import Input from "../ui/Input"
 import Button from "../ui/Button"
 import GoogleIcon from "@mui/icons-material/Google"
 import FacebookIcon from "@mui/icons-material/Facebook"
+import PasswordInput from "../ui/PasswordInput"
 
 type LoginFormProps = {
     onSwitchToSignup: () => void
@@ -9,7 +10,7 @@ type LoginFormProps = {
 
 function LoginForm({ onSwitchToSignup }: LoginFormProps) {
     return (
-        <form className="w-1/2 flex flex-col p-8 gap-7 justify-center">
+        <form className="w-1/2 flex flex-col p-8 gap-7 ">
 
             <div className="flex flex-col gap-1">
                 <h1 className="text-3xl font-bold text-primary">Welcome Back</h1>
@@ -19,7 +20,11 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
             </div>
 
             <Input id="email" label="Email" type="email" placeholder="Enter your email" />
-            <Input id="password" label="Password" type="password" placeholder="********" />
+            <PasswordInput
+                id="password"
+                label="Password"
+                placeholder="********"
+            />
 
             <Button type="submit">Login</Button>
 
