@@ -74,7 +74,7 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="w-1/2 flex flex-col p-8 gap-6">
+        <form onSubmit={handleSubmit} className="w-1/2 flex flex-col p-8 gap-5">
 
             {/* Header */}
             <div className="flex flex-col gap-1">
@@ -152,7 +152,7 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
             {/* STEP 3 */}
             {step === 3 && (
-                <div className="flex flex-col gap-4">
+                <>
 
                     <Input
                         id="phone"
@@ -203,10 +203,10 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                         I agree to the <span className="text-primary">Privacy Policy</span>
                     </label>
 
-                </div>
+                </>
             )}
 
-            <div className="flex flex-col flex-1 justify-end gap-3">
+            <div className="flex flex-col flex-1 justify-end items-end gap-3">
 
                 {/* Navigation Buttons */}
                 <div className="flex w-full gap-4">

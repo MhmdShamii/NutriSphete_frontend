@@ -53,15 +53,15 @@ function ImageUpload({
                         className={`h-10 w-10 object-cover rounded-full ${previewClassName}`}
                     />
                 ) : (
-                    <>
-                        <UploadIcon className="text-text-muted" />
+                    <div className="flex items-center gap-1">
+                        <UploadIcon className="text-primary" />
 
                         <p className="text-xs text-text-muted">
                             <span className="text-primary font-medium">
                                 Upload
                             </span>
                         </p>
-                    </>
+                    </div>
                 )}
 
                 <input
