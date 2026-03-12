@@ -7,10 +7,11 @@ type PasswordInputProps = {
     label: string
     placeholder?: string
     value?: string
-    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onChange?: (value: string) => void
 }
 
 function PasswordInput({ id, label, placeholder, value, onChange }: PasswordInputProps) {
+
     const [show, setShow] = useState(false)
 
     return (
@@ -26,11 +27,11 @@ function PasswordInput({ id, label, placeholder, value, onChange }: PasswordInpu
                     id={id}
                     type={show ? "text" : "password"}
                     value={value}
-                    onChange={onChange}
                     placeholder={placeholder}
+                    onChange={(e) => onChange && onChange(e.target.value)}
                     className="bg-surface border border-border/30 rounded-lg p-3 pr-10 outline-none w-full transition-all duration-300
-          focus:border-primary/60
-          focus:shadow-[0_0_12px_rgba(127,250,136,0.35)]"
+                    focus:border-primary/60
+                    focus:shadow-[0_0_12px_rgba(127,250,136,0.35)]"
                 />
 
                 <button

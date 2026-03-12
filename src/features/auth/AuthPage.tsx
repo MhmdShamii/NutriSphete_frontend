@@ -1,8 +1,7 @@
 import AuthCover from "./AuthCover"
 import LoginForm from "../../components/auth/LoginForm"
-import { useState } from "react"
 import SignupForm from "../../components/auth/SignupForm"
-
+import { useState } from "react"
 export default function AuthPage() {
 
     const [mode, setMode] = useState<"login" | "signup">("login")
@@ -19,17 +18,9 @@ export default function AuthPage() {
 
                 <AuthCover />
 
-                {
-                    mode === "login" && (
-                        <LoginForm onSwitchToSignup={() => setMode("signup")} />
-                    )
-                }
+                {/* <LoginForm onSwitchToSignup={() => setMode("signup")} /> */}
+                <SignupForm onSwitchToLogin={() => setMode("login")} />
 
-                {
-                    mode === "signup" && (
-                        <SignupForm onSwitchToLogin={() => setMode("login")} />
-                    )
-                }
 
             </div>
         </div>
