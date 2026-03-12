@@ -4,7 +4,6 @@ import Input from "../ui/Input"
 import PasswordInput from "../ui/PasswordInput"
 import ArrowRightIcon from "@mui/icons-material/ArrowRight"
 import ArrowLeftIcon from "@mui/icons-material/ArrowLeft"
-import UploadIcon from "@mui/icons-material/Upload"
 import ImageUpload from "../ui/ImageUpload"
 
 type SignupFormProps = {
@@ -185,7 +184,7 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                             }
                             className="w-4 h-4 accent-primary cursor-pointer"
                         />
-                        I agree to the <span className="text-primary">Terms of Service</span>
+                        I agree to the <span className="text-white font-bold">Terms of Service</span>
                     </label>
 
                     <label className="flex items-center gap-3 text-sm text-text-muted cursor-pointer">
@@ -200,7 +199,7 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                             }
                             className="w-4 h-4 accent-primary cursor-pointer"
                         />
-                        I agree to the <span className="text-primary">Privacy Policy</span>
+                        I agree to the <span className="text-white font-bold">Privacy Policy</span>
                     </label>
 
                 </>
@@ -215,7 +214,7 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                         <button
                             type="button"
                             onClick={prevStep}
-                            className="flex items-center justify-center gap-2 flex-1 border border-border/30 text-text-muted rounded-lg p-3 transition-all hover:border-primary hover:text-primary"
+                            className="flex items-center justify-center gap-2 flex-1 border border-border/30 text-text-muted rounded-lg p-3 transition-all hover:border-white/50 hover:text-white"
                         >
                             <ArrowLeftIcon sx={{ fontSize: 20 }} />
                             Back

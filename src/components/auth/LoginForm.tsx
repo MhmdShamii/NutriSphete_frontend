@@ -17,25 +17,32 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
                 </p>
             </div>
 
-            <Input id="email" label="Email" type="email" placeholder="Enter your email" />
-            <PasswordInput
-                id="password"
-                label="Password"
-                placeholder="********"
-            />
 
-            <Button type="submit">Login</Button>
+            <div className="flex flex-col gap-7 flex-1 justify-center">
 
-            <p className="text-sm text-text-muted w-full text-center">
-                Don't have an account?{" "}
-                <button
-                    type="button"
-                    onClick={onSwitchToSignup}
-                    className="text-primary font-medium hover:underline transition-colors"
-                >
-                    Sign up
-                </button>
-            </p>
+                <Input id="email" label="Email" type="email" placeholder="Enter your email" />
+                <PasswordInput
+                    id="password"
+                    label="Password"
+                    placeholder="********"
+                />
+            </div>
+
+            <div className="flex flex-col gap-3 justify-end">
+
+                <Button type="submit">Login</Button>
+
+                <p className="text-sm text-text-muted w-full text-center">
+                    Don't have an account?{" "}
+                    <button
+                        type="button"
+                        onClick={onSwitchToSignup}
+                        className="text-primary font-medium hover:underline transition-colors"
+                    >
+                        Sign up
+                    </button>
+                </p>
+            </div>
 
         </form>
     )

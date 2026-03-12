@@ -18,8 +18,12 @@ export default function AuthPage() {
 
                 <AuthCover />
 
-                {/* <LoginForm onSwitchToSignup={() => setMode("signup")} /> */}
-                <SignupForm onSwitchToLogin={() => setMode("login")} />
+                {mode === "login" &&
+                    <LoginForm onSwitchToSignup={() => setMode("signup")} />
+                }
+                {mode === "signup" && (
+                    <SignupForm onSwitchToLogin={() => setMode("login")} />
+                )}
 
 
             </div>
