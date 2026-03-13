@@ -8,6 +8,7 @@ import PhoneInput from "../ui/PhoneInput"
 import ArrowRightIcon from "@mui/icons-material/ArrowRight"
 import ArrowLeftIcon from "@mui/icons-material/ArrowLeft"
 import { checkEmail } from "../../services/auth/authApi"
+import SignUpStepOne from "./SignUpStepOne"
 
 type Country = {
     name: string
@@ -214,42 +215,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
             {/* ---------------- STEP 1 ---------------- */}
             {step === 1 && (
-                <>
-                    <Input
-                        id="email"
-                        label="Email"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={formData.email}
-                        onChange={(v) => handleChange("email", v)}
-                        error={emailStatus === "exists"}
-                        message={
-                            emailStatus === "checking"
-                                ? "Checking email..."
-                                : emailStatus === "exists"
-                                    ? "Email already exists"
-                                    : emailStatus === "available"
-                                        ? "Email available"
-                                        : ""
-                        }
-                    />
-
-                    <PasswordInput
-                        id="password"
-                        label="Password"
-                        placeholder="********"
-                        value={formData.password}
-                        onChange={(v) => handleChange("password", v)}
-                    />
-
-                    <PasswordInput
-                        id="password_confirmation"
-                        label="Confirm Password"
-                        placeholder="********"
-                        value={formData.password_confirmation}
-                        onChange={(v) => handleChange("password_confirmation", v)}
-                    />
-                </>
+                <SignUpStepOne formData={formData} handleChange={handleChange} emailStatus={emailStatus} />
             )}
 
             {/* ---------------- STEP 2 ---------------- */}
