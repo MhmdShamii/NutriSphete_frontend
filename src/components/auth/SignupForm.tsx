@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { use, useEffect, useState } from "react"
 import Button from "../ui/Button"
 import Input from "../ui/Input"
 import PasswordInput from "../ui/PasswordInput"
@@ -59,6 +59,10 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             [field]: value
         }))
     }
+
+    useEffect(() => {
+        async function validateEmail(email: string) { }
+    }, [formData.email]);
 
     function handleImageUpload(file: File | null) {
         if (!file) return
