@@ -9,6 +9,7 @@ import ArrowRightIcon from "@mui/icons-material/ArrowRight"
 import ArrowLeftIcon from "@mui/icons-material/ArrowLeft"
 import { checkEmail } from "../../services/auth/authApi"
 import SignUpStepOne from "./SignUpStepOne"
+import SignUpStepTwo from "./SignUpStepTwo"
 
 type Country = {
     name: string
@@ -220,31 +221,12 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
             {/* ---------------- STEP 2 ---------------- */}
             {step === 2 && (
-                <>
-                    <ImageUpload
-                        label="Profile Picture (Optional)"
-                        value={imagePreview}
-                        boxClassName="h-16"
-                        previewClassName="h-10 w-10 rounded-full"
-                        onChange={handleImageUpload}
-                    />
-
-                    <Input
-                        id="firstName"
-                        label="First Name"
-                        placeholder="Enter your first name"
-                        value={formData.first_name}
-                        onChange={(v) => handleChange("first_name", v)}
-                    />
-
-                    <Input
-                        id="lastName"
-                        label="Last Name"
-                        placeholder="Enter your last name"
-                        value={formData.last_name}
-                        onChange={(v) => handleChange("last_name", v)}
-                    />
-                </>
+                <SignUpStepTwo
+                    formData={formData}
+                    handleChange={handleChange}
+                    imagePreview={imagePreview}
+                    handleImageUpload={handleImageUpload}
+                />
             )}
 
             {/* ---------------- STEP 3 ---------------- */}
