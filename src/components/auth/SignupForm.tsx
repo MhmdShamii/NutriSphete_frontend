@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Button from "../ui/Button"
 import Input from "../ui/Input"
 import PasswordInput from "../ui/PasswordInput"
@@ -7,6 +7,7 @@ import CountryDropdown from "../ui/CountryDropdown"
 import PhoneInput from "../ui/PhoneInput"
 import ArrowRightIcon from "@mui/icons-material/ArrowRight"
 import ArrowLeftIcon from "@mui/icons-material/ArrowLeft"
+import { checkEmail } from "../../services/auth/authApi"
 
 type Country = {
     name: string
@@ -37,7 +38,6 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
     const [country, setCountry] = useState<Country | null>(null)
     const [phoneCountry, setPhoneCountry] = useState<Country | null>(null)
-
     const [imagePreview, setImagePreview] = useState<string | null>(null)
 
     const [formData, setFormData] = useState<FormData>({
@@ -53,25 +53,117 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         accept_privacy: false
     })
 
-    function handleChange(field: keyof FormData, value: string | boolean | File | null) {
+    const [debouncedEmail, setDebouncedEmail] = useState("")
+    const [emailStatus, setEmailStatus] = useState<
+        "idle" | "checking" | "exists" | "available"
+    >("idle")
+
+    const controllerRef = useRef<AbortController | null>(null)
+
+    /* -------------------- VALIDATION -------------------- */
+
+    const emailValid = /^\S+@\S+\.\S+$/.test(formData.email)
+
+    const passwordValid =
+        formData.password.length >= 8 &&
+        formData.password === formData.password_confirmation
+
+    const step1Valid =
+        emailValid &&
+        emailStatus === "available" &&
+        passwordValid
+
+    const step2Valid =
+        formData.first_name.trim() !== "" &&
+        formData.last_name.trim() !== ""
+
+    const step3Valid =
+        country &&
+        formData.phone &&
+        formData.accept_terms &&
+        formData.accept_privacy
+
+    const isCheckingEmail = emailStatus === "checking"
+
+    /* -------------------- FORM HANDLING -------------------- */
+
+    function handleChange(field: keyof FormData, value: any) {
         setFormData(prev => ({
             ...prev,
             [field]: value
         }))
     }
 
+    /* -------------------- EMAIL DEBOUNCE -------------------- */
+
     useEffect(() => {
-        async function validateEmail(email: string) { }
-    }, [formData.email]);
+
+        const timer = setTimeout(() => {
+            setDebouncedEmail(formData.email)
+        }, 500)
+
+        return () => clearTimeout(timer)
+
+    }, [formData.email])
+
+    /* -------------------- EMAIL CHECK -------------------- */
+
+    useEffect(() => {
+
+        if (!debouncedEmail || !emailValid) {
+            setEmailStatus("idle")
+            return
+        }
+
+        const check = async () => {
+
+            if (controllerRef.current) {
+                controllerRef.current.abort()
+            }
+
+            const controller = new AbortController()
+            controllerRef.current = controller
+
+            try {
+
+                setEmailStatus("checking")
+
+                const result = await checkEmail(debouncedEmail, controller.signal)
+
+                if (!result) return
+
+                if (result.existing_user) {
+                    setEmailStatus("exists")
+                } else {
+                    setEmailStatus("available")
+                }
+
+            } catch {
+                setEmailStatus("idle")
+            }
+        }
+
+        check()
+
+    }, [debouncedEmail])
+
+    /* -------------------- IMAGE -------------------- */
 
     function handleImageUpload(file: File | null) {
+
         if (!file) return
 
         handleChange("profile_image", file)
         setImagePreview(URL.createObjectURL(file))
     }
 
+    /* -------------------- NAVIGATION -------------------- */
+
     function nextStep() {
+
+        if (step === 1 && !step1Valid) return
+        if (step === 2 && !step2Valid) return
+
         if (step < 3) setStep(prev => prev + 1)
     }
 
@@ -80,7 +172,10 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     }
 
     function handleSubmit(e: React.FormEvent) {
+
         e.preventDefault()
+
+        if (!step3Valid) return
 
         const payload = {
             ...formData,
@@ -90,10 +185,12 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         console.log(payload)
     }
 
+    /* -------------------- UI -------------------- */
+
     return (
         <form onSubmit={handleSubmit} className="w-1/2 flex flex-col p-8 gap-5">
 
-            {/* Header */}
+            {/* HEADER */}
             <div className="flex flex-col gap-1">
                 <h1 className="text-3xl font-bold text-primary">
                     Create Account
@@ -104,8 +201,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                 </p>
             </div>
 
-
-            {/* Step Indicator */}
+            {/* STEP INDICATOR */}
             <div className="flex gap-2 mb-2">
                 {[1, 2, 3].map(s => (
                     <div
@@ -116,8 +212,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                 ))}
             </div>
 
-
-            {/* STEP 1 */}
+            {/* ---------------- STEP 1 ---------------- */}
             {step === 1 && (
                 <>
                     <Input
@@ -127,6 +222,16 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                         placeholder="Enter your email"
                         value={formData.email}
                         onChange={(v) => handleChange("email", v)}
+                        error={emailStatus === "exists"}
+                        message={
+                            emailStatus === "checking"
+                                ? "Checking email..."
+                                : emailStatus === "exists"
+                                    ? "Email already exists"
+                                    : emailStatus === "available"
+                                        ? "Email available"
+                                        : ""
+                        }
                     />
 
                     <PasswordInput
@@ -147,8 +252,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                 </>
             )}
 
-
-            {/* STEP 2 */}
+            {/* ---------------- STEP 2 ---------------- */}
             {step === 2 && (
                 <>
                     <ImageUpload
@@ -177,12 +281,9 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                 </>
             )}
 
-
-            {/* STEP 3 */}
+            {/* ---------------- STEP 3 ---------------- */}
             {step === 3 && (
                 <>
-
-                    {/* Country */}
                     <div className="flex flex-col gap-2">
                         <label className="text-sm text-text-muted">
                             Country
@@ -192,21 +293,16 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                             show="name"
                             selected={country}
                             onSelect={(c) => {
-
                                 setCountry(c)
                                 handleChange("country_code", c["alpha-3"])
 
-                                // default phone country only once
                                 if (!phoneCountry) {
                                     setPhoneCountry(c)
                                 }
-
                             }}
                         />
                     </div>
 
-
-                    {/* Phone */}
                     <PhoneInput
                         phone={formData.phone}
                         country={phoneCountry}
@@ -214,46 +310,34 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                         onCountryChange={(c) => setPhoneCountry(c)}
                     />
 
+                    {/* TERMS */}
 
-                    {/* Terms */}
                     <label className="flex items-center gap-3 text-sm text-text-muted cursor-pointer">
                         <input
                             type="checkbox"
                             checked={formData.accept_terms}
-                            onChange={(e) =>
-                                handleChange("accept_terms", e.target.checked)
-                            }
+                            onChange={(e) => handleChange("accept_terms", e.target.checked)}
                             className="w-4 h-4 accent-primary"
                         />
-
                         I agree to the
-                        <span className="text-white font-bold">
-                            Terms of Service
-                        </span>
+                        <span className="text-white font-bold"> Terms of Service </span>
                     </label>
-
 
                     <label className="flex items-center gap-3 text-sm text-text-muted cursor-pointer">
                         <input
                             type="checkbox"
                             checked={formData.accept_privacy}
-                            onChange={(e) =>
-                                handleChange("accept_privacy", e.target.checked)
-                            }
+                            onChange={(e) => handleChange("accept_privacy", e.target.checked)}
                             className="w-4 h-4 accent-primary"
                         />
-
                         I agree to the
-                        <span className="text-white font-bold">
-                            Privacy Policy
-                        </span>
+                        <span className="text-white font-bold"> Privacy Policy </span>
                     </label>
-
                 </>
             )}
 
+            {/* ---------------- NAVIGATION ---------------- */}
 
-            {/* Navigation */}
             <div className="flex flex-col flex-1 justify-end items-end gap-3">
 
                 <div className="flex w-full gap-4">
@@ -274,22 +358,34 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                             type="button"
                             className="flex items-center justify-center gap-2 flex-1"
                             onClick={nextStep}
+                            disabled={
+                                step === 1
+                                    ? !step1Valid || isCheckingEmail
+                                    : step === 2
+                                        ? !step2Valid
+                                        : false
+                            }
                         >
-                            Proceed
-                            <ArrowRightIcon sx={{ fontSize: 20 }} />
+                            {isCheckingEmail ? (
+                                <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                            ) : (
+                                <>
+                                    Proceed
+                                    <ArrowRightIcon sx={{ fontSize: 20 }} />
+                                </>
+                            )}
                         </Button>
                     ) : (
                         <Button
                             type="submit"
                             className="flex items-center justify-center gap-2 flex-1"
-                            disabled={!formData.accept_terms || !formData.accept_privacy}
+                            disabled={!step3Valid}
                         >
                             Sign Up
                         </Button>
                     )}
 
                 </div>
-
 
                 <p className="text-sm text-text-muted w-full text-center">
                     Have an account?{" "}
