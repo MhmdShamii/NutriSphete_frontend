@@ -21,11 +21,15 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
             <div className="flex flex-col gap-7 flex-1 justify-center">
 
                 <Input id="email" label="Email" type="email" placeholder="Enter your email" />
-                <PasswordInput
-                    id="password"
-                    label="Password"
-                    placeholder="********"
-                />
+                <div className="flex flex-col gap-1">
+
+                    <PasswordInput
+                        id="password"
+                        label="Password"
+                        placeholder="********"
+                    />
+                    <span className="text-sm w-full text-right text-text-muted hover:text-primary cursor-pointer ">Forgot password ?</span>
+                </div>
             </div>
 
             <div className="flex flex-col gap-3 justify-end">
