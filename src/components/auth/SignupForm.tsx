@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from "react"
-import Button from "../ui/Button"
-import Input from "../ui/Input"
-import PasswordInput from "../ui/PasswordInput"
-import ImageUpload from "../ui/ImageUpload"
-import CountryDropdown from "../ui/CountryDropdown"
-import PhoneInput from "../ui/PhoneInput"
-import ArrowRightIcon from "@mui/icons-material/ArrowRight"
-import ArrowLeftIcon from "@mui/icons-material/ArrowLeft"
 import { checkEmail } from "../../services/auth/authApi"
 import SignUpStepOne from "./SignUpStepOne"
 import SignUpStepTwo from "./SignUpStepTwo"
+import SignUpStepThree from "./SignUpStepThree"
+import StepIndicator from "./StepIndicator"
+import Navigation from "./Navigation"
 
 type Country = {
     name: string
@@ -80,8 +75,8 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         formData.last_name.trim() !== ""
 
     const step3Valid =
-        country &&
-        formData.phone &&
+        Boolean(country) &&
+        Boolean(formData.phone) &&
         formData.accept_terms &&
         formData.accept_privacy
 
@@ -204,136 +199,34 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             </div>
 
             {/* STEP INDICATOR */}
-            <div className="flex gap-2 mb-2">
-                {[1, 2, 3].map(s => (
-                    <div
-                        key={s}
-                        className={`h-1 flex-1 rounded ${step >= s ? "bg-primary" : "bg-border/30"
-                            }`}
-                    />
-                ))}
-            </div>
+            <StepIndicator step={step} />
 
-            {/* ---------------- STEP 1 ---------------- */}
             {step === 1 && (
                 <SignUpStepOne formData={formData} handleChange={handleChange} emailStatus={emailStatus} />
             )}
-
-            {/* ---------------- STEP 2 ---------------- */}
             {step === 2 && (
-                <SignUpStepTwo
-                    formData={formData}
-                    handleChange={handleChange}
-                    imagePreview={imagePreview}
-                    handleImageUpload={handleImageUpload}
-                />
+                <SignUpStepTwo formData={formData} handleChange={handleChange} imagePreview={imagePreview} handleImageUpload={handleImageUpload} />
             )}
-
-            {/* ---------------- STEP 3 ---------------- */}
             {step === 3 && (
-                <>
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm text-text-muted">
-                            Country
-                        </label>
-
-                        <CountryDropdown
-                            show="name"
-                            selected={country}
-                            onSelect={(c) => {
-                                setCountry(c)
-                                handleChange("country_code", c["alpha-3"])
-
-                                if (!phoneCountry) {
-                                    setPhoneCountry(c)
-                                }
-                            }}
-                        />
-                    </div>
-
-                    <PhoneInput
-                        phone={formData.phone}
-                        country={phoneCountry}
-                        onPhoneChange={(v) => handleChange("phone", v)}
-                        onCountryChange={(c) => setPhoneCountry(c)}
-                    />
-
-                    {/* TERMS */}
-
-                    <label className="flex items-center gap-3 text-sm text-text-muted cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={formData.accept_terms}
-                            onChange={(e) => handleChange("accept_terms", e.target.checked)}
-                            className="w-4 h-4 accent-primary"
-                        />
-                        I agree to the
-                        <span className="text-white font-bold"> Terms of Service </span>
-                    </label>
-
-                    <label className="flex items-center gap-3 text-sm text-text-muted cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={formData.accept_privacy}
-                            onChange={(e) => handleChange("accept_privacy", e.target.checked)}
-                            className="w-4 h-4 accent-primary"
-                        />
-                        I agree to the
-                        <span className="text-white font-bold"> Privacy Policy </span>
-                    </label>
-                </>
+                <SignUpStepThree
+                    formData={formData} handleChange={handleChange} country={country} setCountry={setCountry} phoneCountry={phoneCountry}
+                    setPhoneCountry={setPhoneCountry}
+                />
             )}
 
             {/* ---------------- NAVIGATION ---------------- */}
 
             <div className="flex flex-col flex-1 justify-end items-end gap-3">
 
-                <div className="flex w-full gap-4">
-
-                    {step > 1 && (
-                        <button
-                            type="button"
-                            onClick={prevStep}
-                            className="flex items-center justify-center gap-2 flex-1 border border-border/30 text-text-muted rounded-lg p-3 hover:border-white/50"
-                        >
-                            <ArrowLeftIcon sx={{ fontSize: 20 }} />
-                            Back
-                        </button>
-                    )}
-
-                    {step < 3 ? (
-                        <Button
-                            type="button"
-                            className="flex items-center justify-center gap-2 flex-1"
-                            onClick={nextStep}
-                            disabled={
-                                step === 1
-                                    ? !step1Valid || isCheckingEmail
-                                    : step === 2
-                                        ? !step2Valid
-                                        : false
-                            }
-                        >
-                            {isCheckingEmail ? (
-                                <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                            ) : (
-                                <>
-                                    Proceed
-                                    <ArrowRightIcon sx={{ fontSize: 20 }} />
-                                </>
-                            )}
-                        </Button>
-                    ) : (
-                        <Button
-                            type="submit"
-                            className="flex items-center justify-center gap-2 flex-1"
-                            disabled={!step3Valid}
-                        >
-                            Sign Up
-                        </Button>
-                    )}
-
-                </div>
+                <Navigation
+                    step={step}
+                    nextStep={nextStep}
+                    prevStep={prevStep}
+                    step1Valid={step1Valid}
+                    step2Valid={step2Valid}
+                    step3Valid={step3Valid}
+                    isCheckingEmail={isCheckingEmail}
+                />
 
                 <p className="text-sm text-text-muted w-full text-center">
                     Have an account?{" "}
