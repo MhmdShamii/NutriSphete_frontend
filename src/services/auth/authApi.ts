@@ -1,3 +1,4 @@
+import type { RegisterPayload } from "../../features/auth/types"
 import apiClient from "../../services/apiClient"
 import { AxiosError } from "axios"
 
@@ -20,4 +21,15 @@ export const checkEmail = async (
 
         throw error
     }
+}
+
+export const registerUser = async (data: RegisterPayload) => {
+
+    const response = await apiClient.post(
+        "/auth/register",
+        data
+    )
+
+    return response.data
+
 }

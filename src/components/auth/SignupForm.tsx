@@ -5,6 +5,10 @@ import SignUpStepTwo from "./SignUpStepTwo"
 import SignUpStepThree from "./SignUpStepThree"
 import StepIndicator from "./StepIndicator"
 import Navigation from "./Navigation"
+import { useDispatch } from "react-redux"
+import { register } from "../../features/auth/authSlice"
+import { useNavigate } from "react-router-dom"
+import type { AppDispatch } from "../../app/store"
 
 type Country = {
     name: string
@@ -57,6 +61,9 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
     >("idle")
 
     const controllerRef = useRef<AbortController | null>(null)
+
+    const dispatch = useDispatch<AppDispatch>()
+    const navigate = useNavigate()
 
     /* -------------------- VALIDATION -------------------- */
 
@@ -169,18 +176,28 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
         if (step > 1) setStep(prev => prev - 1)
     }
 
-    function handleSubmit(e: React.FormEvent) {
-
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
 
         if (!step3Valid) return
 
         const payload = {
-            ...formData,
-            phone_country: phoneCountry?.["alpha-3"]
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            email: formData.email,
+            phone: formData.phone,
+            country_code: formData.country_code,
+            password: formData.password,
+            password_confirmation: formData.password_confirmation
         }
 
-        console.log(payload)
+        try {
+            await dispatch(register(payload)).unwrap()
+            navigate("/")
+
+        } catch (error) {
+            console.error(error)
+        }
     }
 
     /* -------------------- UI -------------------- */
