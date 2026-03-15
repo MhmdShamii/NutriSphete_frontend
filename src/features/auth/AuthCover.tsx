@@ -10,7 +10,11 @@ const messages = [
     "Log meals, track calories, monitor progress"
 ]
 
-export default function AuthCover() {
+type props = {
+    className?: string
+}
+
+export default function AuthCover({ className = "" }: props) {
     const [index, setIndex] = useState(0)
     const [nextIndex, setNextIndex] = useState(1)
     const [phase, setPhase] = useState("idle") // "idle" | "fading"
@@ -33,7 +37,7 @@ export default function AuthCover() {
 
     return (
         <div
-            className="w-1/2 h-full bg-center bg-cover rounded-2xl p-2 flex items-end relative"
+            className={`w-1/2 h-full bg-center bg-cover rounded-2xl p-2 flex items-end relative ${className}`}
             style={{ backgroundImage: `url(${coverImage})`, border: "1px solid var(--glass-border)" }}
         >
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent rounded-2xl" />

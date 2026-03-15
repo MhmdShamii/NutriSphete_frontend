@@ -4,11 +4,12 @@ import PasswordInput from "../ui/PasswordInput"
 
 type LoginFormProps = {
     onSwitchToSignup: () => void
+    className: string
 }
 
-function LoginForm({ onSwitchToSignup }: LoginFormProps) {
+function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
     return (
-        <form className="w-1/2 flex flex-col p-8 gap-7 ">
+        <form className={`flex flex-col p-8 gap-7 ${className}`}>
 
             <div className="flex flex-col gap-1">
                 <h1 className="text-3xl font-bold text-primary">Welcome Back</h1>

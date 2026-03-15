@@ -14,6 +14,7 @@ type Country = {
 
 type SignupFormProps = {
     onSwitchToLogin: () => void
+    className: string
 }
 
 type FormData = {
@@ -29,7 +30,7 @@ type FormData = {
     accept_privacy: boolean
 }
 
-export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
+export default function SignupForm({ onSwitchToLogin, className }: SignupFormProps) {
 
     const [step, setStep] = useState(1)
 
@@ -185,7 +186,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     /* -------------------- UI -------------------- */
 
     return (
-        <form onSubmit={handleSubmit} className="w-1/2 flex flex-col p-8 gap-5">
+        <form onSubmit={handleSubmit} className={`flex flex-col p-8 gap-5 ${className}`}>
 
             {/* HEADER */}
             <div className="flex flex-col gap-1">
