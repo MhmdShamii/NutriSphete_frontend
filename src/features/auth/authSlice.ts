@@ -1,6 +1,15 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { loginUser, registerUser } from "../../services/auth/authApi"
+import { getMe, loginUser, registerUser } from "../../services/auth/authApi"
 import type { AuthState, LoginPayload, RegisterPayload } from "./types"
+
+
+const initialState: AuthState = {
+    user: null,
+    token: localStorage.getItem("token"),
+    loading: false,
+    error: null,
+    initialized: false
+}
 
 export const register = createAsyncThunk(
     "auth/register",
@@ -35,12 +44,24 @@ export const login = createAsyncThunk(
     }
 )
 
-const initialState: AuthState = {
-    user: null,
-    token: localStorage.getItem("token"),
-    loading: false,
-    error: null
-}
+export const fetchMe = createAsyncThunk(
+    "auth/me",
+    async (_, { rejectWithValue }) => {
+
+        try {
+
+            const user = await getMe()
+
+            return user
+
+        } catch (error: any) {
+
+            return rejectWithValue("Unauthorized")
+
+        }
+
+    }
+)
 
 const authSlice = createSlice({
     name: "auth",
@@ -57,12 +78,23 @@ const authSlice = createSlice({
 
     extraReducers: (builder) => {
 
-        builder.addCase(register.pending, (state) => {
-            state.loading = true
-            state.error = null
+        builder.addCase(fetchMe.fulfilled, (state, action) => {
+
+            state.user = action.payload
+            state.initialized = true
+
         })
 
-        builder.addCase(login.pending, (state) => {
+        builder.addCase(fetchMe.rejected, (state) => {
+
+            state.user = null
+            state.token = null
+            state.initialized = true
+            localStorage.removeItem("token")
+
+        })
+
+        builder.addCase(register.pending, (state) => {
             state.loading = true
             state.error = null
         })
@@ -79,6 +111,19 @@ const authSlice = createSlice({
 
         })
 
+
+        builder.addCase(register.rejected, (state, action) => {
+
+            state.loading = false
+            state.error = action.payload as string
+
+        })
+
+        builder.addCase(login.pending, (state) => {
+            state.loading = true
+            state.error = null
+        })
+
         builder.addCase(login.fulfilled, (state, action) => {
 
             state.loading = false
@@ -91,20 +136,12 @@ const authSlice = createSlice({
 
         })
 
-        builder.addCase(register.rejected, (state, action) => {
-
-            state.loading = false
-            state.error = action.payload as string
-
-        })
-
         builder.addCase(login.rejected, (state) => {
 
             state.loading = false
             state.error = "Credentials are wrong"
 
         })
-
     }
 })
 

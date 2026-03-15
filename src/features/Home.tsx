@@ -24,6 +24,7 @@ export default function Home() {
                 <img
 
                     src={user.image.avatar}
+                    // src={"http://127.0.0.1:8000/storage/avatars/default.png"}
                     alt="avatar"
                     className="w-24 h-24 rounded-full object-cover border border-border"
                 />

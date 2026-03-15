@@ -56,3 +56,11 @@ export const loginUser = async (data: LoginPayload) => {
     const response = await apiClient.post("/auth/login", data)
     return response.data
 }
+
+export const getMe = async () => {
+
+    const response = await apiClient.get("/me")
+
+    return response.data.user
+
+}

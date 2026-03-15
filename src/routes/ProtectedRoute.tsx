@@ -8,10 +8,14 @@ type ProtectedRouteProps = {
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
 
-    const user = useSelector((state: RootState) => state.auth.user)
+    const { user, initialized } = useSelector((state: RootState) => state.auth)
+
+    if (!initialized) {
+        return <div>Loading...</div>
+    }
 
     if (!user) {
-        return <Navigate to="/auth" replace />
+        return <Navigate to="/auth" />
     }
 
     return children
