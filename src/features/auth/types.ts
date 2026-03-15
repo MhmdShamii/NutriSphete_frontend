@@ -21,6 +21,9 @@ export type AuthUser = {
     email: string
     phone: string
     verified: boolean
+    image: {
+        avatar: string
+    }
 }
 
 export type AuthState = {

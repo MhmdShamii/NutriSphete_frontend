@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { checkEmail } from "../../services/auth/authApi"
+import { checkEmail, uploadAvatar } from "../../services/auth/authApi"
 import SignUpStepOne from "./SignUpStepOne"
 import SignUpStepTwo from "./SignUpStepTwo"
 import SignUpStepThree from "./SignUpStepThree"
@@ -192,11 +192,19 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
         }
 
         try {
-            await dispatch(register(payload)).unwrap()
+
+            const result = await dispatch(register(payload)).unwrap()
+
+            if (formData.profile_image) {
+                await uploadAvatar(formData.profile_image)
+            }
+
             navigate("/")
 
         } catch (error) {
+
             console.error(error)
+
         }
     }
 

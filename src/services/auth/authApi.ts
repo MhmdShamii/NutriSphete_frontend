@@ -23,6 +23,24 @@ export const checkEmail = async (
     }
 }
 
+export const uploadAvatar = async (file: File) => {
+
+    const formData = new FormData()
+    formData.append("avatar", file)
+
+    const response = await apiClient.post(
+        "/me/avatar",
+        formData,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        }
+    )
+
+    return response.data
+}
+
 export const registerUser = async (data: RegisterPayload) => {
 
     const response = await apiClient.post(
