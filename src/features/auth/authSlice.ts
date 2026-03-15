@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { registerUser } from "../../services/auth/authApi"
-import type { AuthState, RegisterPayload } from "./types"
+import { loginUser, registerUser } from "../../services/auth/authApi"
+import type { AuthState, LoginPayload, RegisterPayload } from "./types"
 
 export const register = createAsyncThunk(
     "auth/register",
@@ -18,6 +18,20 @@ export const register = createAsyncThunk(
 
         }
 
+    }
+)
+
+export const login = createAsyncThunk(
+    "auth/login",
+    async (data: LoginPayload, { rejectWithValue }) => {
+        try {
+            const response = await loginUser(data)
+            return response.data
+        } catch (err: any) {
+
+            return rejectWithValue(err.response?.data || "login failed")
+
+        }
     }
 )
 
@@ -48,9 +62,27 @@ const authSlice = createSlice({
             state.error = null
         })
 
+        builder.addCase(login.pending, (state) => {
+            state.loading = true
+            state.error = null
+        })
+
         builder.addCase(register.fulfilled, (state, action) => {
 
             state.loading = false
+            state.error = null
+
+            state.user = action.payload.user
+            state.token = action.payload.token
+
+            localStorage.setItem("token", action.payload.token)
+
+        })
+
+        builder.addCase(login.fulfilled, (state, action) => {
+
+            state.loading = false
+            state.error = null
 
             state.user = action.payload.user
             state.token = action.payload.token
@@ -63,6 +95,13 @@ const authSlice = createSlice({
 
             state.loading = false
             state.error = action.payload as string
+
+        })
+
+        builder.addCase(login.rejected, (state) => {
+
+            state.loading = false
+            state.error = "Credentials are wrong"
 
         })
 

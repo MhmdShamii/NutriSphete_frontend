@@ -1,4 +1,4 @@
-import type { RegisterPayload } from "../../features/auth/types"
+import type { LoginPayload, RegisterPayload } from "../../features/auth/types"
 import apiClient from "../../services/apiClient"
 import { AxiosError } from "axios"
 
@@ -32,4 +32,9 @@ export const registerUser = async (data: RegisterPayload) => {
 
     return response.data
 
+}
+
+export const loginUser = async (data: LoginPayload) => {
+    const response = await apiClient.post("/auth/login", data)
+    return response.data
 }
