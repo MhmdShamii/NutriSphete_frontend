@@ -11,6 +11,8 @@ import { useNavigate } from "react-router-dom"
 
 import type { LoginPayload } from "../../features/auth/types"
 import type { RootState, AppDispatch } from "../../app/store"
+import HSpacer from "../ui/HSpacer"
+import GoogleButton from "../ui/GoogleButton"
 
 type LoginFormProps = {
     onSwitchToSignup: () => void
@@ -116,6 +118,9 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                         "Login"
                     )}
                 </Button>
+
+                <HSpacer height={4} />
+                <GoogleButton label="Continue With Google" />
 
                 <p className="text-sm text-text-muted w-full text-center">
                     Don't have an account?{" "}

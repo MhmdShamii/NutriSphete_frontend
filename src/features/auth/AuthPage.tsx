@@ -13,7 +13,7 @@ export default function AuthPage() {
             <div className="absolute bottom-[-250px] left-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy"></div>
             <div className="absolute bottom-[-250px] right-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy"></div>
 
-            <div className="backdrop-blur-xl p-1 lg:p-4 rounded-4xl shadow-xl w-full max-w-[1000px] h-[600px] flex gap-1 lg:gap-4 overflow-hidden relative z-10 " style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}>
+            <div className="backdrop-blur-xl p-1 lg:p-4 rounded-4xl shadow-xl w-full max-w-[1000px] h-[700px] flex gap-1 lg:gap-4 overflow-hidden relative z-10 " style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}>
                 <div className="absolute bottom-0 left-0 w-full h-[1px]bg-primary/15"></div>
 
                 <AuthCover className="hidden lg:w-1/2 lg:flex" />

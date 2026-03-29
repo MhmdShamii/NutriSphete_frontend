@@ -23,33 +23,14 @@ export const checkEmail = async (
     }
 }
 
-export const uploadAvatar = async (file: File) => {
-
-    const formData = new FormData()
-    formData.append("avatar", file)
-
-    const response = await apiClient.post(
-        "/me/avatar",
-        formData,
-        {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        }
-    )
-
+export const registerUser = async (data: RegisterPayload) => {
+    const response = await apiClient.post("/auth/register", data)
     return response.data
 }
 
-export const registerUser = async (data: RegisterPayload) => {
-
-    const response = await apiClient.post(
-        "/auth/register",
-        data
-    )
-
+export const resendVerificationEmail = async (email: string) => {
+    const response = await apiClient.post("/email/resend", { email })
     return response.data
-
 }
 
 export const loginUser = async (data: LoginPayload) => {
@@ -58,9 +39,6 @@ export const loginUser = async (data: LoginPayload) => {
 }
 
 export const getMe = async () => {
-
     const response = await apiClient.get("/me")
-
     return response.data.user
-
 }

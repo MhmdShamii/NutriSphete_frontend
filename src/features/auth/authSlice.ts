@@ -99,16 +99,9 @@ const authSlice = createSlice({
             state.error = null
         })
 
-        builder.addCase(register.fulfilled, (state, action) => {
-
+        builder.addCase(register.fulfilled, (state) => {
             state.loading = false
             state.error = null
-
-            state.user = action.payload.user
-            state.token = action.payload.token
-
-            localStorage.setItem("token", action.payload.token)
-
         })
 
 
