@@ -3,12 +3,14 @@ import { getMe, googleAuth, loginUser, registerUser } from "../../services/auth/
 import type { AuthState, LoginPayload, RegisterPayload } from "./types"
 
 
+const token = localStorage.getItem("token")
+
 const initialState: AuthState = {
     user: null,
-    token: localStorage.getItem("token"),
+    token,
     loading: false,
     error: null,
-    initialized: false
+    initialized: !token  // no token = no session to restore, already known
 }
 
 export const register = createAsyncThunk(
@@ -132,6 +134,7 @@ const authSlice = createSlice({
         builder.addCase(googleLogin.fulfilled, (state, action) => {
             state.loading = false
             state.error = null
+            state.initialized = true
             state.user = action.payload.user
             state.token = action.payload.token
             localStorage.setItem("token", action.payload.token)
@@ -148,15 +151,12 @@ const authSlice = createSlice({
         })
 
         builder.addCase(login.fulfilled, (state, action) => {
-
             state.loading = false
             state.error = null
-
+            state.initialized = true
             state.user = action.payload.user
             state.token = action.payload.token
-
             localStorage.setItem("token", action.payload.token)
-
         })
 
         builder.addCase(login.rejected, (state) => {
