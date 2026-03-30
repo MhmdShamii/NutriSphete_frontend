@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { getMe, loginUser, registerUser } from "../../services/auth/authApi"
+import { getMe, googleAuth, loginUser, registerUser } from "../../services/auth/authApi"
 import type { AuthState, LoginPayload, RegisterPayload } from "./types"
 
 
@@ -40,6 +40,18 @@ export const login = createAsyncThunk(
 
             return rejectWithValue(err.response?.data || "login failed")
 
+        }
+    }
+)
+
+export const googleLogin = createAsyncThunk(
+    "auth/googleLogin",
+    async (token: string, { rejectWithValue }) => {
+        try {
+            const response = await googleAuth(token)
+            return response.data
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data || "Google login failed")
         }
     }
 )
@@ -110,6 +122,24 @@ const authSlice = createSlice({
             state.loading = false
             state.error = action.payload as string
 
+        })
+
+        builder.addCase(googleLogin.pending, (state) => {
+            state.loading = true
+            state.error = null
+        })
+
+        builder.addCase(googleLogin.fulfilled, (state, action) => {
+            state.loading = false
+            state.error = null
+            state.user = action.payload.user
+            state.token = action.payload.token
+            localStorage.setItem("token", action.payload.token)
+        })
+
+        builder.addCase(googleLogin.rejected, (state, action) => {
+            state.loading = false
+            state.error = action.payload as string
         })
 
         builder.addCase(login.pending, (state) => {

@@ -33,6 +33,11 @@ export const resendVerificationEmail = async (email: string) => {
     return response.data
 }
 
+export const googleAuth = async (token: string) => {
+    const response = await apiClient.post("/auth/google", { id_token: token })
+    return response.data
+}
+
 export const loginUser = async (data: LoginPayload) => {
     const response = await apiClient.post("/auth/login", data)
     return response.data
