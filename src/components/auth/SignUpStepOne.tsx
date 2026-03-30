@@ -15,6 +15,12 @@ type SignUpStepOneProps = {
 
 export default function SignUpStepOne({ formData, handleChange, emailStatus }: SignUpStepOneProps) {
 
+    const message =
+        emailStatus === "checking" ? "Checking availability..." :
+        emailStatus === "exists"   ? "An account with this email already exists" :
+        emailStatus === "available" ? "Email is available" :
+        ""
+
     return <>
         <Input
             id="email"
@@ -24,21 +30,14 @@ export default function SignUpStepOne({ formData, handleChange, emailStatus }: S
             value={formData.email}
             onChange={(v) => handleChange("email", v)}
             error={emailStatus === "exists"}
-            message={
-                emailStatus === "checking"
-                    ? "Checking email..."
-                    : emailStatus === "exists"
-                        ? "Email already exists"
-                        : emailStatus === "available"
-                            ? "Email available"
-                            : ""
-            }
+            success={emailStatus === "available"}
+            message={message}
         />
 
         <PasswordInput
             id="password"
             label="Password"
-            placeholder="********"
+            placeholder="Min. 8 characters"
             value={formData.password}
             onChange={(v) => handleChange("password", v)}
         />
@@ -46,7 +45,7 @@ export default function SignUpStepOne({ formData, handleChange, emailStatus }: S
         <PasswordInput
             id="password_confirmation"
             label="Confirm Password"
-            placeholder="********"
+            placeholder="Repeat your password"
             value={formData.password_confirmation}
             onChange={(v) => handleChange("password_confirmation", v)}
         />

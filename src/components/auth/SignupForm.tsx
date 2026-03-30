@@ -3,10 +3,9 @@ import { checkEmail } from "../../services/auth/authApi"
 import SignUpStepOne from "./SignUpStepOne"
 import SignUpStepTwo from "./SignUpStepTwo"
 import StepIndicator from "./StepIndicator"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { register } from "../../features/auth/authSlice"
-import type { AppDispatch } from "../../app/store"
-import HSpacer from "../ui/HSpacer"
+import type { AppDispatch, RootState } from "../../app/store"
 import GoogleButton from "../ui/GoogleButton"
 import Button from "../ui/Button"
 
@@ -36,6 +35,8 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
 
     const controllerRef = useRef<AbortController | null>(null)
     const dispatch = useDispatch<AppDispatch>()
+    const loading = useSelector((state: RootState) => state.auth.loading)
+    const reduxError = useSelector((state: RootState) => state.auth.error)
 
     /* -------------------- VALIDATION -------------------- */
 
@@ -104,8 +105,8 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
                 password_confirmation: formData.password_confirmation
             })).unwrap()
             setStep(2)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // error stored in Redux, displayed below
         }
     }
 
@@ -114,17 +115,11 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
     return (
         <form onSubmit={handleSubmit} className={`flex flex-col p-8 gap-3 ${className}`}>
 
-            {/* HEADER */}
             <div className="flex flex-col gap-1">
-                <h1 className="text-3xl font-bold text-primary">
-                    Create Account
-                </h1>
-                <p className="text-sm text-text-muted">
-                    Join us and start your nutrition journey today
-                </p>
+                <h1 className="text-3xl font-bold text-primary">Create Account</h1>
+                <p className="text-sm text-text-muted">Join us and start your nutrition journey today</p>
             </div>
 
-            {/* STEP INDICATOR */}
             <StepIndicator step={step} />
 
             {step === 1 && (
@@ -139,28 +134,33 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
                 <SignUpStepTwo email={formData.email} />
             )}
 
-            {/* ---------------- FOOTER ---------------- */}
-
             <div className="flex flex-col flex-1 justify-end gap-3">
 
                 {step === 1 && (
-                    <Button
-                        type="submit"
-                        className="flex items-center justify-center gap-2 w-full"
-                        disabled={!formValid || isCheckingEmail}
-                    >
-                        {isCheckingEmail ? (
-                            <span className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full" />
-                        ) : (
-                            "Create Account"
-                        )}
-                    </Button>
-                )}
-
-                {step === 1 && (
                     <>
-                        <HSpacer height={4} />
-                        <GoogleButton label="Continue With Google" />
+                        {reduxError && (
+                            <p className="text-xs text-red-400 text-center">{reduxError}</p>
+                        )}
+
+                        <Button
+                            type="submit"
+                            className="flex items-center justify-center gap-2 w-full"
+                            disabled={!formValid || isCheckingEmail || loading}
+                        >
+                            {loading || isCheckingEmail ? (
+                                <span className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full" />
+                            ) : (
+                                "Create Account"
+                            )}
+                        </Button>
+
+                        <div className="flex items-center gap-3">
+                            <div className="flex-1 h-px bg-border/30" />
+                            <span className="text-xs text-text-muted">OR</span>
+                            <div className="flex-1 h-px bg-border/30" />
+                        </div>
+
+                        <GoogleButton label="Continue with Google" />
                     </>
                 )}
 

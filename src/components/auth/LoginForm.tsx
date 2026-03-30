@@ -11,7 +11,6 @@ import { useNavigate } from "react-router-dom"
 
 import type { LoginPayload } from "../../features/auth/types"
 import type { RootState, AppDispatch } from "../../app/store"
-import HSpacer from "../ui/HSpacer"
 import GoogleButton from "../ui/GoogleButton"
 
 type LoginFormProps = {
@@ -32,31 +31,20 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
     const loading = useSelector((state: RootState) => state.auth.loading)
     const error = useSelector((state: RootState) => state.auth.error)
 
-    function handleChange<K extends keyof LoginPayload>(
-        field: K,
-        value: LoginPayload[K]
-    ) {
-        setLoginForm(prev => ({
-            ...prev,
-            [field]: value
-        }))
+    function handleChange<K extends keyof LoginPayload>(field: K, value: LoginPayload[K]) {
+        setLoginForm(prev => ({ ...prev, [field]: value }))
     }
 
     async function handleSubmit(e: React.FormEvent) {
-
         e.preventDefault()
-
         try {
-
+            if (!loginForm.email || !loginForm.password) {
+                return
+            }
             await dispatch(login(loginForm)).unwrap()
-
             navigate("/")
-
         } catch {
-
-            // Redux already stores the error
-            // UI will display it automatically
-
+            // error is stored in Redux state, displayed below
         }
     }
 
@@ -64,17 +52,11 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
         <form onSubmit={handleSubmit} className={`flex flex-col p-8 gap-7 ${className}`}>
 
             <div className="flex flex-col gap-1">
-                <h1 className="text-3xl font-bold text-primary">
-                    Welcome Back
-                </h1>
-
-                <p className="text-sm text-text-muted">
-                    Your meals, progress and insights are waiting
-                </p>
+                <h1 className="text-3xl font-bold text-primary">Welcome Back</h1>
+                <p className="text-sm text-text-muted">Your meals, progress and insights are waiting</p>
             </div>
 
-            <div className="flex flex-col gap-7 flex-1 justify-center">
-
+            <div className="flex flex-col gap-5 flex-1 justify-center">
 
                 <Input
                     id="email"
@@ -83,29 +65,30 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                     placeholder="Enter your email"
                     value={loginForm.email}
                     onChange={(v) => handleChange("email", v)}
-                    error={error ? true : false}
-                    message={`${error}`}
+                    error={error} // show error state if there's an error, but don't display text here
                 />
 
                 <div className="flex flex-col gap-1">
-
                     <PasswordInput
                         id="password"
                         label="Password"
-                        placeholder="********"
+                        placeholder="Enter your password"
                         value={loginForm.password}
                         onChange={(v) => handleChange("password", v)}
+                        error={error}
                     />
-
-                    <span className="text-sm w-full text-right text-text-muted hover:text-primary cursor-pointer">
-                        Forgot password ?
+                    <span className="text-xs w-full text-right text-text-muted hover:text-primary cursor-pointer transition-colors">
+                        Forgot password?
                     </span>
-
                 </div>
+
+                {error && (
+                    <p className="text-xs text-red-400 text-center -mt-2">{error}</p>
+                )}
 
             </div>
 
-            <div className="flex flex-col gap-3 justify-end">
+            <div className="flex flex-col gap-3">
 
                 <Button
                     type="submit"
@@ -113,14 +96,19 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                     className="flex items-center justify-center gap-2"
                 >
                     {loading ? (
-                        <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                        <span className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full" />
                     ) : (
                         "Login"
                     )}
                 </Button>
 
-                <HSpacer height={4} />
-                <GoogleButton label="Continue With Google" />
+                <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-border/30" />
+                    <span className="text-xs text-text-muted">OR</span>
+                    <div className="flex-1 h-px bg-border/30" />
+                </div>
+
+                <GoogleButton label="Continue with Google" />
 
                 <p className="text-sm text-text-muted w-full text-center">
                     Don't have an account?{" "}

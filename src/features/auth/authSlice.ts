@@ -159,10 +159,10 @@ const authSlice = createSlice({
             localStorage.setItem("token", action.payload.token)
         })
 
-        builder.addCase(login.rejected, (state) => {
+        builder.addCase(login.rejected, (state, action) => {
 
             state.loading = false
-            state.error = "Credentials are wrong"
+            state.error = (action.payload as any)?.message as string || "Login failed"
 
         })
     }

@@ -8,9 +8,10 @@ type PasswordInputProps = {
     placeholder?: string
     value?: string
     onChange?: (value: string) => void
+    error?: boolean
 }
 
-function PasswordInput({ id, label, placeholder, value, onChange }: PasswordInputProps) {
+function PasswordInput({ id, label, placeholder, value, onChange, error }: PasswordInputProps) {
 
     const [show, setShow] = useState(false)
 
@@ -29,9 +30,13 @@ function PasswordInput({ id, label, placeholder, value, onChange }: PasswordInpu
                     value={value}
                     placeholder={placeholder}
                     onChange={(e) => onChange && onChange(e.target.value)}
-                    className="bg-surface border border-border/30 rounded-lg p-3 pr-10 outline-none w-full transition-all duration-300
+                    className={`bg-surface border border-border/30 rounded-lg p-3 pr-10 outline-none w-full transition-all duration-300
                     focus:border-primary/60
-                    focus:shadow-[0_0_12px_rgba(127,250,136,0.35)]"
+                    focus:shadow-[0_0_12px_rgba(127,250,136,0.35)]
+                    ${error
+                            ? "border-red-400 focus:border-red-400 focus:shadow-[0_0_10px_rgba(239,68,68,0.35)]" : null
+                        }
+                    `}
                 />
 
                 <button

@@ -7,7 +7,6 @@ const messages = [
     "AI-powered nutrition insights tailored to your goals.",
     "Monitor your progress and stay consistent every day.",
     "Share meals, discover recipes, and learn from the community.",
-    "Log meals, track calories, monitor progress"
 ]
 
 type props = {
