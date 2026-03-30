@@ -29,7 +29,7 @@ export const registerUser = async (data: RegisterPayload) => {
 }
 
 export const resendVerificationEmail = async (email: string) => {
-    const response = await apiClient.post("/email/resend", { email })
+    const response = await apiClient.post("/auth/email/resend", { email })
     return response.data
 }
 
@@ -39,6 +39,6 @@ export const loginUser = async (data: LoginPayload) => {
 }
 
 export const getMe = async () => {
-    const response = await apiClient.get("/me")
+    const response = await apiClient.get("/auth/me")
     return response.data.user
 }
