@@ -38,9 +38,9 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         try {
-            if (!loginForm.email || !loginForm.password) {
-                return
-            }
+            // if (!loginForm.email || !loginForm.password) {
+            //     return
+            // }
             await dispatch(login(loginForm)).unwrap()
             navigate("/")
         } catch {
@@ -65,7 +65,7 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                     placeholder="Enter your email"
                     value={loginForm.email}
                     onChange={(v) => handleChange("email", v)}
-                    error={error} // show error state if there's an error, but don't display text here
+                    error={!!error}
                 />
 
                 <div className="flex flex-col gap-1">
@@ -75,7 +75,7 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                         placeholder="Enter your password"
                         value={loginForm.password}
                         onChange={(v) => handleChange("password", v)}
-                        error={error}
+                        error={!!error}
                     />
                     <span className="text-xs w-full text-right text-text-muted hover:text-primary cursor-pointer transition-colors">
                         Forgot password?

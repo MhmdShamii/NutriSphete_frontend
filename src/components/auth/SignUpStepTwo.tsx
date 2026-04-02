@@ -32,7 +32,7 @@ export default function SignUpStepTwo({ email }: SignUpStepTwoProps) {
                 <p className="text-sm text-text-muted">
                     We sent a verification link to
                 </p>
-                <p className="text-sm font-medium text-text">{email}</p>
+                <p className="text-sm font-medium text-primary">{email}</p>
             </div>
 
             <p className="text-xs text-text-muted">
@@ -43,13 +43,12 @@ export default function SignUpStepTwo({ email }: SignUpStepTwoProps) {
                 type="button"
                 onClick={handleResend}
                 disabled={status === "sending" || status === "sent"}
-                className={`text-sm font-medium transition-colors ${
-                    status === "sent"
-                        ? "text-primary cursor-default"
-                        : status === "error"
-                            ? "text-red-400 hover:underline"
-                            : "text-primary hover:underline"
-                } ${status === "sending" ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`text-sm font-medium transition-colors ${status === "sent"
+                    ? "text-primary cursor-default"
+                    : status === "error"
+                        ? "text-red-400 hover:underline"
+                        : "text-primary hover:underline"
+                    } ${status === "sending" ? "opacity-50 cursor-not-allowed" : ""}`}
             >
                 {status === "sending" && (
                     <span className="inline-flex items-center gap-2">
