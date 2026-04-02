@@ -1,7 +1,8 @@
 import { useSelector } from "react-redux"
 import type { RootState } from "../app/store"
+import TopBar from "../components/Home/TopBar"
 
-export default function Home() {
+export default function Home({ children }: { children?: React.ReactNode }) {
 
     const user = useSelector((state: RootState) => state.auth.user)
 
@@ -16,45 +17,16 @@ export default function Home() {
     }
 
     return (
-        <div className="flex items-center justify-center w-full h-full">
+        <div className="flex flex-col w-full h-full p-5 gap-5 relative">
+            <div className="absolute top-[-250px] left-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy"></div>
+            <div className="absolute top-[-250px] right-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy"></div>
 
-            <div className="bg-surface border border-border/30 rounded-xl p-6 w-80 flex flex-col items-center gap-4 shadow-lg">
-
-                {/* Avatar */}
-                <img
-
-                    src={user.image.avatar}
-                    // src={"http://127.0.0.1:8000/storage/avatars/default.png"}
-                    alt="avatar"
-                    className="w-24 h-24 rounded-full object-cover border border-border"
-                />
-
-                {/* Name */}
-                <h2 className="text-xl font-bold text-white">
-                    {user.first_name} {user.last_name}
-                </h2>
-
-                {/* Email */}
-                <p className="text-sm text-text-muted">
-                    {user.email}
+            <TopBar />
+            {children ? children : (
+                <p className="text-2xl text-primary">
+                    Welcome, {user.first_name}!
                 </p>
-
-                {/* Phone */}
-                <p className="text-sm text-text-muted">
-                    📞 {user.phone}
-                </p>
-
-                {/* Verified */}
-                <span className={`text-xs px-3 py-1 rounded-full
-                        ${user.verified
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-yellow-500/20 text-yellow-400"
-                    }`}>
-                    {user.verified ? "Verified" : "Not Verified"}
-                </span>
-
-            </div>
-
+            )}
         </div>
     )
 }
