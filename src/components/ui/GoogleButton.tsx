@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import { googleLogin } from "../../features/auth/authSlice"
 import type { AppDispatch } from "../../app/store"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 type GoogleButtonProps = {
     label: string
@@ -15,9 +15,9 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const initializedRef = useRef(false)
 
     function handleClick() {
-
         const google = (window as any).google
         if (!google?.accounts?.id) {
             setError("Google sign-in is not available")
@@ -26,25 +26,29 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
 
         setError(null)
 
-        google.accounts.id.initialize({
-            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            callback: async ({ credential }: { credential: string }) => {
-                setLoading(true)
-                try {
-                    await dispatch(googleLogin(credential)).unwrap()
-                    navigate("/")
-                } catch (err: any) {
-                    setError(err?.message || "Google sign-in failed")
-                } finally {
-                    setLoading(false)
-                }
-            },
-            cancel_on_tap_outside: true,
-        })
+        if (!initializedRef.current) {
+            google.accounts.id.initialize({
+                client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+                callback: async ({ credential }: { credential: string }) => {
+                    setLoading(true)
+                    try {
+                        await dispatch(googleLogin(credential)).unwrap()
+                        navigate("/")
+                    } catch (err: unknown) {
+                        const msg = (err as { message?: string })?.message
+                        setError(msg || "Google sign-in failed")
+                    } finally {
+                        setLoading(false)
+                    }
+                },
+                cancel_on_tap_outside: true,
+            })
+            initializedRef.current = true
+        }
 
         google.accounts.id.prompt((notification: any) => {
             if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                // One Tap was suppressed — fall back to the account picker popup
+                // One Tap suppressed — fall back to the account picker popup
                 google.accounts.id.renderButton(
                     document.getElementById("google-btn-trigger"),
                     { theme: "outline", size: "large" }

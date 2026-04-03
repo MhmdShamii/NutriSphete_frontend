@@ -38,9 +38,6 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         try {
-            // if (!loginForm.email || !loginForm.password) {
-            //     return
-            // }
             await dispatch(login(loginForm)).unwrap()
             navigate("/")
         } catch {

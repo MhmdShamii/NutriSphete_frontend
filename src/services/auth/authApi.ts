@@ -1,6 +1,6 @@
 import type { LoginPayload, RegisterPayload } from "../../features/auth/types"
 import apiClient from "../../services/apiClient"
-import { AxiosError } from "axios"
+import axios from "axios"
 
 export const checkEmail = async (
     email: string,
@@ -12,13 +12,9 @@ export const checkEmail = async (
             { email },
             { signal }
         )
-
         return response.data
     } catch (error) {
-        if ((error as AxiosError).name === "CanceledError") {
-            return null
-        }
-
+        if (axios.isCancel(error)) return null
         throw error
     }
 }
@@ -44,6 +40,6 @@ export const loginUser = async (data: LoginPayload) => {
 }
 
 export const getMe = async () => {
-    const response = await apiClient.get("/auth/me")
+    const response = await apiClient.get("/me")
     return response.data.user
 }

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import { getMe, googleAuth, loginUser, registerUser } from "../../services/auth/authApi"
 import type { AuthState, LoginPayload, RegisterPayload } from "./types"
-
+import type { AxiosError } from "axios"
 
 const token = localStorage.getItem("token")
 
@@ -13,22 +13,20 @@ const initialState: AuthState = {
     initialized: !token  // no token = no session to restore, already known
 }
 
+function extractError(error: unknown, fallback: string): string {
+    const err = error as AxiosError<{ message?: string }>
+    return err.response?.data?.message || fallback
+}
+
 export const register = createAsyncThunk(
     "auth/register",
     async (data: RegisterPayload, { rejectWithValue }) => {
-
         try {
-
             const response = await registerUser(data)
-
             return response.data
-
-        } catch (error: any) {
-
-            return rejectWithValue(error.response?.data || "Registration failed")
-
+        } catch (error: unknown) {
+            return rejectWithValue(extractError(error, "Registration failed"))
         }
-
     }
 )
 
@@ -38,10 +36,8 @@ export const login = createAsyncThunk(
         try {
             const response = await loginUser(data)
             return response.data
-        } catch (err: any) {
-
-            return rejectWithValue(err.response?.data || "login failed")
-
+        } catch (error: unknown) {
+            return rejectWithValue(extractError(error, "Login failed"))
         }
     }
 )
@@ -52,8 +48,8 @@ export const googleLogin = createAsyncThunk(
         try {
             const response = await googleAuth(token)
             return response.data
-        } catch (error: any) {
-            return rejectWithValue(error.response?.data || "Google login failed")
+        } catch (error: unknown) {
+            return rejectWithValue(extractError(error, "Google login failed"))
         }
     }
 )
@@ -61,19 +57,12 @@ export const googleLogin = createAsyncThunk(
 export const fetchMe = createAsyncThunk(
     "auth/me",
     async (_, { rejectWithValue }) => {
-
         try {
-
             const user = await getMe()
-
             return user
-
-        } catch (error: any) {
-
+        } catch {
             return rejectWithValue("Unauthorized")
-
         }
-
     }
 )
 
@@ -81,31 +70,25 @@ const authSlice = createSlice({
     name: "auth",
     initialState,
     reducers: {
-
         logout(state) {
             state.user = null
             state.token = null
             localStorage.removeItem("token")
         }
-
     },
 
     extraReducers: (builder) => {
 
         builder.addCase(fetchMe.fulfilled, (state, action) => {
-
             state.user = action.payload
             state.initialized = true
-
         })
 
         builder.addCase(fetchMe.rejected, (state) => {
-
             state.user = null
             state.token = null
             state.initialized = true
             localStorage.removeItem("token")
-
         })
 
         builder.addCase(register.pending, (state) => {
@@ -118,12 +101,9 @@ const authSlice = createSlice({
             state.error = null
         })
 
-
         builder.addCase(register.rejected, (state, action) => {
-
             state.loading = false
             state.error = action.payload as string
-
         })
 
         builder.addCase(googleLogin.pending, (state) => {
@@ -160,10 +140,8 @@ const authSlice = createSlice({
         })
 
         builder.addCase(login.rejected, (state, action) => {
-
             state.loading = false
-            state.error = (action.payload as any)?.message as string || "Login failed"
-
+            state.error = action.payload as string
         })
     }
 })
