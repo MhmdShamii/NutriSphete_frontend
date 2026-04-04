@@ -1,4 +1,4 @@
-import type { LoginPayload, RegisterPayload } from "../../features/auth/types"
+import type { LoginPayload, RegisterPayload, MainInfoPayload, BasicInfoPayload, TargetsPayload } from "../../features/auth/types"
 import apiClient from "../../services/apiClient"
 import axios from "axios"
 
@@ -42,4 +42,28 @@ export const loginUser = async (data: LoginPayload) => {
 export const getMe = async () => {
     const response = await apiClient.get("/me")
     return response.data.user
+}
+
+export const uploadAvatarApi = async (file: File) => {
+    const form = new FormData()
+    form.append("avatar", file)
+    const response = await apiClient.post("/me/avatar", form, {
+        headers: { "Content-Type": "multipart/form-data" }
+    })
+    return response.data
+}
+
+export const completeMainInfoApi = async (data: MainInfoPayload) => {
+    const response = await apiClient.post("/me/complete-main-info", data)
+    return response.data
+}
+
+export const completeBasicInfoApi = async (data: BasicInfoPayload) => {
+    const response = await apiClient.post("/me/complete-basic-info", data)
+    return response.data
+}
+
+export const completeTargetsApi = async (data: TargetsPayload) => {
+    const response = await apiClient.post("/me/complete-targets", data)
+    return response.data
 }

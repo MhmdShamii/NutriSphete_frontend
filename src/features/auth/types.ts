@@ -4,6 +4,30 @@ export type LoginPayload = {
     password: string
 }
 
+export type MainInfoPayload = {
+    first_name: string
+    last_name: string
+    country_code: string  // ISO alpha-3 code e.g. "USA"
+}
+
+export type BasicInfoPayload = {
+    date_of_birth: string
+    gender: "male" | "female"
+    weight_kg: number
+    height_cm: number
+    activity_level: "sedentary" | "light" | "moderate" | "active" | "very_active"
+    goal: "lose_weight" | "gain_muscle" | "maintain"
+    dietary_preferences: "vegetarian" | "vegan" | "pescatarian" | "none"
+}
+
+export type TargetsPayload = {
+    daily_calorie_target: number
+    daily_protein_g: number
+    daily_carbs_g: number
+    daily_fat_g: number
+}
+
+
 export type RegisterPayload = {
     email: string
     password: string
@@ -56,8 +80,8 @@ export type AuthState = {
 const ONBOARDING_ROUTES: Record<OnboardingStep, string> = {
     main_info: "/onboarding/main-info",
     basic_info: "/onboarding/basic-info",
-    targets:    "/onboarding/targets",
-    complete:   "/",
+    targets: "/onboarding/targets",
+    complete: "/",
 }
 
 export function getPostLoginRoute(step: OnboardingStep): string {

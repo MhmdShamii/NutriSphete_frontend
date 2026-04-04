@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { getMe, googleAuth, loginUser, registerUser } from "../../services/auth/authApi"
-import type { AuthState, LoginPayload, RegisterPayload } from "./types"
+import { getMe, googleAuth, loginUser, registerUser, completeMainInfoApi, completeBasicInfoApi, completeTargetsApi } from "../../services/auth/authApi"
+import type { AuthState, LoginPayload, RegisterPayload, MainInfoPayload, BasicInfoPayload, TargetsPayload } from "./types"
 import type { AxiosError } from "axios"
 
 const token = localStorage.getItem("token")
@@ -10,7 +10,7 @@ const initialState: AuthState = {
     token,
     loading: false,
     error: null,
-    initialized: !token  // no token = no session to restore, already known
+    initialized: !token,
 }
 
 function extractError(error: unknown, fallback: string): string {
@@ -50,6 +50,39 @@ export const googleLogin = createAsyncThunk(
             return response.data
         } catch (error: unknown) {
             return rejectWithValue(extractError(error, "Google login failed"))
+        }
+    }
+)
+
+export const completeMainInfo = createAsyncThunk(
+    "auth/completeMainInfo",
+    async (data: MainInfoPayload, { rejectWithValue }) => {
+        try {
+            await completeMainInfoApi(data)
+        } catch (error: unknown) {
+            return rejectWithValue(extractError(error, "Failed to save info"))
+        }
+    }
+)
+
+export const completeBasicInfo = createAsyncThunk(
+    "auth/completeBasicInfo",
+    async (data: BasicInfoPayload, { rejectWithValue }) => {
+        try {
+            await completeBasicInfoApi(data)
+        } catch (error: unknown) {
+            return rejectWithValue(extractError(error, "Failed to save info"))
+        }
+    }
+)
+
+export const completeTargets = createAsyncThunk(
+    "auth/completeTargets",
+    async (data: TargetsPayload, { rejectWithValue }) => {
+        try {
+            await completeTargetsApi(data)
+        } catch (error: unknown) {
+            return rejectWithValue(extractError(error, "Failed to save targets"))
         }
     }
 )
@@ -143,6 +176,19 @@ const authSlice = createSlice({
             state.loading = false
             state.error = action.payload as string
         })
+
+        // Onboarding steps — user refresh is handled by fetchMe in the component
+        builder.addCase(completeMainInfo.pending,  (state) => { state.loading = true;  state.error = null })
+        builder.addCase(completeMainInfo.fulfilled, (state) => { state.loading = false })
+        builder.addCase(completeMainInfo.rejected, (state, action) => { state.loading = false; state.error = action.payload as string })
+
+        builder.addCase(completeBasicInfo.pending,  (state) => { state.loading = true;  state.error = null })
+        builder.addCase(completeBasicInfo.fulfilled, (state) => { state.loading = false })
+        builder.addCase(completeBasicInfo.rejected, (state, action) => { state.loading = false; state.error = action.payload as string })
+
+        builder.addCase(completeTargets.pending,  (state) => { state.loading = true;  state.error = null })
+        builder.addCase(completeTargets.fulfilled, (state) => { state.loading = false })
+        builder.addCase(completeTargets.rejected, (state, action) => { state.loading = false; state.error = action.payload as string })
     }
 })
 

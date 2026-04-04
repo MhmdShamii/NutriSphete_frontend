@@ -50,7 +50,7 @@ function ImageUpload({
                     <img
                         src={value}
                         alt="preview"
-                        className={`h-10 w-10 object-cover rounded-full ${previewClassName}`}
+                        className={`object-cover ${previewClassName}`}
                     />
                 ) : (
                     <div className="flex items-center gap-1">
