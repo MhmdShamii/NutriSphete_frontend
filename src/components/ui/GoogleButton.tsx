@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import { googleLogin } from "../../features/auth/authSlice"
 import type { AppDispatch } from "../../app/store"
+import { getPostLoginRoute } from "../../features/auth/types"
 import { useRef, useState } from "react"
 
 type GoogleButtonProps = {
@@ -32,8 +33,8 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
                 callback: async ({ credential }: { credential: string }) => {
                     setLoading(true)
                     try {
-                        await dispatch(googleLogin(credential)).unwrap()
-                        navigate("/")
+                        const { user } = await dispatch(googleLogin(credential)).unwrap()
+                        navigate(getPostLoginRoute(user.onboarding_step))
                     } catch (err: unknown) {
                         const msg = (err as { message?: string })?.message
                         setError(msg || "Google sign-in failed")
