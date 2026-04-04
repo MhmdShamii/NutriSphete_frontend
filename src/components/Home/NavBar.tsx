@@ -1,15 +1,16 @@
 import { NavLink, Link } from "react-router-dom";
-import TimelineIcon from '@mui/icons-material/Timeline';
+import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
 import FoodBankRoundedIcon from '@mui/icons-material/FoodBankRounded';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import SportsRoundedIcon from '@mui/icons-material/SportsRounded';
+import FitnessCenterRoundedIcon from '@mui/icons-material/FitnessCenterRounded';
 import GlassCard from "../ui/GlassCard";
 
-function NavItem({ to, icon }: { to: string; icon: React.ReactNode }) {
+function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
     return (
         <NavLink
             to={to}
+            title={label}
             className={({ isActive }) => `
                 flex items-center justify-center p-2.5 rounded-xl transition-all duration-200
                 active:scale-95
@@ -26,35 +27,48 @@ function NavItem({ to, icon }: { to: string; icon: React.ReactNode }) {
 
 export default function NavBar() {
     return (
-        <div className="relative flex flex-col w-fit justify-center items-center h-full gap-4">
+        // Mobile: full-width horizontal row | Desktop: vertical column full height
+        <div className="relative flex items-center justify-between gap-4
+            flex-row w-full
+            sm:flex-col sm:w-fit sm:h-full sm:justify-center
+        ">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                w-40 h-24 sm:w-24 sm:h-40
+                bg-primary/30 blur-3xl rounded-full pointer-events-none z-0"
+            />
 
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-40 bg-primary/30 blur-3xl rounded-full pointer-events-none z-0" />
-
-            <GlassCard className="relative z-10 p-3 rounded-2xl flex flex-col gap-2">
-                <NavItem to="/dashboard" icon={<TimelineIcon fontSize="small" />} />
-                <NavItem to="/profile" icon={<PersonRoundedIcon fontSize="small" />} />
+            <GlassCard className="relative z-10 p-3 rounded-2xl flex gap-2
+                flex-row flex-1 justify-around
+                sm:flex-col sm:flex-none sm:w-full sm:justify-start
+            ">
+                <NavItem to="/stats" icon={<BarChartRoundedIcon fontSize="medium" />} label="My Stats" />
+                <NavItem to="/feed" icon={<FoodBankRoundedIcon fontSize="medium" />} label="Feed" />
             </GlassCard>
 
+            {/* Add Meal CTA */}
             <Link
                 to="/create-meal"
                 className="
                     relative z-10
-                    flex items-center justify-center w-16 h-16 rounded-full
+                    flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full
                     bg-primary text-black/80
                     shadow-[0_0_22px_rgba(127,250,136,0.65)]
                     hover:bg-primary-hover
                     hover:shadow-[0_0_36px_rgba(127,250,136,1)]
-                    hover:scale-105
-                    active:scale-95
+                    hover:scale-105 active:scale-95
                     transition-all duration-200
                 "
             >
                 <AddCircleRoundedIcon fontSize="large" />
             </Link>
 
-            <GlassCard className="relative z-10 p-3 rounded-2xl flex flex-col gap-2">
-                <NavItem to="/nutrition" icon={<FoodBankRoundedIcon fontSize="small" />} />
-                <NavItem to="/settings" icon={<SettingsRoundedIcon fontSize="small" />} />
+            {/* Bottom/Right glass card */}
+            <GlassCard className="relative z-10 p-3 rounded-2xl flex gap-2
+                flex-row flex-1 justify-around
+                sm:flex-col sm:flex-none sm:w-full sm:justify-start
+            ">
+                <NavItem to="/coaches" icon={<SportsRoundedIcon fontSize="medium" />} label="Coaches" />
+                <NavItem to="/personal-trainer" icon={<FitnessCenterRoundedIcon fontSize="medium" />} label="Personal Trainer" />
             </GlassCard>
 
         </div>
