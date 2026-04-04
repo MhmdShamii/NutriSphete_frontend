@@ -46,6 +46,7 @@ function App() {
           <Route path="/coaches" element={<p className="text-2xl text-primary">Coaches</p>} />
           <Route path="/personal-trainer" element={<p className="text-2xl text-primary">Personal Trainer</p>} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<p className="text-2xl text-primary">Settings</p>} />
           <Route path="/create-meal" element={<p className="text-2xl text-primary">Create Meal</p>} />
         </Route>
 
