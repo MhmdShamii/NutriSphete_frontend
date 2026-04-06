@@ -28,6 +28,14 @@ export type TargetsPayload = {
     daily_fat_g: number
 }
 
+export type HealthCondition = {
+    id: number
+    name: string
+    slug: string
+    type: string
+    severity: string
+}
+
 
 export type RegisterPayload = {
     email: string
@@ -35,7 +43,7 @@ export type RegisterPayload = {
     password_confirmation: string
 }
 
-export type OnboardingStep = "main_info" | "basic_info" | "targets" | "complete"
+export type OnboardingStep = "main_info" | "basic_info" | "targets" | "health_conditions" | "complete"
 
 export type UserProfile = {
     date_of_birth: string
@@ -82,6 +90,7 @@ const ONBOARDING_ROUTES: Record<OnboardingStep, string> = {
     main_info: "/onboarding/main-info",
     basic_info: "/onboarding/basic-info",
     targets: "/onboarding/targets",
+    health_conditions: "/onboarding/health-conditions",
     complete: "/",
 }
 

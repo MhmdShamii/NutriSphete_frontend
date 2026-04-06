@@ -67,3 +67,24 @@ export const completeTargetsApi = async (data: TargetsPayload) => {
     const response = await apiClient.post("/me/complete-targets", data)
     return response.data
 }
+
+export const getHealthConditionsApi = async () => {
+    const response = await apiClient.get("/health-conditions")
+    return response.data.conditions
+}
+
+export const addHealthConditionApi = async (
+    body: { health_condition_id: number } | { custom_condition: string }
+) => {
+    const response = await apiClient.post("/me/health-conditions", body)
+    return response.data.condition as { id: number; custom_condition: string | null; condition: { id: number; name: string } | null }
+}
+
+export const removeHealthConditionApi = async (userConditionId: number) => {
+    await apiClient.delete(`/me/health-conditions/${userConditionId}`)
+}
+
+export const completeHealthConditionsApi = async () => {
+    const response = await apiClient.post("/me/complete-health-conditions")
+    return response.data
+}

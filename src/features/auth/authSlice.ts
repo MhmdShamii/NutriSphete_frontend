@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { getMe, googleAuth, loginUser, registerUser, completeMainInfoApi, completeBasicInfoApi, completeTargetsApi } from "../../services/auth/authApi"
+import { getMe, googleAuth, loginUser, registerUser, completeMainInfoApi, completeBasicInfoApi, completeTargetsApi, completeHealthConditionsApi } from "../../services/auth/authApi"
 import type { AuthState, LoginPayload, RegisterPayload, MainInfoPayload, BasicInfoPayload, TargetsPayload } from "./types"
 import type { AxiosError } from "axios"
 
@@ -83,6 +83,17 @@ export const completeTargets = createAsyncThunk(
             await completeTargetsApi(data)
         } catch (error: unknown) {
             return rejectWithValue(extractError(error, "Failed to save targets"))
+        }
+    }
+)
+
+export const completeHealthConditions = createAsyncThunk(
+    "auth/completeHealthConditions",
+    async (_, { rejectWithValue }) => {
+        try {
+            await completeHealthConditionsApi()
+        } catch (error: unknown) {
+            return rejectWithValue(extractError(error, "Failed to complete health conditions step"))
         }
     }
 )
@@ -189,6 +200,10 @@ const authSlice = createSlice({
         builder.addCase(completeTargets.pending,  (state) => { state.loading = true;  state.error = null })
         builder.addCase(completeTargets.fulfilled, (state) => { state.loading = false })
         builder.addCase(completeTargets.rejected, (state, action) => { state.loading = false; state.error = action.payload as string })
+
+        builder.addCase(completeHealthConditions.pending,  (state) => { state.loading = true;  state.error = null })
+        builder.addCase(completeHealthConditions.fulfilled, (state) => { state.loading = false })
+        builder.addCase(completeHealthConditions.rejected, (state, action) => { state.loading = false; state.error = action.payload as string })
     }
 })
 

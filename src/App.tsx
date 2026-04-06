@@ -14,6 +14,7 @@ import OnboardingPage from "./features/onboarding/OnboardingPage"
 import MainInfoStep from "./features/onboarding/steps/MainInfoStep"
 import BasicInfoStep from "./features/onboarding/steps/BasicInfoStep"
 import TargetsStep from "./features/onboarding/steps/TargetsStep"
+import HealthConditionsStep from "./features/onboarding/steps/HealthConditionsStep"
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -36,6 +37,7 @@ function App() {
           <Route path="/onboarding/main-info" element={<MainInfoStep />} />
           <Route path="/onboarding/basic-info" element={<BasicInfoStep />} />
           <Route path="/onboarding/targets" element={<TargetsStep />} />
+          <Route path="/onboarding/health-conditions" element={<HealthConditionsStep />} />
         </Route>
 
         {/* App — logged in + onboarding complete */}

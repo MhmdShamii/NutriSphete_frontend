@@ -36,7 +36,6 @@ export default function OnboardingPage() {
                 className="backdrop-blur-xl p-6 rounded-4xl shadow-xl w-full max-w-lg relative z-10"
                 style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}
             >
-                <div className="absolute bottom-0 left-0 w-full h-[1px] bg-primary/15 rounded-full" />
                 <Outlet />
             </div>
 
