@@ -10,6 +10,7 @@ import { login } from "../../features/auth/authSlice"
 import { useNavigate } from "react-router-dom"
 
 import type { LoginPayload } from "../../features/auth/types"
+import { getPostLoginRoute } from "../../features/auth/types"
 import type { RootState, AppDispatch } from "../../app/store"
 import GoogleButton from "../ui/GoogleButton"
 
@@ -38,11 +39,8 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         try {
-            // if (!loginForm.email || !loginForm.password) {
-            //     return
-            // }
-            await dispatch(login(loginForm)).unwrap()
-            navigate("/")
+            const { user } = await dispatch(login(loginForm)).unwrap()
+            navigate(getPostLoginRoute(user.onboarding_step))
         } catch {
             // error is stored in Redux state, displayed below
         }

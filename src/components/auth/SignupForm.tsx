@@ -6,6 +6,7 @@ import StepIndicator from "./StepIndicator"
 import { useDispatch, useSelector } from "react-redux"
 import { register } from "../../features/auth/authSlice"
 import type { AppDispatch, RootState } from "../../app/store"
+import type { RegisterPayload } from "../../features/auth/types"
 import GoogleButton from "../ui/GoogleButton"
 import Button from "../ui/Button"
 
@@ -14,17 +15,11 @@ type SignupFormProps = {
     className: string
 }
 
-type FormData = {
-    email: string
-    password: string
-    password_confirmation: string
-}
-
 export default function SignupForm({ onSwitchToLogin, className }: SignupFormProps) {
 
     const [step, setStep] = useState(1)
 
-    const [formData, setFormData] = useState<FormData>({
+    const [formData, setFormData] = useState<RegisterPayload>({
         email: "",
         password: "",
         password_confirmation: ""
@@ -40,18 +35,16 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
 
     /* -------------------- VALIDATION -------------------- */
 
-    const emailValid = /^\S+@\S+\.\S+$/.test(formData.email)
-
     const passwordValid =
         formData.password.length >= 8 &&
         formData.password === formData.password_confirmation
 
-    const formValid = emailValid && emailStatus === "available" && passwordValid
+    const formValid = emailStatus === "available" && passwordValid
     const isCheckingEmail = emailStatus === "checking"
 
     /* -------------------- FORM HANDLING -------------------- */
 
-    function handleChange(field: keyof FormData, value: string) {
+    function handleChange(field: keyof RegisterPayload, value: string) {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
@@ -65,19 +58,17 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
     /* -------------------- EMAIL CHECK -------------------- */
 
     useEffect(() => {
-
-        if (!debouncedEmail || !emailValid) {
+        const isValid = /^\S+@\S+\.\S+$/.test(debouncedEmail)
+        if (!debouncedEmail || !isValid) {
             setEmailStatus("idle")
             return
         }
 
+        if (controllerRef.current) controllerRef.current.abort()
+        const controller = new AbortController()
+        controllerRef.current = controller
+
         const check = async () => {
-
-            if (controllerRef.current) controllerRef.current.abort()
-
-            const controller = new AbortController()
-            controllerRef.current = controller
-
             try {
                 setEmailStatus("checking")
                 const result = await checkEmail(debouncedEmail, controller.signal)
@@ -89,7 +80,6 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
         }
 
         check()
-
     }, [debouncedEmail])
 
     /* -------------------- SUBMIT -------------------- */
@@ -99,11 +89,7 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
         if (!formValid) return
 
         try {
-            await dispatch(register({
-                email: formData.email,
-                password: formData.password,
-                password_confirmation: formData.password_confirmation
-            })).unwrap()
+            await dispatch(register(formData)).unwrap()
             setStep(2)
         } catch {
             // error stored in Redux, displayed below

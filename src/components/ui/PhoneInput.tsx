@@ -1,16 +1,13 @@
-import CountryDropdown from "./CountryDropdown"
+import CountryDropdown, { type Country } from "./CountryDropdown"
 import Input from "./Input"
+import countriesData from "../../assets/data/countries.json"
 
-type Country = {
-    name: string
-    "alpha-3": string
-    phone_code: string
-}
+const countries = countriesData as Country[]
 
 type PhoneInputProps = {
     phone: string
     country: Country | null
-    onPhoneChange: (phone: string) => void
+    onPhoneChange: (v: string) => void
     onCountryChange: (country: Country) => void
 }
 
@@ -32,6 +29,7 @@ export default function PhoneInput({
 
                 <div className="w-32">
                     <CountryDropdown
+                        countries={countries}
                         show="code"
                         selected={country}
                         onSelect={onCountryChange}
