@@ -85,3 +85,11 @@ body {
 .animate-energy {
   animation: energy-rise 12s ease-in-out infinite;
 }
+
+@keyframes shimmer {
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.4s infinite;
+}

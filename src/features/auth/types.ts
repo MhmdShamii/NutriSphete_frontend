@@ -18,6 +18,7 @@ export type BasicInfoPayload = {
     activity_level: "sedentary" | "light" | "moderate" | "active" | "very_active"
     goal: "lose_weight" | "gain_muscle" | "maintain"
     dietary_preferences: "vegetarian" | "vegan" | "pescatarian" | "none"
+    body_fat_pct?: number | null
 }
 
 export type TargetsPayload = {

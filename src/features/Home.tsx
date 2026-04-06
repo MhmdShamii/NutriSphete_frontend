@@ -17,7 +17,7 @@ export default function Home() {
     }
 
     return (
-        <div className="flex flex-col w-full h-screen gap-5 relative p-3 sm:p-5">
+        <div className="flex flex-col w-full h-dvh gap-5 relative p-3 sm:p-5 overflow-hidden">
             <div className="absolute top-[-250px] left-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy" />
             <div className="absolute top-[-250px] right-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy" />
 

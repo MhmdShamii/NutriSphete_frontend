@@ -65,7 +65,7 @@ export default function NavBar() {
             {/* Bottom/Right glass card */}
             <GlassCard className="relative z-10 p-3 rounded-2xl flex gap-2
                 flex-row flex-1 justify-around
-                sm:flex-col sm:flex-none sm:w-full sm:justify-start
+                sm:flex-col sm:flex-none sm:w-full sm:justify-between
             ">
                 <NavItem to="/coaches" icon={<SportsRoundedIcon fontSize="medium" />} label="Coaches" />
                 <NavItem to="/personal-trainer" icon={<FitnessCenterRoundedIcon fontSize="medium" />} label="Personal Trainer" />

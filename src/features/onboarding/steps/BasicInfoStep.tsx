@@ -31,10 +31,12 @@ export default function BasicInfoStep() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         if (!valid) return
+        const payload: BasicInfoPayload = { ...form }
+        if (!payload.body_fat_pct) delete payload.body_fat_pct
         try {
-            await dispatch(completeBasicInfo(form)).unwrap()
+            await dispatch(completeBasicInfo(payload)).unwrap()
             await dispatch(fetchMe()).unwrap()
-            navigate("/onboarding/targets")
+            navigate("/onboarding/targets", { state: { hasBodyFat: !!payload.body_fat_pct } })
         } catch {}
     }
 
@@ -69,6 +71,16 @@ export default function BasicInfoStep() {
                     <Input id="height" label="Height (cm)" placeholder="175"
                         value={form.height_cm || ""}
                         onChange={(v) => set("height_cm", Number(v.replace(/\D/g, "")))} />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                    <Input id="body_fat_pct" label="Body Fat % (optional)" placeholder="e.g. 18"
+                        value={form.body_fat_pct ?? ""}
+                        onChange={(v) => {
+                            const n = Number(v.replace(/[^\d.]/g, ""))
+                            set("body_fat_pct", v === "" ? null : Math.min(70, Math.max(1, n)))
+                        }} />
+                    <p className="text-xs text-[var(--color-text-muted)]">Optional — enables more accurate calorie estimation</p>
                 </div>
 
                 <SelectDropdown

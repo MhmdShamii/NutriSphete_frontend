@@ -1,16 +1,90 @@
-import { useState } from "react"
-import { useSelector } from "react-redux"
-import type { RootState } from "../app/store"
+import { useState, useEffect } from "react"
+import { useSelector, useDispatch } from "react-redux"
+import type { RootState, AppDispatch } from "../app/store"
+import { fetchMe } from "./auth/authSlice"
 import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded"
 import LockRoundedIcon from "@mui/icons-material/LockRounded"
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded"
 
 type Tab = "recipes" | "private" | "saved"
 
-export default function Profile() {
-    const user = useSelector((state: RootState) => state.auth.user)
-    const [tab, setTab] = useState<Tab>("recipes")
+function Shimmer({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    return (
+        <div className={`relative overflow-hidden rounded-xl bg-white/5 ${className ?? ""}`} style={style}>
+            <div className="absolute inset-0 -translate-x-full animate-shimmer"
+                style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)" }} />
+        </div>
+    )
+}
 
+function ProfileSkeleton() {
+    return (
+        <div className="w-full flex flex-col pb-6">
+            <div className="w-full flex flex-col overflow-hidden"
+                style={{ border: "1px solid var(--glass-border)", borderRadius: "24px 24px 0 0", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}
+            >
+                {/* Banner skeleton */}
+                <Shimmer className="w-full h-44 sm:h-52 !rounded-none" style={{ borderRadius: "24px 24px 0 0" } as React.CSSProperties} />
+
+                {/* Avatar + info skeleton */}
+                <div className="px-6 sm:px-8 pb-5">
+                    <div className="relative w-fit -mt-12 sm:-mt-14 mb-4">
+                        <Shimmer className="w-24 h-24 sm:w-28 sm:h-28 !rounded-full" />
+                    </div>
+                    <div className="flex items-end justify-between gap-4 flex-wrap">
+                        <div className="flex flex-col gap-2">
+                            <Shimmer className="h-5 w-36" />
+                            <Shimmer className="h-3.5 w-48" />
+                        </div>
+                        <div className="flex items-center gap-5 pb-0.5">
+                            <div className="flex flex-col items-center gap-1.5">
+                                <Shimmer className="h-5 w-10" />
+                                <Shimmer className="h-3 w-14" />
+                            </div>
+                            <div className="w-px h-8 bg-border/30" />
+                            <div className="flex flex-col items-center gap-1.5">
+                                <Shimmer className="h-5 w-10" />
+                                <Shimmer className="h-3 w-14" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tabs skeleton */}
+                <div className="flex border-t gap-1 p-2" style={{ borderColor: "var(--glass-border)" }}>
+                    {[1, 2, 3].map(i => <Shimmer key={i} className="flex-1 h-10" />)}
+                </div>
+            </div>
+
+            {/* Grid skeleton */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex flex-col rounded-2xl overflow-hidden"
+                        style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}
+                    >
+                        <Shimmer className="w-full aspect-square !rounded-none" />
+                        <div className="p-3 flex flex-col gap-2">
+                            <Shimmer className="h-3.5 w-3/4" />
+                            <Shimmer className="h-3 w-1/2" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+export default function Profile() {
+    const dispatch = useDispatch<AppDispatch>()
+    const { user, loading } = useSelector((state: RootState) => state.auth)
+    const [tab, setTab] = useState<Tab>("recipes")
+    const [fetched, setFetched] = useState(false)
+
+    useEffect(() => {
+        dispatch(fetchMe()).finally(() => setFetched(true))
+    }, [])
+
+    if (!fetched || loading) return <ProfileSkeleton />
     if (!user) return null
 
     return (
@@ -52,8 +126,6 @@ export default function Profile() {
                         <img src={user.image.avatar} alt="avatar"
                             className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-xl"
                             style={{ border: "4px solid var(--background)" }} />
-                        <span className="absolute bottom-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-primary shadow-[0_0_8px_rgba(127,250,136,0.9)]"
-                            style={{ border: "2px solid var(--background)" }} />
                     </div>
 
                     {/* Name row */}
@@ -101,21 +173,18 @@ export default function Profile() {
             {/* ── Recipes ── */}
             {tab === "recipes" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
-
                 </div>
             )}
 
             {/* ── Private ── */}
             {tab === "private" && (
                 <div className="flex flex-col gap-3 mt-3">
-
                 </div>
             )}
 
             {/* ── Saved ── */}
             {tab === "saved" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
-
                 </div>
             )}
 

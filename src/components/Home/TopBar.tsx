@@ -81,9 +81,8 @@ export default function TopBar({ user }: { user: AuthUser }) {
 
                     {/* Dropdown menu */}
                     <div
-                        className="absolute right-0 top-full w-48 rounded-2xl shadow-xl z-50"
+                        className="absolute right-0 top-full w-48 rounded-2xl shadow-xl z-50 bg-surface"
                         style={{
-                            background: "var(--glass-bg)",
                             border: "1px solid var(--glass-border)",
                             backdropFilter: "blur(20px)",
                             transition: "opacity 250ms ease, transform 250ms ease",
