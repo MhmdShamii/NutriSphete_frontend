@@ -1,4 +1,4 @@
-import type { LoginPayload, RegisterPayload, MainInfoPayload, BasicInfoPayload, TargetsPayload } from "../../features/auth/types"
+import type { LoginPayload, RegisterPayload, MainInfoPayload, BasicInfoPayload, TargetsPayload, UpdateMePayload } from "../../features/auth/types"
 import apiClient from "../../services/apiClient"
 import axios from "axios"
 
@@ -51,6 +51,16 @@ export const uploadAvatarApi = async (file: File) => {
         headers: { "Content-Type": "multipart/form-data" }
     })
     return response.data
+}
+
+export const deleteAvatarApi = async () => {
+    const response = await apiClient.delete("/me/avatar")
+    return response.data
+}
+
+export const updateMeApi = async (data: UpdateMePayload) => {
+    const response = await apiClient.patch("/me", data)
+    return response.data.user
 }
 
 export const completeMainInfoApi = async (data: MainInfoPayload) => {

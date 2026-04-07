@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { getMe, googleAuth, loginUser, registerUser, completeMainInfoApi, completeBasicInfoApi, completeTargetsApi, completeHealthConditionsApi } from "../../services/auth/authApi"
-import type { AuthState, LoginPayload, RegisterPayload, MainInfoPayload, BasicInfoPayload, TargetsPayload } from "./types"
+import { getMe, googleAuth, loginUser, registerUser, updateMeApi, completeMainInfoApi, completeBasicInfoApi, completeTargetsApi, completeHealthConditionsApi } from "../../services/auth/authApi"
+import type { AuthState, LoginPayload, RegisterPayload, MainInfoPayload, BasicInfoPayload, TargetsPayload, UpdateMePayload } from "./types"
 import type { AxiosError } from "axios"
 
 const token = localStorage.getItem("token")
@@ -50,6 +50,17 @@ export const googleLogin = createAsyncThunk(
             return response.data
         } catch (error: unknown) {
             return rejectWithValue(extractError(error, "Google login failed"))
+        }
+    }
+)
+
+export const updateMe = createAsyncThunk(
+    "auth/updateMe",
+    async (data: UpdateMePayload, { rejectWithValue }) => {
+        try {
+            return await updateMeApi(data)
+        } catch (error: unknown) {
+            return rejectWithValue(extractError(error, "Failed to update profile"))
         }
     }
 )
@@ -187,6 +198,10 @@ const authSlice = createSlice({
             state.loading = false
             state.error = action.payload as string
         })
+
+        builder.addCase(updateMe.pending,  (state) => { state.loading = true;  state.error = null })
+        builder.addCase(updateMe.fulfilled, (state, action) => { state.loading = false; state.user = action.payload })
+        builder.addCase(updateMe.rejected, (state, action) => { state.loading = false; state.error = action.payload as string })
 
         // Onboarding steps — user refresh is handled by fetchMe in the component
         builder.addCase(completeMainInfo.pending,  (state) => { state.loading = true;  state.error = null })

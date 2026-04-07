@@ -1,10 +1,29 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import type { RootState, AppDispatch } from "../app/store"
-import { fetchMe } from "./auth/authSlice"
+import { fetchMe, updateMe } from "./auth/authSlice"
+import type { UpdateMePayload } from "./auth/types"
+import { uploadAvatarApi, deleteAvatarApi } from "../services/auth/authApi"
+import CountryDropdown, { type Country } from "../components/ui/CountryDropdown"
+import countriesData from "../assets/data/countries.json"
+import isoCountries from "i18n-iso-countries"
+import en from "i18n-iso-countries/langs/en.json"
+
+isoCountries.registerLocale(en)
+
+function alpha3to2(alpha3: string | null) {
+    if (!alpha3) return null
+    return isoCountries.alpha3ToAlpha2(alpha3)?.toLowerCase() ?? null
+}
 import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded"
 import LockRoundedIcon from "@mui/icons-material/LockRounded"
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded"
+import EditRoundedIcon from "@mui/icons-material/EditRounded"
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
+import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
+
+const countries = countriesData as Country[]
 
 type Tab = "recipes" | "private" | "saved"
 
@@ -76,13 +95,83 @@ function ProfileSkeleton() {
 
 export default function Profile() {
     const dispatch = useDispatch<AppDispatch>()
-    const { user, loading } = useSelector((state: RootState) => state.auth)
+    const { user, loading, error } = useSelector((state: RootState) => state.auth)
     const [tab, setTab] = useState<Tab>("recipes")
     const [fetched, setFetched] = useState(false)
+    const [editing, setEditing] = useState(false)
+    const [form, setForm] = useState({ first_name: "", last_name: "" })
+    const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
+    const snapshot = useRef({ first_name: "", last_name: "", country_code: "" })
+
+    const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
+    const [avatarLoading, setAvatarLoading] = useState(false)
+    const avatarInputRef = useRef<HTMLInputElement>(null)
+    const avatarMenuRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleOutside(e: MouseEvent) {
+            if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+                setAvatarMenuOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handleOutside)
+        return () => document.removeEventListener("mousedown", handleOutside)
+    }, [])
+
+    async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (!file) return
+        e.target.value = ""
+        setAvatarMenuOpen(false)
+        setAvatarLoading(true)
+        try {
+            await uploadAvatarApi(file)
+            await dispatch(fetchMe())
+        } catch { } finally {
+            setAvatarLoading(false)
+        }
+    }
+
+    async function handleAvatarDelete() {
+        setAvatarMenuOpen(false)
+        setAvatarLoading(true)
+        try {
+            await deleteAvatarApi()
+            await dispatch(fetchMe())
+        } catch { } finally {
+            setAvatarLoading(false)
+        }
+    }
 
     useEffect(() => {
         dispatch(fetchMe()).finally(() => setFetched(true))
     }, [])
+
+    useEffect(() => {
+        if (!user || !editing) return
+        const first_name = user.first_name ?? ""
+        const last_name = user.last_name ?? ""
+        const country_code = user.country.code ?? ""
+        setForm({ first_name, last_name })
+        setSelectedCountry(countries.find(c => c["alpha-3"] === country_code) ?? null)
+        snapshot.current = { first_name, last_name, country_code }
+    }, [editing])
+
+    async function handleSave(e: React.FormEvent) {
+        e.preventDefault()
+
+        const patch: UpdateMePayload = {}
+        if (form.first_name.trim() !== snapshot.current.first_name) patch.first_name = form.first_name.trim()
+        if (form.last_name.trim() !== snapshot.current.last_name) patch.last_name = form.last_name.trim()
+        const newCode = selectedCountry?.["alpha-3"] ?? ""
+        if (newCode !== snapshot.current.country_code) patch.country_code = newCode
+
+        if (Object.keys(patch).length === 0) { setEditing(false); return }
+        try {
+            await dispatch(updateMe(patch)).unwrap()
+            setEditing(false)
+        } catch { }
+    }
 
     if (!fetched || loading) return <ProfileSkeleton />
     if (!user) return null
@@ -91,7 +180,7 @@ export default function Profile() {
         <div className="w-full flex flex-col pb-6">
 
             {/* ── Header ── */}
-            <div className="w-full flex flex-col overflow-hidden"
+            <div className="w-full flex flex-col"
                 style={{ border: "1px solid var(--glass-border)", borderRadius: "24px 24px 0 0", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}
             >
                 {/* Banner */}
@@ -122,32 +211,147 @@ export default function Profile() {
 
                 {/* Avatar + info */}
                 <div className="px-6 sm:px-8 pb-5">
-                    <div className="relative w-fit -mt-12 sm:-mt-14 mb-4">
-                        <img src={user.image.avatar} alt="avatar"
-                            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-xl"
-                            style={{ border: "4px solid var(--background)" }} />
+                    {/* Avatar editor */}
+                    <div ref={avatarMenuRef} className="relative w-fit -mt-12 sm:-mt-14 mb-4">
+                        {/* Circle — clickable */}
+                        <button
+                            type="button"
+                            onClick={() => setAvatarMenuOpen(o => !o)}
+                            className="relative group block rounded-full focus:outline-none"
+                            style={{ border: "4px solid var(--background)", borderRadius: "9999px" }}
+                        >
+                            <img
+                                src={user.image.avatar}
+                                alt="avatar"
+                                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-xl block"
+                            />
+                            {/* Hover overlay */}
+                            <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100
+                                transition-opacity duration-200 flex items-center justify-center">
+                                {avatarLoading
+                                    ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    : <PhotoCameraRoundedIcon sx={{ fontSize: 22 }} className="text-white" />}
+                            </div>
+                        </button>
+
+                        {/* Dropdown menu */}
+                        {avatarMenuOpen && (
+                            <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl shadow-xl z-50 overflow-hidden"
+                                style={{ background: "var(--surface)", border: "1px solid var(--glass-border)" }}>
+                                <label className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted
+                                    hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer">
+                                    <PhotoCameraRoundedIcon sx={{ fontSize: 16 }} />
+                                    Upload photo
+                                    <input
+                                        ref={avatarInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleAvatarUpload}
+                                    />
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={handleAvatarDelete}
+                                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm
+                                        text-red-400 hover:bg-red-400/10 transition-colors"
+                                >
+                                    <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
+                                    Remove photo
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Name row */}
-                    <div className="flex items-end justify-between gap-4 flex-wrap">
-                        <div className="flex flex-col gap-0.5">
-                            <h2 className="text-xl font-bold text-text">{user.first_name} {user.last_name}</h2>
-                            <p className="text-sm text-text-muted">{user.email}</p>
-                        </div>
+                    {/* Name / edit row */}
+                    <form onSubmit={handleSave}>
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex flex-col gap-1 min-w-0">
 
-                        {/* Stats */}
-                        <div className="flex items-center gap-5 pb-0.5">
-                            <div className="flex flex-col items-center">
-                                <span className="text-base font-bold text-text">2.4k</span>
-                                <span className="text-xs text-text-muted">Followers</span>
+                                {editing ? (
+                                    /* ── Edit mode ── */
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <input
+                                            autoFocus
+                                            value={form.first_name}
+                                            onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))}
+                                            placeholder="First"
+                                            className="text-xl font-bold text-text bg-white/5 border border-white/10 rounded-lg
+                                            px-2.5 py-1 outline-none w-28 focus:border-primary/60
+                                            focus:bg-primary/5 focus:shadow-[0_0_12px_rgba(127,250,136,0.15)]
+                                            transition-all duration-200 placeholder:text-text-muted/30"
+                                        />
+                                        <input
+                                            value={form.last_name}
+                                            onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))}
+                                            placeholder="Last"
+                                            className="text-xl font-bold text-text bg-white/5 border border-white/10 rounded-lg
+                                            px-2.5 py-1 outline-none w-28 focus:border-primary/60
+                                            focus:bg-primary/5 focus:shadow-[0_0_12px_rgba(127,250,136,0.15)]
+                                            transition-all duration-200 placeholder:text-text-muted/30"
+                                        />
+                                        {/* Country dropdown inline */}
+                                        <div className="w-44">
+                                            <CountryDropdown
+                                                countries={countries}
+                                                selected={selectedCountry}
+                                                onSelect={setSelectedCountry}
+                                                show="name"
+                                            />
+                                        </div>
+                                        {/* Save / Cancel */}
+                                        <button type="submit" disabled={loading}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                                            bg-primary text-black hover:bg-primary/90 disabled:opacity-50 transition-all duration-200">
+                                            {loading
+                                                ? <span className="w-3 h-3 border-[1.5px] border-black border-t-transparent rounded-full animate-spin" />
+                                                : <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                                                    <path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>}
+                                            Save
+                                        </button>
+                                        <button type="button" onClick={() => setEditing(false)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                                            text-text-muted border border-white/10 hover:border-white/20 hover:text-text transition-all duration-200">
+                                            <CloseRoundedIcon sx={{ fontSize: 12 }} />
+                                            Cancel
+                                        </button>
+                                        {error && <p className="text-xs text-red-400">{error}</p>}
+                                    </div>
+                                ) : (
+                                    /* ── View mode ── */
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-xl font-bold text-text">{user.first_name} {user.last_name}</h2>
+                                        {alpha3to2(user.country.code) && (
+                                            <span className={`fi fi-${alpha3to2(user.country.code)} text-base flex-shrink-0`} />
+                                        )}
+                                        <button type="button" onClick={() => setEditing(true)}
+                                            className="p-1 rounded-lg text-text-muted/40 hover:text-primary hover:bg-primary/10 transition-all duration-200">
+                                            <EditRoundedIcon sx={{ fontSize: 14 }} />
+                                        </button>
+                                    </div>
+                                )}
+
+                                <p className="text-sm text-text-muted">{user.email}</p>
+                                {!editing && user.country.name && (
+                                    <p className="text-xs text-text-muted/50">{user.country.name}</p>
+                                )}
                             </div>
-                            <div className="w-px h-8 bg-border/30" />
-                            <div className="flex flex-col items-center">
-                                <span className="text-base font-bold text-text">318</span>
-                                <span className="text-xs text-text-muted">Following</span>
+
+                            {/* Stats — right side */}
+                            <div className="flex items-center gap-5 flex-shrink-0">
+                                <div className="flex flex-col items-center">
+                                    <span className="text-base font-bold text-text">2.4k</span>
+                                    <span className="text-xs text-text-muted">Followers</span>
+                                </div>
+                                <div className="w-px h-8 bg-border/30" />
+                                <div className="flex flex-col items-center">
+                                    <span className="text-base font-bold text-text">318</span>
+                                    <span className="text-xs text-text-muted">Following</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
 
                 {/* Tabs */}

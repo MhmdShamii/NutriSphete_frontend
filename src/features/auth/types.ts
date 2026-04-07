@@ -28,6 +28,12 @@ export type TargetsPayload = {
     daily_fat_g: number
 }
 
+export type UpdateMePayload = {
+    first_name?: string
+    last_name?: string
+    country_code?: string
+}
+
 export type HealthCondition = {
     id: number
     name: string
