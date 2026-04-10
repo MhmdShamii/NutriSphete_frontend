@@ -42,7 +42,7 @@ export default function BasicInfoStep() {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <StepHeader step={2} total={3} title="Your body & goals" subtitle="Help us calculate your ideal nutrition plan" />
+            <StepHeader step={2} total={4} title="Your body & goals" subtitle="Help us calculate your ideal nutrition plan" />
 
             <div className="flex flex-col gap-4">
 

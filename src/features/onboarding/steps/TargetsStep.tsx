@@ -13,11 +13,11 @@ import WaterDropRoundedIcon from "@mui/icons-material/WaterDropRounded"
 
 function buildSteps(hasBodyFat: boolean) {
     return [
-        { label: "Analyzing your body metrics",                                        duration: 900 },
+        { label: "Analyzing your body metrics", duration: 900 },
         { label: hasBodyFat ? "Running Katch-McArdle formula" : "Running Mifflin-St Jeor formula", duration: 800 },
-        { label: "Applying activity multiplier",                                       duration: 700 },
-        { label: "Optimizing macro distribution",                                      duration: 900 },
-        { label: "Personalizing your nutrition plan",                                  duration: 800 },
+        { label: "Applying activity multiplier", duration: 700 },
+        { label: "Optimizing macro distribution", duration: 900 },
+        { label: "Personalizing your nutrition plan", duration: 800 },
     ]
 }
 
@@ -175,7 +175,7 @@ export default function TargetsStep() {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <StepHeader step={3} total={3} title="Your targets" subtitle={
+            <StepHeader step={3} total={4} title="Your targets" subtitle={
                 user?.profile?.daily_calorie_target
                     ? "Calculated for you — tweak if you'd like"
                     : "Set your daily nutrition targets"

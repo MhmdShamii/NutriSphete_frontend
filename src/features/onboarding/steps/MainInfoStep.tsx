@@ -52,7 +52,7 @@ export default function MainInfoStep() {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <StepHeader step={1} total={3} title="Tell us about yourself" subtitle="We'll use this to personalise your experience" />
+            <StepHeader step={1} total={4} title="Tell us about yourself" subtitle="We'll use this to personalise your experience" />
 
             {/* Avatar picker */}
             <div className="flex flex-col items-center gap-2">
