@@ -15,6 +15,7 @@ import MainInfoStep from "./features/onboarding/steps/MainInfoStep"
 import BasicInfoStep from "./features/onboarding/steps/BasicInfoStep"
 import TargetsStep from "./features/onboarding/steps/TargetsStep"
 import HealthConditionsStep from "./features/onboarding/steps/HealthConditionsStep"
+import CreateMeal from "./features/mealCreation/screens/CreateMeal"
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -49,7 +50,7 @@ function App() {
           <Route path="/personal-trainer" element={<p className="text-2xl text-primary">Personal Trainer</p>} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<p className="text-2xl text-primary">Settings</p>} />
-          <Route path="/create-meal" element={<p className="text-2xl text-primary">Create Meal</p>} />
+          <Route path="/create-meal" element={<CreateMeal />} />
         </Route>
 
       </Routes>
