@@ -57,3 +57,22 @@ export interface CreateMealResponse {
     meal: MealDraft
     message: string
 }
+
+export interface QuickLogFormData {
+    name: string
+    description: string
+    ingredients: Ingredient[]
+}
+
+export interface QuickLogEntry {
+    id: number
+    type: "custom"
+    log_name: string
+    calories: string
+    protein: string
+    carbs: string
+    fats: string
+    fiber: string
+    logged_at: string
+    confirmed_at: string | null
+}

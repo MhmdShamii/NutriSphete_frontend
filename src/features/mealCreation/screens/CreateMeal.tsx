@@ -4,6 +4,7 @@ import type { MealFormData, MealDraft } from "../types/meal.types"
 import BasicInfoPanel from "../components/BasicInfoPanel"
 import IngredientsPanel from "../components/IngredientsPanel"
 import ReviewPanel from "../components/ReviewPanel"
+import QuickLog from "./QuickLog"
 
 function generateId() {
     return Math.random().toString(36).slice(2)
@@ -19,6 +20,7 @@ const initialForm: MealFormData = {
 }
 
 export default function CreateMeal() {
+    const [view, setView] = useState<"post" | "quick">("post")
     const [form, setForm] = useState<MealFormData>(initialForm)
     const [mobileStep, setMobileStep] = useState<0 | 1 | 2>(0)
     const [draft, setDraft] = useState<MealDraft | null>(null)
@@ -160,80 +162,110 @@ export default function CreateMeal() {
     ]
 
     return (
-        <>
-            {/* ── Desktop: 3 panels side by side ─────────────────────── */}
-            <div className="hidden sm:flex flex-col h-full">
-                <div className="flex flex-shrink-0 border-b border-border/20">
-                    {steps.map((s, i) => (
-                        <div key={s.n} className={`flex-1 flex items-center gap-3 px-5 py-3.5 ${i < 2 ? "border-r border-border/20" : ""}`}>
-                            <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center flex-shrink-0">
-                                <span className="text-xs font-bold text-primary">{s.n}</span>
+        <div className="flex flex-col h-full">
+
+            {/* ── Toggle — rendered once, always on top ───────────────── */}
+            <div className="flex flex-shrink-0 items-center justify-center border-b border-border/20 px-5 py-2.5">
+                <div className="flex bg-surface border border-border/30 rounded-xl p-0.5 overflow-hidden">
+                    <button
+                        type="button"
+                        onClick={() => setView("post")}
+                        className={`px-5 py-1.5 rounded-[10px] text-xs font-semibold cursor-pointer transition-all duration-200
+                            ${view === "post" ? "bg-primary text-black" : "text-text-muted hover:text-text"}`}
+                    >
+                        Meal Post
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setView("quick")}
+                        className={`px-5 py-1.5 rounded-[10px] text-xs font-semibold cursor-pointer transition-all duration-200
+                            ${view === "quick" ? "bg-primary text-black" : "text-text-muted hover:text-text"}`}
+                    >
+                        Quick Log
+                    </button>
+                </div>
+            </div>
+
+            {/* ── Quick Log ────────────────────────────────────────────── */}
+            {view === "quick" && <QuickLog />}
+
+            {/* ── Meal Post ────────────────────────────────────────────── */}
+            {view === "post" && (
+                <>
+                    {/* Desktop step header */}
+                    <div className="hidden sm:flex flex-shrink-0 border-b border-border/20">
+                        {steps.map((s, i) => (
+                            <div key={s.n} className={`flex-1 flex items-center gap-3 px-5 py-3.5 ${i < 2 ? "border-r border-border/20" : ""}`}>
+                                <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-xs font-bold text-primary">{s.n}</span>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-text text-sm leading-tight">{s.label}</p>
+                                    <p className="text-[11px] text-text-muted">{s.sub}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="font-semibold text-text text-sm leading-tight">{s.label}</p>
-                                <p className="text-[11px] text-text-muted">{s.sub}</p>
-                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop panels */}
+                    <div className="hidden sm:flex flex-1 min-h-0">
+                        <div className={`${panelBase} ${panelDivider}`}>
+                            <BasicInfoPanel form={form} onChange={setField} />
                         </div>
-                    ))}
-                </div>
+                        <div className={`${panelBase} ${panelDivider}`}>
+                            <IngredientsPanel form={form} onChange={setField} loading={loading} error={submitError} />
+                        </div>
+                        <div className={panelBase}>
+                            <ReviewPanel
+                                key={reviewKey}
+                                draft={draft}
+                                onSubmit={handleSubmit}
+                                onConfirm={handleConfirm}
+                                onConfirmAndLog={handleConfirmAndLog}
+                                onDiscard={handleDiscard}
+                                onRecalculate={handleRecalculate}
+                                loading={loading}
+                                error={submitError}
+                                submitReady={submitReady}
+                            />
+                        </div>
+                    </div>
 
-                <div className="flex flex-1 min-h-0">
-                    <div className={`${panelBase} ${panelDivider}`}>
-                        <BasicInfoPanel form={form} onChange={setField} />
+                    {/* Mobile steps */}
+                    <div className="flex sm:hidden flex-col flex-1 min-h-0 px-4 py-4">
+                        {mobileStep === 0 && (
+                            <BasicInfoPanel form={form} onChange={setField} onNext={() => setMobileStep(1)} isMobile />
+                        )}
+                        {mobileStep === 1 && (
+                            <IngredientsPanel
+                                form={form}
+                                onChange={setField}
+                                onNext={() => { setMobileStep(2); handleSubmit() }}
+                                onBack={() => setMobileStep(0)}
+                                isMobile
+                                loading={loading}
+                                error={submitError}
+                            />
+                        )}
+                        {mobileStep === 2 && (
+                            <ReviewPanel
+                                key={reviewKey}
+                                draft={draft}
+                                onSubmit={handleSubmit}
+                                onConfirm={handleConfirm}
+                                onConfirmAndLog={handleConfirmAndLog}
+                                onDiscard={handleDiscard}
+                                onEditMobile={handleEditMobile}
+                                onBack={() => setMobileStep(1)}
+                                isMobile
+                                loading={loading}
+                                error={submitError}
+                                submitReady={submitReady}
+                            />
+                        )}
                     </div>
-                    <div className={`${panelBase} ${panelDivider}`}>
-                        <IngredientsPanel form={form} onChange={setField} loading={loading} error={submitError} />
-                    </div>
-                    <div className={panelBase}>
-                        <ReviewPanel
-                            key={reviewKey}
-                            draft={draft}
-                            onSubmit={handleSubmit}
-                            onConfirm={handleConfirm}
-                            onConfirmAndLog={handleConfirmAndLog}
-                            onDiscard={handleDiscard}
-                            onRecalculate={handleRecalculate}
-                            loading={loading}
-                            error={submitError}
-                            submitReady={submitReady}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Mobile: step by step ─────────────────────────────── */}
-            <div className="flex sm:hidden flex-col h-full px-4 py-4">
-                {mobileStep === 0 && (
-                    <BasicInfoPanel form={form} onChange={setField} onNext={() => setMobileStep(1)} isMobile />
-                )}
-                {mobileStep === 1 && (
-                    <IngredientsPanel
-                        form={form}
-                        onChange={setField}
-                        onNext={() => { setMobileStep(2); handleSubmit() }}
-                        onBack={() => setMobileStep(0)}
-                        isMobile
-                        loading={loading}
-                        error={submitError}
-                    />
-                )}
-                {mobileStep === 2 && (
-                    <ReviewPanel
-                        key={reviewKey}
-                        draft={draft}
-                        onSubmit={handleSubmit}
-                        onConfirm={handleConfirm}
-                        onConfirmAndLog={handleConfirmAndLog}
-                        onDiscard={handleDiscard}
-                        onEditMobile={handleEditMobile}
-                        onBack={() => setMobileStep(1)}
-                        isMobile
-                        loading={loading}
-                        error={submitError}
-                        submitReady={submitReady}
-                    />
-                )}
-            </div>
-        </>
+                </>
+            )}
+        </div>
     )
 }
