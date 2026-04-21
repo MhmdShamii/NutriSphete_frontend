@@ -194,6 +194,10 @@ export default function IngredientsPanel({ form, onChange, onNext, onBack, isMob
         onChange("ingredients", form.ingredients.filter((_, i) => i !== index))
     }
 
+    function clearIngredients() {
+        onChange("ingredients", [{ localId: generateId(), name: "", portion: "", unit: "g" }])
+    }
+
     function updateStep(index: number, value: string) {
         const updated = [...form.preparation_steps]
         updated[index] = { ...updated[index], description: value }
@@ -207,6 +211,10 @@ export default function IngredientsPanel({ form, onChange, onNext, onBack, isMob
 
     function removeStep(index: number) {
         onChange("preparation_steps", form.preparation_steps.filter((_, i) => i !== index))
+    }
+
+    function clearSteps() {
+        onChange("preparation_steps", [])
     }
 
     const ingredientsValid =
@@ -233,9 +241,20 @@ export default function IngredientsPanel({ form, onChange, onNext, onBack, isMob
                     <label className="text-sm font-medium text-text-muted">
                         Ingredients <span className="text-red-400">*</span>
                     </label>
-                    <span className={`text-[11px] ${form.ingredients.length >= 18 ? "text-red-400" : "text-text-muted/50"}`}>
-                        {form.ingredients.length}/20
-                    </span>
+                    <div className="flex items-center gap-2">
+                        {form.ingredients.length > 1 && (
+                            <button
+                                type="button"
+                                onClick={clearIngredients}
+                                className="text-[11px] text-red-400/60 hover:text-red-400 transition-colors duration-200"
+                            >
+                                Clear all
+                            </button>
+                        )}
+                        <span className={`text-[11px] ${form.ingredients.length >= 18 ? "text-red-400" : "text-text-muted/50"}`}>
+                            {form.ingredients.length}/20
+                        </span>
+                    </div>
                 </div>
 
                 {/* Column labels */}
@@ -282,9 +301,18 @@ export default function IngredientsPanel({ form, onChange, onNext, onBack, isMob
                         <span className="text-[11px] font-normal text-text-muted/50 ml-2">optional</span>
                     </label>
                     {form.preparation_steps.length > 0 && (
-                        <span className={`text-[11px] ${form.preparation_steps.length >= 18 ? "text-red-400" : "text-text-muted/50"}`}>
-                            {form.preparation_steps.length}/20
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={clearSteps}
+                                className="text-[11px] text-red-400/60 hover:text-red-400 transition-colors duration-200"
+                            >
+                                Clear all
+                            </button>
+                            <span className={`text-[11px] ${form.preparation_steps.length >= 18 ? "text-red-400" : "text-text-muted/50"}`}>
+                                {form.preparation_steps.length}/20
+                            </span>
+                        </div>
                     )}
                 </div>
 
