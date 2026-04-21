@@ -14,6 +14,7 @@ interface Props {
     draft: MealDraft | null
     onSubmit: () => void
     onConfirm: (image: File) => void
+    onConfirmAndLog: (image: File) => void
     onDiscard: () => void
     onRecalculate?: () => void
     onEditMobile?: () => void
@@ -94,7 +95,7 @@ function GlowCard({ children, className = "", speed = 2.8, delay = 0, rounded = 
 }
 
 export default function ReviewPanel({
-    draft, onSubmit, onConfirm, onDiscard, onRecalculate, onEditMobile,
+    draft, onSubmit, onConfirm, onConfirmAndLog, onDiscard, onRecalculate, onEditMobile,
     onBack, isMobile, loading, error, submitReady,
 }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -171,12 +172,15 @@ export default function ReviewPanel({
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-2.5 mt-auto">
-                            <button type="button" disabled className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl border border-red-400/30 text-red-400 text-sm font-medium opacity-40 pointer-events-none">
-                                <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} /> Discard
+                        <div className="flex flex-col gap-2 mt-auto">
+                            <button type="button" disabled className="w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-semibold bg-primary/30 text-black/50 pointer-events-none">
+                                <CheckRoundedIcon sx={{ fontSize: 16 }} /> Confirm &amp; Log
                             </button>
-                            <button type="button" disabled className="flex-[2] flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-semibold bg-primary/30 text-black/50 pointer-events-none">
-                                <CheckRoundedIcon sx={{ fontSize: 16 }} /> Confirm Meal
+                            <button type="button" disabled className="w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-medium border border-border/20 text-text-muted/40 pointer-events-none">
+                                <CheckRoundedIcon sx={{ fontSize: 15 }} /> Confirm only
+                            </button>
+                            <button type="button" disabled className="flex items-center justify-center gap-1 w-full py-1.5 text-xs text-red-400/40 pointer-events-none opacity-40">
+                                <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} /> Discard meal
                             </button>
                         </div>
                     </div>
@@ -296,23 +300,13 @@ export default function ReviewPanel({
                         />
                     </div>
 
-                    {/* Confirm / Discard */}
-                    <div className={`flex gap-2.5 ${isMobile ? "mt-auto pt-1" : "mt-1"}`}>
+                    {/* Actions */}
+                    <div className={`flex flex-col gap-2 ${isMobile ? "mt-auto pt-1" : "mt-1"}`}>
                         <button
                             type="button"
-                            onClick={onDiscard}
-                            disabled={loading}
-                            className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl border border-red-400/30 text-red-400
-                                text-sm font-medium hover:bg-red-400/8 transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
-                        >
-                            <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
-                            Discard
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => image && onConfirm(image)}
+                            onClick={() => image && onConfirmAndLog(image)}
                             disabled={!image || loading}
-                            className={`flex-[2] flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-semibold transition-all duration-300
+                            className={`w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-semibold transition-all duration-300
                                 ${image && !loading
                                     ? "bg-primary text-black hover:bg-primary-hover hover:shadow-[0_0_18px_rgba(127,250,136,0.45)] active:scale-[0.98]"
                                     : "bg-primary/30 text-black/50 pointer-events-none"
@@ -320,8 +314,30 @@ export default function ReviewPanel({
                         >
                             {loading
                                 ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                                : <><CheckRoundedIcon sx={{ fontSize: 16 }} /> Confirm Meal</>
+                                : <><CheckRoundedIcon sx={{ fontSize: 16 }} /> Confirm &amp; Log</>
                             }
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => image && onConfirm(image)}
+                            disabled={!image || loading}
+                            className={`w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-medium border transition-all duration-200
+                                ${image && !loading
+                                    ? "border-border/40 text-text-muted hover:border-primary/40 hover:text-primary"
+                                    : "border-border/20 text-text-muted/40 pointer-events-none"
+                                }`}
+                        >
+                            <CheckRoundedIcon sx={{ fontSize: 15 }} /> Confirm only
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onDiscard}
+                            disabled={loading}
+                            className="flex items-center justify-center gap-1 w-full py-1.5 text-xs text-red-400/60
+                                hover:text-red-400 transition-colors duration-200 disabled:opacity-30 disabled:pointer-events-none"
+                        >
+                            <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} />
+                            Discard meal
                         </button>
                     </div>
                 </div>

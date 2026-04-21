@@ -32,3 +32,7 @@ export const discardMeal = async (mealId: number): Promise<void> => {
     await apiClient.post(`/meals/${mealId}/discard`)
 }
 
+export const logMeal = async (mealId: number): Promise<void> => {
+    await apiClient.post(`/users/me/log/${mealId}`)
+}
+

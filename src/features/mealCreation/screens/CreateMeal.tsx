@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { createMeal, confirmMeal, discardMeal } from "../../../services/meals/mealsApis"
+import { createMeal, confirmMeal, discardMeal, logMeal } from "../../../services/meals/mealsApis"
 import type { MealFormData, MealDraft } from "../types/meal.types"
 import BasicInfoPanel from "../components/BasicInfoPanel"
 import IngredientsPanel from "../components/IngredientsPanel"
@@ -76,6 +76,23 @@ export default function CreateMeal() {
             setMobileStep(0)
         } catch {
             setSubmitError("Failed to confirm meal.")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    async function handleConfirmAndLog(image: File) {
+        if (!draft) return
+        setLoading(true)
+        setSubmitError(null)
+        try {
+            await confirmMeal(draft.id, image)
+            await logMeal(draft.id)
+            setForm(initialForm)
+            resetDraft()
+            setMobileStep(0)
+        } catch {
+            setSubmitError("Failed to confirm and log meal.")
         } finally {
             setLoading(false)
         }
@@ -173,6 +190,7 @@ export default function CreateMeal() {
                             draft={draft}
                             onSubmit={handleSubmit}
                             onConfirm={handleConfirm}
+                            onConfirmAndLog={handleConfirmAndLog}
                             onDiscard={handleDiscard}
                             onRecalculate={handleRecalculate}
                             loading={loading}
@@ -205,6 +223,7 @@ export default function CreateMeal() {
                         draft={draft}
                         onSubmit={handleSubmit}
                         onConfirm={handleConfirm}
+                        onConfirmAndLog={handleConfirmAndLog}
                         onDiscard={handleDiscard}
                         onEditMobile={handleEditMobile}
                         onBack={() => setMobileStep(1)}
