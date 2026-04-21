@@ -5,6 +5,7 @@ import BasicInfoPanel from "../components/BasicInfoPanel"
 import IngredientsPanel from "../components/IngredientsPanel"
 import ReviewPanel from "../components/ReviewPanel"
 import QuickLog from "./QuickLog"
+import EstimateMeal from "./EstimateMeal"
 
 function generateId() {
     return Math.random().toString(36).slice(2)
@@ -20,7 +21,7 @@ const initialForm: MealFormData = {
 }
 
 export default function CreateMeal() {
-    const [view, setView] = useState<"post" | "quick">("post")
+    const [view, setView] = useState<"post" | "quick" | "estimate">("post")
     const [form, setForm] = useState<MealFormData>(initialForm)
     const [mobileStep, setMobileStep] = useState<0 | 1 | 2>(0)
     const [draft, setDraft] = useState<MealDraft | null>(null)
@@ -161,33 +162,41 @@ export default function CreateMeal() {
         { n: 3, label: "Photo & Review",       sub: draft ? "AI macros — confirm or discard" : "Add photo & create meal" },
     ]
 
+    function switchView(v: "post" | "quick" | "estimate") {
+        if (v === view) return
+        setForm(initialForm)
+        setDraft(null)
+        setReviewKey(k => k + 1)
+        setMobileStep(0)
+        setSubmitError(null)
+        setView(v)
+    }
+
     return (
         <div className="flex flex-col h-full">
 
             {/* ── Toggle — rendered once, always on top ───────────────── */}
-            <div className="flex flex-shrink-0 items-center justify-center border-b border-border/20 px-5 py-2.5">
-                <div className="flex bg-surface border border-border/30 rounded-xl p-0.5 overflow-hidden">
-                    <button
-                        type="button"
-                        onClick={() => setView("post")}
-                        className={`px-5 py-1.5 rounded-[10px] text-xs font-semibold cursor-pointer transition-all duration-200
-                            ${view === "post" ? "bg-primary text-black" : "text-text-muted hover:text-text"}`}
-                    >
-                        Meal Post
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setView("quick")}
-                        className={`px-5 py-1.5 rounded-[10px] text-xs font-semibold cursor-pointer transition-all duration-200
-                            ${view === "quick" ? "bg-primary text-black" : "text-text-muted hover:text-text"}`}
-                    >
-                        Quick Log
-                    </button>
+            <div className="flex flex-shrink-0 items-center justify-center border-b border-border/20 px-3 sm:px-5 py-2">
+                <div className="flex sm:inline-flex w-full sm:w-auto bg-surface border border-border/30 rounded-xl p-0.5 overflow-hidden">
+                    {(["post", "quick", "estimate"] as const).map(v => (
+                        <button
+                            key={v}
+                            type="button"
+                            onClick={() => switchView(v)}
+                            className={`flex-1 sm:flex-none px-4 py-1.5 rounded-[10px] text-xs font-semibold cursor-pointer transition-all duration-200 text-center
+                                ${view === v ? "bg-primary text-black" : "text-text-muted hover:text-text"}`}
+                        >
+                            {v === "post" ? "Meal Post" : v === "quick" ? "Quick Log" : "Estimate"}
+                        </button>
+                    ))}
                 </div>
             </div>
 
             {/* ── Quick Log ────────────────────────────────────────────── */}
             {view === "quick" && <QuickLog />}
+
+            {/* ── Estimate ─────────────────────────────────────────────── */}
+            {view === "estimate" && <EstimateMeal />}
 
             {/* ── Meal Post ────────────────────────────────────────────── */}
             {view === "post" && (

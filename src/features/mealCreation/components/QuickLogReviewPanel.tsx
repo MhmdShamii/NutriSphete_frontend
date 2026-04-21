@@ -66,14 +66,15 @@ interface Props {
     loading?: boolean
     error?: string | null
     submitReady: boolean
+    submitLabel?: string
 }
 
-export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate, onConfirm, onDiscard, onBack, isMobile, loading, error, submitReady }: Props) {
+export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate, onConfirm, onDiscard, onBack, isMobile, loading, error, submitReady, submitLabel = "Calculate Macros" }: Props) {
 
     /* ── Skeleton while AI calculates ─────────────────────────── */
     if (loading && !entry) {
         return (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 h-full">
                 <style>{BEAM_KEYFRAMES}</style>
                 <GlowCard speed={3.2}>
                     <div className="p-4 flex items-center gap-3">
@@ -96,6 +97,21 @@ export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate,
                             </div>
                         </GlowCard>
                     ))}
+                </div>
+
+                <div className={`flex flex-col gap-2 ${isMobile ? "mt-auto pt-1" : "mt-auto"}`}>
+                    <button disabled className="flex items-center justify-center gap-1.5 w-full p-2.5 rounded-xl border border-border/20
+                        text-sm text-text-muted opacity-30 pointer-events-none">
+                        <EditRoundedIcon sx={{ fontSize: 15 }} /> Recalculate
+                    </button>
+                    <button disabled className="w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-semibold
+                        bg-primary/30 text-black/50 pointer-events-none">
+                        <CheckRoundedIcon sx={{ fontSize: 16 }} /> Confirm &amp; Add to Log
+                    </button>
+                    <button disabled className="flex items-center justify-center gap-1 w-full py-1.5 text-xs
+                        text-red-400/30 pointer-events-none">
+                        <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} /> Discard
+                    </button>
                 </div>
             </div>
         )
@@ -137,21 +153,20 @@ export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate,
                     ))}
                 </div>
 
-                <button
-                    type="button"
-                    onClick={onRecalculate}
-                    disabled={loading}
-                    className="flex items-center justify-center gap-1.5 w-full p-2.5 rounded-xl border border-border/20
-                        text-sm text-text-muted hover:text-primary hover:border-primary/30
-                        transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
-                >
-                    <EditRoundedIcon sx={{ fontSize: 15 }} />
-                    Recalculate
-                </button>
-
                 {error && <p className="text-xs text-red-400 text-center">{error}</p>}
 
                 <div className={`flex flex-col gap-2 ${isMobile ? "mt-auto pt-1" : "mt-auto"}`}>
+                    <button
+                        type="button"
+                        onClick={onRecalculate}
+                        disabled={loading}
+                        className="flex items-center justify-center gap-1.5 w-full p-2.5 rounded-xl border border-border/20
+                            text-sm text-text-muted hover:text-primary hover:border-primary/30
+                            transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
+                    >
+                        <EditRoundedIcon sx={{ fontSize: 15 }} />
+                        Recalculate
+                    </button>
                     <button
                         type="button"
                         onClick={onConfirm}
@@ -208,7 +223,7 @@ export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate,
                 >
                     {loading
                         ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                        : "Calculate Macros"
+                        : submitLabel
                     }
                 </button>
             )}

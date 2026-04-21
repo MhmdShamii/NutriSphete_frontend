@@ -26,3 +26,11 @@ export const confirmQuickLog = async (id: number): Promise<void> => {
 export const deleteQuickLog = async (id: number): Promise<void> => {
     await apiClient.delete(`/users/me/log/${id}`)
 }
+
+export const estimateMeal = async (name: string, description?: string): Promise<CreateQuickLogResponse> => {
+    const response = await apiClient.post("/users/me/log/estimate", {
+        name,
+        description: description || undefined,
+    })
+    return response.data
+}

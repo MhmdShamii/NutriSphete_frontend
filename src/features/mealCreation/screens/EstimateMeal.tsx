@@ -1,19 +1,8 @@
 import { useState } from "react"
-import type { QuickLogFormData, QuickLogEntry } from "../types/meal.types"
-import { createQuickLog, confirmQuickLog, deleteQuickLog } from "../../../services/log/quickLogApi"
-import QuickLogBasicPanel from "../components/QuickLogBasicPanel"
-import QuickLogInputPanel from "../components/QuickLogInputPanel"
+import type { QuickLogEntry } from "../types/meal.types"
+import { estimateMeal, confirmQuickLog, deleteQuickLog } from "../../../services/log/quickLogApi"
+import EstimateInputPanel from "../components/EstimateInputPanel"
 import QuickLogReviewPanel from "../components/QuickLogReviewPanel"
-
-function generateId() {
-    return Math.random().toString(36).slice(2)
-}
-
-const initialForm: QuickLogFormData = {
-    name: "",
-    description: "",
-    ingredients: [{ localId: generateId(), name: "", portion: "", unit: "g" }],
-}
 
 function extractError(err: unknown) {
     return (err as { response?: { data?: { message?: string } } })?.response?.data?.message
@@ -21,37 +10,30 @@ function extractError(err: unknown) {
 }
 
 const steps = [
-    { n: 1, label: "Meal Details",  sub: "Name & description" },
-    { n: 2, label: "Ingredients",   sub: "What goes into your meal" },
-    { n: 3, label: "Review",        sub: "AI macros — confirm or discard" },
+    { n: 1, label: "Describe Your Meal", sub: "Name & details for AI estimation" },
+    { n: 2, label: "Estimated Macros",   sub: "Review AI estimate — confirm or discard" },
 ]
 
-export default function QuickLog() {
-    const [form, setForm] = useState<QuickLogFormData>(initialForm)
+export default function EstimateMeal() {
+    const [name, setName] = useState("")
+    const [description, setDescription] = useState("")
+    const [resetKey, setResetKey] = useState(0)
     const [entry, setEntry] = useState<QuickLogEntry | null>(null)
-    const [mobileStep, setMobileStep] = useState<0 | 1 | 2>(0)
+    const [mobileStep, setMobileStep] = useState<0 | 1>(0)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    function setField<K extends keyof QuickLogFormData>(field: K, value: QuickLogFormData[K]) {
-        setForm(prev => ({ ...prev, [field]: value }))
-    }
+    const isReady = name.trim().length > 0 && name.length <= 255
 
-    const basicValid = form.name.trim().length > 0 && form.name.length <= 255
-    const ingredientsValid =
-        form.ingredients.length >= 1 &&
-        form.ingredients.every(i => i.name.trim() && Number(i.portion) >= 0.1 && i.unit.trim())
-    const submitReady = basicValid && ingredientsValid
-
-    async function handleCalculate() {
-        if (!submitReady) return
+    async function handleEstimate() {
+        if (!isReady) return
         setLoading(true)
         setError(null)
         setEntry(null)
+        setMobileStep(1)
         try {
-            const res = await createQuickLog(form)
+            const res = await estimateMeal(name, description)
             setEntry(res.logged_meal)
-            setMobileStep(2)
         } catch (err) {
             setEntry(null)
             setError(extractError(err))
@@ -60,15 +42,21 @@ export default function QuickLog() {
         }
     }
 
+    function reset() {
+        setName("")
+        setDescription("")
+        setEntry(null)
+        setMobileStep(0)
+        setResetKey(k => k + 1)
+    }
+
     async function handleConfirm() {
         if (!entry) return
         setLoading(true)
         setError(null)
         try {
             await confirmQuickLog(entry.id)
-            setForm(initialForm)
-            setEntry(null)
-            setMobileStep(0)
+            reset()
         } catch (err) {
             setError(extractError(err))
         } finally {
@@ -82,9 +70,7 @@ export default function QuickLog() {
         setError(null)
         try {
             await deleteQuickLog(entry.id)
-            setForm(initialForm)
-            setEntry(null)
-            setMobileStep(0)
+            reset()
         } catch (err) {
             setError(extractError(err))
         } finally {
@@ -97,12 +83,11 @@ export default function QuickLog() {
 
     return (
         <>
-            {/* ── Desktop ──────────────────────────────────────────────── */}
+            {/* ── Desktop: 2 panels ────────────────────────────────────── */}
             <div className="hidden sm:flex flex-col flex-1 min-h-0">
-                {/* Step header */}
                 <div className="flex flex-shrink-0 border-b border-border/20">
                     {steps.map((s, i) => (
-                        <div key={s.n} className={`flex-1 flex items-center gap-3 px-5 py-3.5 ${i < 2 ? "border-r border-border/20" : ""}`}>
+                        <div key={s.n} className={`flex-1 flex items-center gap-3 px-5 py-3.5 ${i < 1 ? "border-r border-border/20" : ""}`}>
                             <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center flex-shrink-0">
                                 <span className="text-xs font-bold text-primary">{s.n}</span>
                             </div>
@@ -114,61 +99,61 @@ export default function QuickLog() {
                     ))}
                 </div>
 
-                {/* Panels */}
                 <div className="flex flex-1 min-h-0">
                     <div className={`${panelBase} ${panelDivider}`}>
-                        <QuickLogBasicPanel form={form} onChange={setField} />
-                    </div>
-                    <div className={`${panelBase} ${panelDivider}`}>
-                        <QuickLogInputPanel form={form} onChange={setField} loading={loading} />
+                        <EstimateInputPanel
+                            key={resetKey}
+                            name={name}
+                            onNameChange={setName}
+                            onDescriptionChange={setDescription}
+                            onEstimate={handleEstimate}
+                            loading={loading}
+                            isReady={isReady}
+                        />
                     </div>
                     <div className={panelBase}>
                         <QuickLogReviewPanel
                             entry={entry}
-                            onCalculate={handleCalculate}
-                            onRecalculate={handleCalculate}
+                            onCalculate={handleEstimate}
+                            onRecalculate={handleEstimate}
                             onConfirm={handleConfirm}
                             onDiscard={handleDiscard}
                             loading={loading}
                             error={error}
-                            submitReady={submitReady}
+                            submitReady={isReady}
+                            submitLabel="Estimate Macros"
                         />
                     </div>
                 </div>
             </div>
 
-            {/* ── Mobile: 3 steps ──────────────────────────────────────── */}
+            {/* ── Mobile: 2 steps ──────────────────────────────────────── */}
             <div className="flex sm:hidden flex-col flex-1 min-h-0 px-4 py-4">
                 {mobileStep === 0 && (
-                    <QuickLogBasicPanel
-                        form={form}
-                        onChange={setField}
-                        onNext={() => setMobileStep(1)}
+                    <EstimateInputPanel
+                        key={resetKey}
+                        name={name}
+                        onNameChange={setName}
+                        onDescriptionChange={setDescription}
+                        onEstimate={handleEstimate}
+                        onNext={handleEstimate}
                         isMobile
+                        loading={loading}
+                        isReady={isReady}
                     />
                 )}
                 {mobileStep === 1 && (
-                    <QuickLogInputPanel
-                        form={form}
-                        onChange={setField}
-                        onNext={() => { setMobileStep(2); handleCalculate() }}
+                    <QuickLogReviewPanel
+                        entry={entry}
+                        onCalculate={handleEstimate}
+                        onRecalculate={handleEstimate}
+                        onConfirm={handleConfirm}
+                        onDiscard={handleDiscard}
                         onBack={() => setMobileStep(0)}
                         isMobile
                         loading={loading}
-                    />
-                )}
-                {mobileStep === 2 && (
-                    <QuickLogReviewPanel
-                        entry={entry}
-                        onCalculate={handleCalculate}
-                        onRecalculate={handleCalculate}
-                        onConfirm={handleConfirm}
-                        onDiscard={handleDiscard}
-                        onBack={() => setMobileStep(1)}
-                        isMobile
-                        loading={loading}
                         error={error}
-                        submitReady={submitReady}
+                        submitReady={isReady}
                     />
                 )}
             </div>

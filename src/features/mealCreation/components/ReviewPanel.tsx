@@ -163,7 +163,7 @@ export default function ReviewPanel({
                         </button>
                         <div className="flex flex-col gap-1.5">
                             <p className="text-sm text-text-muted">Meal photo <span className="text-red-400">*</span></p>
-                            <div className="relative rounded-2xl overflow-hidden border-2 border-dashed border-border/30 opacity-50" style={{ aspectRatio: "16/9" }}>
+                            <div className="relative rounded-2xl overflow-hidden border-2 border-dashed border-border/30 opacity-50" style={isMobile ? { minHeight: "80px" } : { aspectRatio: "16/9" }}>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5">
                                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                                         <AddPhotoAlternateRoundedIcon sx={{ fontSize: 24 }} style={{ color: "var(--primary)" }} />
@@ -176,12 +176,14 @@ export default function ReviewPanel({
                             <button type="button" disabled className="w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-semibold bg-primary/30 text-black/50 pointer-events-none">
                                 <CheckRoundedIcon sx={{ fontSize: 16 }} /> Confirm &amp; Log
                             </button>
-                            <button type="button" disabled className="w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-medium border border-border/20 text-text-muted/40 pointer-events-none">
-                                <CheckRoundedIcon sx={{ fontSize: 15 }} /> Confirm only
-                            </button>
-                            <button type="button" disabled className="flex items-center justify-center gap-1 w-full py-1.5 text-xs text-red-400/40 pointer-events-none opacity-40">
-                                <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} /> Discard meal
-                            </button>
+                            <div className="flex gap-2">
+                                <button type="button" disabled className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-medium border border-border/20 text-text-muted/40 pointer-events-none">
+                                    <CheckRoundedIcon sx={{ fontSize: 15 }} /> Confirm only
+                                </button>
+                                <button type="button" disabled className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-red-400/30 rounded-xl border border-red-400/10 pointer-events-none">
+                                    <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} /> Discard meal
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -252,19 +254,20 @@ export default function ReviewPanel({
                     </button>
 
                     {/* Image upload */}
-                    <div className="flex flex-col gap-1.5">
+                    <div className={`flex flex-col gap-1.5 ${isMobile ? "flex-1 min-h-0" : ""}`}>
                         <p className="text-sm text-text-muted">
                             Meal photo <span className="text-red-400">*</span>
                         </p>
                         <div
                             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 border-dashed
+                                ${isMobile ? "h-full" : ""}
                                 ${dragging
                                     ? "border-primary/70 bg-primary/5 shadow-[0_0_20px_rgba(127,250,136,0.2)]"
                                     : imagePreview
                                         ? "border-transparent"
                                         : "border-border/30 hover:border-primary/40"
                                 }`}
-                            style={{ aspectRatio: "16/9" }}
+                            style={isMobile ? undefined : { aspectRatio: "16/9" }}
                             onClick={() => fileInputRef.current?.click()}
                             onDragOver={e => { e.preventDefault(); setDragging(true) }}
                             onDragLeave={() => setDragging(false)}
@@ -280,12 +283,12 @@ export default function ReviewPanel({
                                 </>
                             ) : (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5">
-                                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <AddPhotoAlternateRoundedIcon sx={{ fontSize: 24 }} style={{ color: "var(--primary)" }} />
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <AddPhotoAlternateRoundedIcon sx={{ fontSize: 20 }} style={{ color: "var(--primary)" }} />
                                     </div>
                                     <div className="text-center">
                                         <p className="text-sm font-medium text-text">Upload meal photo</p>
-                                        <p className="text-[11px] text-text-muted mt-0.5">JPG, PNG or WebP · max 5 MB</p>
+                                        {!isMobile && <p className="text-[11px] text-text-muted mt-0.5">JPG, PNG or WebP · max 5 MB</p>}
                                     </div>
                                     {dragging && <p className="text-xs text-primary font-medium">Drop it here</p>}
                                 </div>
@@ -317,11 +320,12 @@ export default function ReviewPanel({
                                 : <><CheckRoundedIcon sx={{ fontSize: 16 }} /> Confirm &amp; Log</>
                             }
                         </button>
+                        <div className="flex gap-2">
                         <button
                             type="button"
                             onClick={() => image && onConfirm(image)}
                             disabled={!image || loading}
-                            className={`w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-medium border transition-all duration-200
+                            className={`flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-medium border transition-all duration-200
                                 ${image && !loading
                                     ? "border-border/40 text-text-muted hover:border-primary/40 hover:text-primary"
                                     : "border-border/20 text-text-muted/40 pointer-events-none"
@@ -333,12 +337,13 @@ export default function ReviewPanel({
                             type="button"
                             onClick={onDiscard}
                             disabled={loading}
-                            className="flex items-center justify-center gap-1 w-full py-1.5 text-xs text-red-400/60
-                                hover:text-red-400 transition-colors duration-200 disabled:opacity-30 disabled:pointer-events-none"
+                            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-red-400/60 rounded-xl border border-red-400/20
+                                hover:text-red-400 hover:border-red-400/40 transition-colors duration-200 disabled:opacity-30 disabled:pointer-events-none"
                         >
                             <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} />
                             Discard meal
                         </button>
+                        </div>
                     </div>
                 </div>
             ) : (
