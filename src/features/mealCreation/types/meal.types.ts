@@ -55,6 +55,7 @@ export interface MealDraft {
 
 export interface CreateMealResponse {
     meal: MealDraft
+    health_warning: HealthWarning
     message: string
 }
 

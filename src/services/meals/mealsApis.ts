@@ -22,7 +22,11 @@ export const createMeal = async (data: MealFormData): Promise<CreateMealResponse
             .filter(s => s.description.trim())
             .map(s => ({ description: s.description })),
     })
-    return response.data
+    return {
+        meal: response.data.data.meal,
+        health_warning: response.data.data.health_warning,
+        message: response.data.message,
+    }
 }
 
 export const confirmMeal = async (mealId: number, image: File): Promise<{ meal: MealDraft }> => {

@@ -32,6 +32,7 @@ export default function CreateMeal() {
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [showWarning, setShowWarning] = useState(false)
     const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
+    const [warningContext, setWarningContext] = useState<"create" | "log">("create")
     const [pendingLogId, setPendingLogId] = useState<number | null>(null)
 
     function setField<K extends keyof MealFormData>(field: K, value: MealFormData[K]) {
@@ -65,6 +66,11 @@ export default function CreateMeal() {
                 new Promise<void>(resolve => setTimeout(resolve, 4500)),
             ])
             setDraft(res.meal)
+            if (res.health_warning.is_flagged) {
+                setWarningContext("create")
+                setWarningIngredients(res.health_warning.flagged_ingredients)
+                setShowWarning(true)
+            }
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
             setSubmitError(msg ?? "Something went wrong. Please try again.")
@@ -98,6 +104,7 @@ export default function CreateMeal() {
             const logRes = await logMeal(draft.id)
             if (logRes.health_warning.is_flagged) {
                 setPendingLogId(logRes.logged_meal.id)
+                setWarningContext("log")
                 setWarningIngredients(logRes.health_warning.flagged_ingredients)
                 setShowWarning(true)
                 return
@@ -113,15 +120,17 @@ export default function CreateMeal() {
     }
 
     async function handleWarningIgnore() {
-        if (pendingLogId === null) return
         setLoading(true)
         try {
-            await confirmQuickLog(pendingLogId)
+            if (warningContext === "log" && pendingLogId !== null) {
+                await confirmQuickLog(pendingLogId)
+                setPendingLogId(null)
+                setForm(initialForm)
+                resetDraft()
+                setMobileStep(0)
+            }
+            // "create" context: draft is already set, just close and let user proceed to review
             setShowWarning(false)
-            setPendingLogId(null)
-            setForm(initialForm)
-            resetDraft()
-            setMobileStep(0)
         } catch {
             setSubmitError("Failed to log meal.")
         } finally {
@@ -130,14 +139,17 @@ export default function CreateMeal() {
     }
 
     async function handleWarningDiscard() {
-        if (pendingLogId === null) return
         setLoading(true)
         try {
-            await deleteQuickLog(pendingLogId)
+            if (warningContext === "log" && pendingLogId !== null) {
+                await deleteQuickLog(pendingLogId)
+                setPendingLogId(null)
+            } else if (warningContext === "create" && draft) {
+                await discardMeal(draft.id)
+                resetDraft()
+            }
             setShowWarning(false)
-            setPendingLogId(null)
             setForm(initialForm)
-            resetDraft()
             setMobileStep(0)
         } catch {
             setSubmitError("Failed to discard.")
@@ -233,6 +245,7 @@ export default function CreateMeal() {
                     onIgnore={handleWarningIgnore}
                     onDiscard={handleWarningDiscard}
                     loading={loading}
+                    confirmLabel={warningContext === "create" ? "Proceed Anyway" : "Ignore & Log"}
                 />
             )}
 

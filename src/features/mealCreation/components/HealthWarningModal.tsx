@@ -16,9 +16,10 @@ interface Props {
     onIgnore: () => void
     onDiscard: () => void
     loading?: boolean
+    confirmLabel?: string
 }
 
-export default function HealthWarningModal({ flaggedIngredients, onEdit, onIgnore, onDiscard, loading }: Props) {
+export default function HealthWarningModal({ flaggedIngredients, onEdit, onIgnore, onDiscard, loading, confirmLabel = "Ignore & Log" }: Props) {
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -81,7 +82,7 @@ export default function HealthWarningModal({ flaggedIngredients, onEdit, onIgnor
                     >
                         {loading
                             ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                            : <><CheckRoundedIcon sx={{ fontSize: 16 }} /> Ignore &amp; Log</>
+                            : <><CheckRoundedIcon sx={{ fontSize: 16 }} /> {confirmLabel}</>
                         }
                     </button>
                     <button
