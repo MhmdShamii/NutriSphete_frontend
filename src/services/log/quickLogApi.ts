@@ -16,7 +16,10 @@ export const createQuickLog = async (data: QuickLogFormData): Promise<CreateQuic
             unit: i.unit,
         })),
     })
-    return response.data
+    return {
+        logged_meal: response.data.data.logged_meal,
+        message: response.data.message,
+    }
 }
 
 export const confirmQuickLog = async (id: number): Promise<void> => {
@@ -32,5 +35,8 @@ export const estimateMeal = async (name: string, description?: string): Promise<
         name,
         description: description || undefined,
     })
-    return response.data
+    return {
+        logged_meal: response.data.data.logged_meal,
+        message: response.data.message,
+    }
 }

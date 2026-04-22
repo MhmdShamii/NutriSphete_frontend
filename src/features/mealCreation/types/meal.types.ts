@@ -66,7 +66,7 @@ export interface QuickLogFormData {
 
 export interface QuickLogEntry {
     id: number
-    type: "custom" | "estimate"
+    type: "meal" | "custom" | "estimate"
     log_name: string
     description?: string
     calories: string
