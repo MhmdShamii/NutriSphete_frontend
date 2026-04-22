@@ -19,7 +19,7 @@ interface Props {
     confirmLabel?: string
 }
 
-export default function HealthWarningModal({ flaggedIngredients, onEdit, onIgnore, onDiscard, loading, confirmLabel = "Ignore & Log" }: Props) {
+export default function HealthWarningModal({ flaggedIngredients, onEdit, onIgnore, onDiscard, loading, confirmLabel = "Ignore" }: Props) {
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />

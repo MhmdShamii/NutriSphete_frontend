@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { updateTargets } from "./auth/authSlice"
+import type { AppDispatch, RootState } from "../app/store"
 import { useNavigate } from "react-router-dom"
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded"
 import FitnessCenterRoundedIcon from "@mui/icons-material/FitnessCenterRounded"
@@ -130,14 +133,29 @@ function ModalInput({ label, value, onChange, unit, color }: {
 
 // ─── Update targets modal ─────────────────────────────────────────────────────
 function UpdateTargetsModal({ onClose }: { onClose: () => void }) {
-    const [calories, setCalories] = useState("2400")
-    const [protein,  setProtein]  = useState("150")
-    const [carbs,    setCarbs]    = useState("270")
-    const [fats,     setFats]     = useState("80")
+    const dispatch = useDispatch<AppDispatch>()
+    const { user, loading, error } = useSelector((state: RootState) => state.auth)
+    const profile = user?.profile
 
-    function handleSave() {
-        // TODO: dispatch API call to update targets
-        onClose()
+    const [calories, setCalories] = useState(String(profile?.daily_calorie_target ?? ""))
+    const [protein,  setProtein]  = useState(String(profile?.daily_protein_g ?? ""))
+    const [carbs,    setCarbs]    = useState(String(profile?.daily_carbs_g ?? ""))
+    const [fats,     setFats]     = useState(String(profile?.daily_fat_g ?? ""))
+
+    const calNum = Number(calories)
+    const valid = calNum >= 500 && calNum <= 10000 && Number(protein) >= 0 && Number(carbs) >= 0 && Number(fats) >= 0
+
+    async function handleSave() {
+        if (!valid) return
+        try {
+            await dispatch(updateTargets({
+                daily_calorie_target: calNum,
+                daily_protein_g: Number(protein),
+                daily_carbs_g: Number(carbs),
+                daily_fat_g: Number(fats),
+            })).unwrap()
+            onClose()
+        } catch { }
     }
 
     return (
@@ -148,10 +166,15 @@ function UpdateTargetsModal({ onClose }: { onClose: () => void }) {
                 <ModalInput label="Carbs"    value={carbs}    onChange={setCarbs}    unit="g" color="#FFC107" />
                 <ModalInput label="Fats"     value={fats}     onChange={setFats}     unit="g" color="#FF6B9D" />
             </div>
-            <button onClick={handleSave}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 active:scale-95"
+            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
+            <button
+                onClick={handleSave}
+                disabled={!valid || loading}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-40"
                 style={{ background: "var(--primary)", boxShadow: "0 0 16px rgba(127,250,136,0.3)" }}>
-                Save Targets
+                {loading
+                    ? <span className="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    : "Save Targets"}
             </button>
         </Modal>
     )

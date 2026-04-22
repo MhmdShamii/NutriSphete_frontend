@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { getMe, googleAuth, loginUser, registerUser, updateMeApi, completeMainInfoApi, completeBasicInfoApi, completeTargetsApi, completeHealthConditionsApi } from "../../services/auth/authApi"
+import { getMe, googleAuth, loginUser, registerUser, updateMeApi, completeMainInfoApi, completeBasicInfoApi, completeTargetsApi, completeHealthConditionsApi, updateTargetsApi } from "../../services/auth/authApi"
 import type { AuthState, LoginPayload, RegisterPayload, MainInfoPayload, BasicInfoPayload, TargetsPayload, UpdateMePayload } from "./types"
 import type { AxiosError } from "axios"
 
@@ -94,6 +94,18 @@ export const completeTargets = createAsyncThunk(
             await completeTargetsApi(data)
         } catch (error: unknown) {
             return rejectWithValue(extractError(error, "Failed to save targets"))
+        }
+    }
+)
+
+export const updateTargets = createAsyncThunk(
+    "auth/updateTargets",
+    async (data: Partial<TargetsPayload>, { rejectWithValue }) => {
+        try {
+            await updateTargetsApi(data)
+            return data
+        } catch (error: unknown) {
+            return rejectWithValue(extractError(error, "Failed to update targets"))
         }
     }
 )
@@ -215,6 +227,13 @@ const authSlice = createSlice({
         builder.addCase(completeTargets.pending,  (state) => { state.loading = true;  state.error = null })
         builder.addCase(completeTargets.fulfilled, (state) => { state.loading = false })
         builder.addCase(completeTargets.rejected, (state, action) => { state.loading = false; state.error = action.payload as string })
+
+        builder.addCase(updateTargets.pending,  (state) => { state.loading = true;  state.error = null })
+        builder.addCase(updateTargets.fulfilled, (state, action) => {
+            state.loading = false
+            if (state.user?.profile) Object.assign(state.user.profile, action.payload)
+        })
+        builder.addCase(updateTargets.rejected, (state, action) => { state.loading = false; state.error = action.payload as string })
 
         builder.addCase(completeHealthConditions.pending,  (state) => { state.loading = true;  state.error = null })
         builder.addCase(completeHealthConditions.fulfilled, (state) => { state.loading = false })

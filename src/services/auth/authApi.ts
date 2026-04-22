@@ -78,6 +78,11 @@ export const completeTargetsApi = async (data: TargetsPayload) => {
     return response.data
 }
 
+export const updateTargetsApi = async (data: Partial<TargetsPayload>) => {
+    const response = await apiClient.patch("/users/me/targets", data)
+    return response.data
+}
+
 export const getHealthConditionsApi = async () => {
     const response = await apiClient.get("/health-conditions")
     return response.data.conditions

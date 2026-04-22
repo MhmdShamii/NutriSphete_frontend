@@ -245,7 +245,7 @@ export default function CreateMeal() {
                     onIgnore={handleWarningIgnore}
                     onDiscard={handleWarningDiscard}
                     loading={loading}
-                    confirmLabel={warningContext === "create" ? "Proceed Anyway" : "Ignore & Log"}
+                    confirmLabel={warningContext === "create" ? "Proceed Anyway" : "Ignore"}
                 />
             )}
 

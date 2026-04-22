@@ -104,9 +104,8 @@ export default function QuickLog() {
         if (window.innerWidth < 640) setMobileStep(1)
     }
 
-    async function handleWarningIgnore() {
+    function handleWarningIgnore() {
         setShowWarning(false)
-        await handleConfirm()
     }
 
     async function handleWarningDiscard() {
@@ -197,6 +196,8 @@ export default function QuickLog() {
                         onConfirm={handleConfirm}
                         onDiscard={handleDiscard}
                         onBack={() => setMobileStep(1)}
+                        onEdit={() => setMobileStep(1)}
+                        editLabel="Edit Ingredients"
                         isMobile
                         loading={loading}
                         error={error}

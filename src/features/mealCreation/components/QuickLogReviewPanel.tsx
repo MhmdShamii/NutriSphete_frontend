@@ -62,6 +62,8 @@ interface Props {
     onConfirm: () => void
     onDiscard: () => void
     onBack?: () => void
+    onEdit?: () => void
+    editLabel?: string
     isMobile?: boolean
     loading?: boolean
     error?: string | null
@@ -69,7 +71,7 @@ interface Props {
     submitLabel?: string
 }
 
-export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate, onConfirm, onDiscard, onBack, isMobile, loading, error, submitReady, submitLabel = "Calculate Macros" }: Props) {
+export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate, onConfirm, onDiscard, onBack, onEdit, editLabel = "Edit", isMobile, loading, error, submitReady, submitLabel = "Calculate Macros" }: Props) {
 
     /* ── Skeleton while AI calculates ─────────────────────────── */
     if (loading && !entry) {
@@ -158,14 +160,14 @@ export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate,
                 <div className={`flex flex-col gap-2 ${isMobile ? "mt-auto pt-1" : "mt-auto"}`}>
                     <button
                         type="button"
-                        onClick={onRecalculate}
+                        onClick={isMobile && onEdit ? onEdit : onRecalculate}
                         disabled={loading}
                         className="flex items-center justify-center gap-1.5 w-full p-2.5 rounded-xl border border-border/20
                             text-sm text-text-muted hover:text-primary hover:border-primary/30
                             transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
                     >
                         <EditRoundedIcon sx={{ fontSize: 15 }} />
-                        Recalculate
+                        {isMobile && onEdit ? editLabel : "Recalculate"}
                     </button>
                     <button
                         type="button"

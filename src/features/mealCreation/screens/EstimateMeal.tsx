@@ -90,9 +90,8 @@ export default function EstimateMeal() {
         if (window.innerWidth < 640) setMobileStep(0)
     }
 
-    async function handleWarningIgnore() {
+    function handleWarningIgnore() {
         setShowWarning(false)
-        await handleConfirm()
     }
 
     async function handleWarningDiscard() {
@@ -182,6 +181,8 @@ export default function EstimateMeal() {
                         onConfirm={handleConfirm}
                         onDiscard={handleDiscard}
                         onBack={() => setMobileStep(0)}
+                        onEdit={() => setMobileStep(0)}
+                        editLabel="Edit Estimated Meal"
                         isMobile
                         loading={loading}
                         error={error}
