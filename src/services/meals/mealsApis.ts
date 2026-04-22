@@ -1,5 +1,11 @@
 import apiClient from "../apiClient"
-import type { CreateMealResponse, MealDraft, MealFormData } from "../../features/mealCreation/types/meal.types"
+import type { CreateMealResponse, MealDraft, MealFormData, QuickLogEntry, HealthWarning } from "../../features/mealCreation/types/meal.types"
+
+interface LogMealResponse {
+    logged_meal: QuickLogEntry
+    health_warning: HealthWarning
+    message: string
+}
 
 export const createMeal = async (data: MealFormData): Promise<CreateMealResponse> => {
     const response = await apiClient.post("/meals", {
@@ -32,7 +38,12 @@ export const discardMeal = async (mealId: number): Promise<void> => {
     await apiClient.post(`/meals/${mealId}/discard`)
 }
 
-export const logMeal = async (mealId: number): Promise<void> => {
-    await apiClient.post(`/users/me/log/${mealId}`)
+export const logMeal = async (mealId: number): Promise<LogMealResponse> => {
+    const response = await apiClient.post(`/users/me/log/${mealId}`)
+    return {
+        logged_meal: response.data.data.logged_meal,
+        health_warning: response.data.data.health_warning,
+        message: response.data.message,
+    }
 }
 

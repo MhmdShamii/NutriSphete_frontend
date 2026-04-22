@@ -1,8 +1,9 @@
 import { useState } from "react"
-import type { QuickLogEntry } from "../types/meal.types"
+import type { QuickLogEntry, FlaggedIngredient } from "../types/meal.types"
 import { estimateMeal, confirmQuickLog, deleteQuickLog } from "../../../services/log/quickLogApi"
 import EstimateInputPanel from "../components/EstimateInputPanel"
 import QuickLogReviewPanel from "../components/QuickLogReviewPanel"
+import HealthWarningModal from "../components/HealthWarningModal"
 
 function extractError(err: unknown) {
     return (err as { response?: { data?: { message?: string } } })?.response?.data?.message
@@ -22,6 +23,8 @@ export default function EstimateMeal() {
     const [mobileStep, setMobileStep] = useState<0 | 1>(0)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [showWarning, setShowWarning] = useState(false)
+    const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
 
     const isReady = name.trim().length > 0 && name.length <= 255
 
@@ -34,6 +37,10 @@ export default function EstimateMeal() {
         try {
             const res = await estimateMeal(name, description)
             setEntry(res.logged_meal)
+            if (res.health_warning.is_flagged) {
+                setWarningIngredients(res.health_warning.flagged_ingredients)
+                setShowWarning(true)
+            }
         } catch (err) {
             setEntry(null)
             setError(extractError(err))
@@ -78,11 +85,36 @@ export default function EstimateMeal() {
         }
     }
 
+    function handleWarningEdit() {
+        setShowWarning(false)
+        if (window.innerWidth < 640) setMobileStep(0)
+    }
+
+    async function handleWarningIgnore() {
+        setShowWarning(false)
+        await handleConfirm()
+    }
+
+    async function handleWarningDiscard() {
+        setShowWarning(false)
+        await handleDiscard()
+    }
+
     const panelBase = "flex-1 min-w-0 overflow-y-auto px-5 py-5"
     const panelDivider = "border-r border-border/20"
 
     return (
         <>
+            {showWarning && (
+                <HealthWarningModal
+                    flaggedIngredients={warningIngredients}
+                    onEdit={handleWarningEdit}
+                    onIgnore={handleWarningIgnore}
+                    onDiscard={handleWarningDiscard}
+                    loading={loading}
+                />
+            )}
+
             {/* ── Desktop: 2 panels ────────────────────────────────────── */}
             <div className="hidden sm:flex flex-col flex-1 min-h-0">
                 <div className="flex flex-shrink-0 border-b border-border/20">

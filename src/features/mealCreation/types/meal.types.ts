@@ -58,6 +58,18 @@ export interface CreateMealResponse {
     message: string
 }
 
+export interface FlaggedIngredient {
+    ingredient: string
+    concern: string
+    condition: string
+    severity: "high" | "medium" | "low"
+}
+
+export interface HealthWarning {
+    is_flagged: boolean
+    flagged_ingredients: FlaggedIngredient[]
+}
+
 export interface QuickLogFormData {
     name: string
     description: string

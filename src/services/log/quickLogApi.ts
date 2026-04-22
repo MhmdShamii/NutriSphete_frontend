@@ -1,8 +1,9 @@
 import apiClient from "../apiClient"
-import type { QuickLogFormData, QuickLogEntry } from "../../features/mealCreation/types/meal.types"
+import type { QuickLogFormData, QuickLogEntry, HealthWarning } from "../../features/mealCreation/types/meal.types"
 
 interface CreateQuickLogResponse {
     logged_meal: QuickLogEntry
+    health_warning: HealthWarning
     message: string
 }
 
@@ -18,6 +19,7 @@ export const createQuickLog = async (data: QuickLogFormData): Promise<CreateQuic
     })
     return {
         logged_meal: response.data.data.logged_meal,
+        health_warning: response.data.data.health_warning,
         message: response.data.message,
     }
 }
@@ -37,6 +39,7 @@ export const estimateMeal = async (name: string, description?: string): Promise<
     })
     return {
         logged_meal: response.data.data.logged_meal,
+        health_warning: response.data.data.health_warning,
         message: response.data.message,
     }
 }

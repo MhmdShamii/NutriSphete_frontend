@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { createMeal, confirmMeal, discardMeal, logMeal } from "../../../services/meals/mealsApis"
-import type { MealFormData, MealDraft } from "../types/meal.types"
+import { confirmQuickLog, deleteQuickLog } from "../../../services/log/quickLogApi"
+import type { MealFormData, MealDraft, FlaggedIngredient } from "../types/meal.types"
+import HealthWarningModal from "../components/HealthWarningModal"
 import BasicInfoPanel from "../components/BasicInfoPanel"
 import IngredientsPanel from "../components/IngredientsPanel"
 import ReviewPanel from "../components/ReviewPanel"
@@ -28,6 +30,9 @@ export default function CreateMeal() {
     const [reviewKey, setReviewKey] = useState(0)
     const [loading, setLoading] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
+    const [showWarning, setShowWarning] = useState(false)
+    const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
+    const [pendingLogId, setPendingLogId] = useState<number | null>(null)
 
     function setField<K extends keyof MealFormData>(field: K, value: MealFormData[K]) {
         setForm(prev => ({ ...prev, [field]: value }))
@@ -90,7 +95,13 @@ export default function CreateMeal() {
         setSubmitError(null)
         try {
             await confirmMeal(draft.id, image)
-            await logMeal(draft.id)
+            const logRes = await logMeal(draft.id)
+            if (logRes.health_warning.is_flagged) {
+                setPendingLogId(logRes.logged_meal.id)
+                setWarningIngredients(logRes.health_warning.flagged_ingredients)
+                setShowWarning(true)
+                return
+            }
             setForm(initialForm)
             resetDraft()
             setMobileStep(0)
@@ -98,6 +109,47 @@ export default function CreateMeal() {
             setSubmitError("Failed to confirm and log meal.")
         } finally {
             setLoading(false)
+        }
+    }
+
+    async function handleWarningIgnore() {
+        if (pendingLogId === null) return
+        setLoading(true)
+        try {
+            await confirmQuickLog(pendingLogId)
+            setShowWarning(false)
+            setPendingLogId(null)
+            setForm(initialForm)
+            resetDraft()
+            setMobileStep(0)
+        } catch {
+            setSubmitError("Failed to log meal.")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    async function handleWarningDiscard() {
+        if (pendingLogId === null) return
+        setLoading(true)
+        try {
+            await deleteQuickLog(pendingLogId)
+            setShowWarning(false)
+            setPendingLogId(null)
+            setForm(initialForm)
+            resetDraft()
+            setMobileStep(0)
+        } catch {
+            setSubmitError("Failed to discard.")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    function handleWarningEdit() {
+        setShowWarning(false)
+        if (window.innerWidth < 640) {
+            handleEditMobile()
         }
     }
 
@@ -174,6 +226,15 @@ export default function CreateMeal() {
 
     return (
         <div className="flex flex-col h-full">
+            {showWarning && (
+                <HealthWarningModal
+                    flaggedIngredients={warningIngredients}
+                    onEdit={handleWarningEdit}
+                    onIgnore={handleWarningIgnore}
+                    onDiscard={handleWarningDiscard}
+                    loading={loading}
+                />
+            )}
 
             {/* ── Toggle — rendered once, always on top ───────────────── */}
             <div className="flex flex-shrink-0 items-center justify-center border-b border-border/20 px-3 sm:px-5 py-2">

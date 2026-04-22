@@ -1,9 +1,10 @@
 import { useState } from "react"
-import type { QuickLogFormData, QuickLogEntry } from "../types/meal.types"
+import type { QuickLogFormData, QuickLogEntry, FlaggedIngredient } from "../types/meal.types"
 import { createQuickLog, confirmQuickLog, deleteQuickLog } from "../../../services/log/quickLogApi"
 import QuickLogBasicPanel from "../components/QuickLogBasicPanel"
 import QuickLogInputPanel from "../components/QuickLogInputPanel"
 import QuickLogReviewPanel from "../components/QuickLogReviewPanel"
+import HealthWarningModal from "../components/HealthWarningModal"
 
 function generateId() {
     return Math.random().toString(36).slice(2)
@@ -32,6 +33,8 @@ export default function QuickLog() {
     const [mobileStep, setMobileStep] = useState<0 | 1 | 2>(0)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [showWarning, setShowWarning] = useState(false)
+    const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
 
     function setField<K extends keyof QuickLogFormData>(field: K, value: QuickLogFormData[K]) {
         setForm(prev => ({ ...prev, [field]: value }))
@@ -52,6 +55,10 @@ export default function QuickLog() {
             const res = await createQuickLog(form)
             setEntry(res.logged_meal)
             setMobileStep(2)
+            if (res.health_warning.is_flagged) {
+                setWarningIngredients(res.health_warning.flagged_ingredients)
+                setShowWarning(true)
+            }
         } catch (err) {
             setEntry(null)
             setError(extractError(err))
@@ -92,11 +99,36 @@ export default function QuickLog() {
         }
     }
 
+    function handleWarningEdit() {
+        setShowWarning(false)
+        if (window.innerWidth < 640) setMobileStep(1)
+    }
+
+    async function handleWarningIgnore() {
+        setShowWarning(false)
+        await handleConfirm()
+    }
+
+    async function handleWarningDiscard() {
+        setShowWarning(false)
+        await handleDiscard()
+    }
+
     const panelBase = "flex-1 min-w-0 overflow-y-auto px-5 py-5"
     const panelDivider = "border-r border-border/20"
 
     return (
         <>
+            {showWarning && (
+                <HealthWarningModal
+                    flaggedIngredients={warningIngredients}
+                    onEdit={handleWarningEdit}
+                    onIgnore={handleWarningIgnore}
+                    onDiscard={handleWarningDiscard}
+                    loading={loading}
+                />
+            )}
+
             {/* ── Desktop ──────────────────────────────────────────────── */}
             <div className="hidden sm:flex flex-col flex-1 min-h-0">
                 {/* Step header */}
