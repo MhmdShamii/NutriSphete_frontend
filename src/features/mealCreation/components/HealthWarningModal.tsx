@@ -5,9 +5,9 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded"
 import type { FlaggedIngredient } from "../types/meal.types"
 
 const SEVERITY_STYLES: Record<string, string> = {
-    high:   "bg-red-500/15 text-red-400 border-red-500/20",
+    high: "bg-red-500/15 text-red-400 border-red-500/20",
     medium: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-    low:    "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
+    low: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
 }
 
 interface Props {
