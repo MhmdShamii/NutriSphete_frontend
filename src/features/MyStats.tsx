@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { updateTargets } from "./auth/authSlice"
 import type { AppDispatch, RootState } from "../app/store"
@@ -9,7 +9,6 @@ import GrainRoundedIcon from "@mui/icons-material/GrainRounded"
 import WaterDropRoundedIcon from "@mui/icons-material/WaterDropRounded"
 import WhatshotRoundedIcon from "@mui/icons-material/WhatshotRounded"
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded"
-import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import MonitorWeightRoundedIcon from "@mui/icons-material/MonitorWeightRounded"
@@ -17,9 +16,13 @@ import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-    AreaChart, Area,
+    AreaChart, Area, ReferenceLine,
 } from "recharts"
 import type { MealDraft } from "./mealCreation/types/meal.types"
+import { getWeightHistory, logWeight as logWeightApi } from "../services/stats/weightApi"
+import type { WeightEntry } from "../services/stats/weightApi"
+import { getCalories } from "../services/stats/caloriesApi"
+import type { CalorieDay } from "../services/stats/caloriesApi"
 
 // ─── Types & placeholder data ─────────────────────────────────────────────────
 interface LogEntry { logged_at: string; meal: MealDraft }
@@ -54,9 +57,7 @@ const PLACEHOLDER_LOGS: LogEntry[] = [
     },
 ]
 
-const CALORIE_HISTORY = [1820, 2100, 1650, 2340, 1980, 2560, 950]
-const DAYS_SHORT      = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-const GOAL_CAL        = 2400
+const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 const MACRO_HISTORY = [
     { protein: 110, carbs: 220, fats: 60 },
@@ -68,9 +69,12 @@ const MACRO_HISTORY = [
     { protein: 69,  carbs: 84,  fats: 31 },
 ]
 
-const WEIGHT_DATA = [83.2, 82.8, 82.5, 82.9, 82.1, 81.8, 81.5]
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
+function toDateStr(d: Date): string {
+    return d.toISOString().slice(0, 10)
+}
+
 function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
     return (
         <div className={`p-4 rounded-2xl flex flex-col gap-3 ${className}`}
@@ -181,36 +185,71 @@ function UpdateTargetsModal({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Log weight modal ─────────────────────────────────────────────────────────
-function LogWeightModal({ onClose }: { onClose: () => void }) {
-    const [weight, setWeight] = useState("")
+function LogWeightModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+    const [weight, setWeight]   = useState("")
+    const [note, setNote]       = useState("")
+    const [loading, setLoading] = useState(false)
+    const [error, setError]     = useState<string | null>(null)
 
-    function handleSave() {
-        if (!weight || isNaN(Number(weight))) return
-        // TODO: dispatch API call to log weight
-        onClose()
+    const kg     = parseFloat(weight)
+    const valid  = weight !== "" && !isNaN(kg) && kg > 0 && kg < 700
+
+    async function handleSave() {
+        if (!valid || loading) return
+        setLoading(true)
+        setError(null)
+        try {
+            await logWeightApi({ weight_kg: kg, note: note || undefined })
+            onSuccess()
+            onClose()
+        } catch {
+            setError("Could not save weight. Please try again.")
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
         <Modal title="Log Weight" onClose={onClose}>
+            {/* Weight input */}
             <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-text-muted">Current weight</span>
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
                     style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--glass-border)" }}>
                     <input
                         type="number" placeholder="e.g. 81.5" value={weight}
-                        onChange={e => setWeight(e.target.value)}
+                        onChange={e => { setWeight(e.target.value); setError(null) }}
                         className="flex-1 bg-transparent text-2xl font-bold text-text outline-none min-w-0"
-                        style={{ appearance: "textfield" }}
+                        style={{ appearance: "textfield" } as React.CSSProperties}
                         autoFocus
                     />
                     <span className="text-sm text-text-muted flex-shrink-0">kg</span>
                 </div>
             </div>
+
+            {/* Optional note */}
+            <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-text-muted">Note <span className="opacity-50">(optional)</span></span>
+                <input
+                    type="text"
+                    placeholder="e.g. after morning workout"
+                    value={note}
+                    onChange={e => setNote(e.target.value)}
+                    maxLength={120}
+                    className="px-3 py-2.5 rounded-xl bg-transparent text-sm text-text outline-none placeholder:text-text-muted/40"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--glass-border)" }}
+                />
+            </div>
+
+            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
+
             <button onClick={handleSave}
+                disabled={!valid || loading}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-40"
-                style={{ background: "var(--primary)", boxShadow: "0 0 16px rgba(127,250,136,0.3)" }}
-                disabled={!weight}>
-                Log Weight
+                style={{ background: "var(--primary)", boxShadow: "0 0 16px rgba(127,250,136,0.3)" }}>
+                {loading
+                    ? <span className="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    : "Log Weight"}
             </button>
         </Modal>
     )
@@ -316,44 +355,135 @@ function TodaysMacros({ onEditTargets }: { onEditTargets: () => void }) {
 }
 
 // ─── Calorie area chart ───────────────────────────────────────────────────────
-const CAL_DATA = CALORIE_HISTORY.map((cal, i) => ({ day: DAYS_SHORT[i], cal }))
+function buildCalChartData(days: CalorieDay[], weekStart: Date, todayStr: string) {
+    const byDate = new Map(days.map(d => [d.date, d]))
+    return DAYS_SHORT.map((label, i) => {
+        const d       = new Date(weekStart)
+        d.setDate(weekStart.getDate() + i)
+        const dateStr = toDateStr(d)
+
+        // Future days → no dot, no line
+        if (dateStr > todayStr) {
+            return { label, cal: null as number | null, target: null as number | null, disabled: true }
+        }
+
+        const entry = byDate.get(dateStr)
+        // null/null → before profile creation → disabled
+        if (!entry || (entry.calories_consumed === null && entry.calories_target === null)) {
+            return { label, cal: null as number | null, target: null as number | null, disabled: true }
+        }
+        // 0/null → active day, nothing logged yet
+        // number/number → normally logged day
+        return { label, cal: entry.calories_consumed ?? 0, target: entry.calories_target, disabled: false }
+    })
+}
 
 function CalorieChart() {
-    const nav = useWeekNav()
-    // TODO: fetch from /api/stats/calories?week=<nav.weekStart.toISOString()> when !nav.isCurrentWeek
-    //       fetch from /api/stats/calories/current when nav.isCurrentWeek
-    const data = CAL_DATA // replace with fetched data
+    const nav                       = useWeekNav()
+    const [days, setDays]           = useState<CalorieDay[]>([])
+    const [loading, setLoading]     = useState(false)
+
+    useEffect(() => {
+        let cancelled = false
+        setLoading(true)
+        const start = toDateStr(nav.weekStart)
+        const end   = toDateStr(new Date(nav.weekStart.getTime() + 6 * 24 * 60 * 60 * 1000))
+        getCalories({ start, end })
+            .then(data => { if (!cancelled) setDays(data) })
+            .catch(() => { if (!cancelled) setDays([]) })
+            .finally(() => { if (!cancelled) setLoading(false) })
+        return () => { cancelled = true }
+    }, [nav.weekStart])
+
+    // Today's calorie total (current week only)
+    const todayStr   = toDateStr(new Date())
+    const chartData  = buildCalChartData(days, nav.weekStart, todayStr)
+    const todayEntry = days.find(d => d.date === todayStr)
+    const todayCal   = todayEntry?.calories_consumed ?? null
+
+    // Average for past weeks (exclude null/disabled days)
+    const logged     = days.filter(d => d.calories_consumed !== null && d.calories_consumed > 0)
+    const avgCal     = logged.length
+        ? Math.round(logged.reduce((s, d) => s + (d.calories_consumed ?? 0), 0) / logged.length)
+        : null
+
+    const displayCal = nav.isCurrentWeek ? todayCal : avgCal
+
+    // Use the most recent non-null target from this week's data
+    const goalCal = days.find(d => d.calories_target !== null)?.calories_target ?? null
 
     return (
         <div className="flex flex-col gap-1 flex-1 min-h-0">
             <div className="flex items-center justify-between flex-shrink-0">
                 <PanelTitle>Calorie History</PanelTitle>
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-primary px-2 py-0.5 rounded-lg"
-                        style={{ background: "rgba(127,250,136,0.08)", border: "1px solid rgba(127,250,136,0.15)" }}>
-                        Goal: {GOAL_CAL.toLocaleString()}
-                    </span>
+                    {goalCal !== null && (
+                        <span className="text-[10px] text-primary px-2 py-0.5 rounded-lg"
+                            style={{ background: "rgba(127,250,136,0.08)", border: "1px solid rgba(127,250,136,0.15)" }}>
+                            Goal: {goalCal.toLocaleString()}
+                        </span>
+                    )}
                     <WeekNav label={nav.label} onPrev={nav.prev} onNext={nav.next} isCurrentWeek={nav.isCurrentWeek} />
                 </div>
             </div>
+
             <div className="flex items-baseline gap-1.5 flex-shrink-0">
-                <span className="text-2xl font-bold text-text">{CALORIE_HISTORY[CALORIE_HISTORY.length - 1].toLocaleString()}</span>
-                <span className="text-xs text-text-muted">{nav.isCurrentWeek ? "kcal today" : "kcal avg/day"}</span>
+                {loading ? (
+                    <span className="text-sm text-text-muted animate-pulse">Loading…</span>
+                ) : displayCal !== null ? (
+                    <>
+                        <span className="text-2xl font-bold text-text">{displayCal.toLocaleString()}</span>
+                        <span className="text-xs text-text-muted">
+                            {nav.isCurrentWeek ? "kcal today" : "kcal avg/day"}
+                        </span>
+                    </>
+                ) : (
+                    <span className="text-sm text-text-muted/50">
+                        {nav.isCurrentWeek ? "Nothing logged today" : "No data this week"}
+                    </span>
+                )}
             </div>
+
             <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                         <defs>
                             <linearGradient id="calGrad" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%"  stopColor="#7FFA88" stopOpacity={0.2} />
                                 <stop offset="95%" stopColor="#7FFA88" stopOpacity={0} />
                             </linearGradient>
                         </defs>
-                        <XAxis dataKey="day" tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
-                        <YAxis domain={["auto", "auto"]} tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
-                        <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => [`${v} kcal`, "Calories"]} />
-                        <Area type="monotone" dataKey="cal" stroke="#7FFA88" strokeWidth={2}
-                            fill="url(#calGrad)" dot={{ r: 3, fill: "#7FFA88", strokeWidth: 0 }}
+                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
+                        <YAxis domain={[0, "auto"]} tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
+                        <Tooltip
+                            {...TOOLTIP_STYLE}
+                            formatter={(v: number | null, _: string, props: { payload?: { disabled?: boolean } }) => {
+                                if (props.payload?.disabled || v === null) return ["—", "Calories"]
+                                return [`${v.toLocaleString()} kcal`, "Calories"]
+                            }}
+                        />
+                        {/* Target reference line */}
+                        {goalCal !== null && (
+                            <ReferenceLine
+                                y={goalCal}
+                                stroke="#7FFA88"
+                                strokeDasharray="5 4"
+                                strokeOpacity={0.45}
+                                strokeWidth={1.5}
+                            />
+                        )}
+                        {/* Line breaks at null (disabled/pre-profile days); zero renders at baseline */}
+                        <Area
+                            type="monotone"
+                            dataKey="cal"
+                            stroke="#7FFA88"
+                            strokeWidth={2}
+                            fill="url(#calGrad)"
+                            connectNulls={false}
+                            dot={(props: { cx: number; cy: number; payload: { disabled?: boolean; cal: number | null } }) => {
+                                if (props.payload.disabled || props.payload.cal === null) return <g key={props.cx} />
+                                return <circle key={props.cx} cx={props.cx} cy={props.cy} r={3} fill="#7FFA88" />
+                            }}
                             activeDot={{ r: 5, fill: "#7FFA88" }}
                         />
                     </AreaChart>
@@ -408,28 +538,60 @@ function MacroHistoryChart() {
     )
 }
 
-// ─── Weight area chart ────────────────────────────────────────────────────────
-const WEIGHT_CHART_DATA = WEIGHT_DATA.map((val, i) => ({ day: DAYS_SHORT[i], val }))
+// ─── Weight area chart (lifetime) ─────────────────────────────────────────────
+function formatWeightLabel(dateStr: string): string {
+    // Parse as local date to avoid UTC-offset day shifts
+    const [y, m, d] = dateStr.split("-").map(Number)
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+}
 
-function WeightChart({ onLogWeight }: { onLogWeight: () => void }) {
-    const nav    = useWeekNav()
-    // TODO: fetch from /api/stats/weight?week=<nav.weekStart.toISOString()> when !nav.isCurrentWeek
-    //       fetch from /api/stats/weight/current when nav.isCurrentWeek
-    const data   = WEIGHT_CHART_DATA // replace with fetched data
-    const last   = WEIGHT_DATA[WEIGHT_DATA.length - 1]
-    const prev   = WEIGHT_DATA[WEIGHT_DATA.length - 2]
-    const diff   = (last - prev).toFixed(1)
-    const isDown = last < prev
+function WeightChart({ onLogWeight, refreshKey }: { onLogWeight: () => void; refreshKey: number }) {
+    const [entries, setEntries] = useState<WeightEntry[]>([])
+    const [loading, setLoading] = useState(true)
+
+    const fetchData = useCallback(async () => {
+        setLoading(true)
+        try {
+            const data = await getWeightHistory()
+            setEntries(data)
+        } catch {
+            setEntries([])
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => { fetchData() }, [refreshKey, fetchData])
+
+    // API returns newest→oldest; reverse for left→right chronological order
+    const chartData = [...entries].reverse().map(e => ({
+        label: formatWeightLabel(e.logged_at),
+        val:   parseFloat(e.weight_kg),
+        note:  e.note,
+    }))
+
+    const latest    = entries.length > 0 ? parseFloat(entries[0].weight_kg) : null
+    const prev      = entries.length > 1 ? parseFloat(entries[1].weight_kg) : null
+    const diff      = latest !== null && prev !== null ? (latest - prev).toFixed(1) : null
+    const isDown    = diff !== null && parseFloat(diff) <= 0
+    const oldest    = entries.length > 1 ? parseFloat(entries[entries.length - 1].weight_kg) : null
+    const totalDiff = latest !== null && oldest !== null ? (latest - oldest).toFixed(1) : null
+
+    // Cap visible x-axis labels to avoid crowding
+    const tickInterval = chartData.length > 6 ? Math.ceil(chartData.length / 6) - 1 : 0
 
     return (
         <div className="flex flex-col gap-1 flex-1 min-h-0">
+
+            {/* Header */}
             <div className="flex items-center justify-between flex-shrink-0">
                 <PanelTitle>Weight</PanelTitle>
                 <div className="flex items-center gap-2">
-                    <span className={`text-xs font-semibold ${isDown ? "text-primary" : "text-red-400"}`}>
-                        {isDown ? "" : "+"}{diff} kg
-                    </span>
-                    <WeekNav label={nav.label} onPrev={nav.prev} onNext={nav.next} isCurrentWeek={nav.isCurrentWeek} />
+                    {diff !== null && (
+                        <span className={`text-xs font-semibold ${isDown ? "text-primary" : "text-red-400"}`}>
+                            {parseFloat(diff) > 0 ? "+" : ""}{diff} kg
+                        </span>
+                    )}
                     <button onClick={onLogWeight}
                         className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-text-muted hover:text-text transition-colors"
                         style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--glass-border)" }}>
@@ -438,29 +600,86 @@ function WeightChart({ onLogWeight }: { onLogWeight: () => void }) {
                     </button>
                 </div>
             </div>
-            <div className="flex items-baseline gap-1.5 flex-shrink-0">
-                <span className="text-2xl font-bold text-text">{last}</span>
-                <span className="text-xs text-text-muted">kg</span>
+
+            {/* Latest reading + lifetime delta */}
+            <div className="flex items-baseline gap-2 flex-shrink-0">
+                {loading ? (
+                    <span className="text-sm text-text-muted animate-pulse">Loading…</span>
+                ) : latest !== null ? (
+                    <>
+                        <span className="text-2xl font-bold text-text">{latest}</span>
+                        <span className="text-xs text-text-muted">kg</span>
+                        {totalDiff !== null && (
+                            <span className={`text-[11px] font-medium ${parseFloat(totalDiff) <= 0 ? "text-primary" : "text-red-400"}`}>
+                                ({parseFloat(totalDiff) > 0 ? "+" : ""}{totalDiff} kg total)
+                            </span>
+                        )}
+                        {entries[0]?.note && (
+                            <span className="text-[10px] text-text-muted/60 truncate max-w-[100px]">{entries[0].note}</span>
+                        )}
+                    </>
+                ) : (
+                    <span className="text-sm text-text-muted/50">No entries yet</span>
+                )}
             </div>
+
+            {/* Chart */}
             <div className="flex-1 min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%"  stopColor="#7FFA88" stopOpacity={0.2} />
-                                <stop offset="95%" stopColor="#7FFA88" stopOpacity={0} />
-                            </linearGradient>
-                        </defs>
-                        <XAxis dataKey="day" tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
-                        <YAxis domain={["auto", "auto"]} tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
-                        <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => [`${v} kg`, "Weight"]} />
-                        <Area type="monotone" dataKey="val" stroke="#7FFA88" strokeWidth={2}
-                            fill="url(#weightGrad)" dot={{ r: 3, fill: "#7FFA88", strokeWidth: 0 }}
-                            activeDot={{ r: 5, fill: "#7FFA88" }}
-                        />
-                    </AreaChart>
-                </ResponsiveContainer>
+                {!loading && chartData.length === 0 ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                        <MonitorWeightRoundedIcon sx={{ fontSize: 22 }} className="text-text-muted/20" />
+                        <span className="text-[11px] text-text-muted/40 text-center">
+                            Log your weight to start tracking progress
+                        </span>
+                    </div>
+                ) : chartData.length === 1 ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                        <span className="text-xs text-text-muted/60">First entry logged</span>
+                        <span className="text-[11px] text-text-muted/40">Log again to see your trend</span>
+                    </div>
+                ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%"  stopColor="#7FFA88" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="#7FFA88" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <XAxis
+                                dataKey="label"
+                                tick={{ fontSize: 9, fill: "#B3BCB5" }}
+                                axisLine={false}
+                                tickLine={false}
+                                interval={tickInterval}
+                            />
+                            <YAxis
+                                domain={["auto", "auto"]}
+                                tick={{ fontSize: 9, fill: "#B3BCB5" }}
+                                axisLine={false}
+                                tickLine={false}
+                            />
+                            <Tooltip
+                                {...TOOLTIP_STYLE}
+                                formatter={(v: number, _: string, props: { payload?: { note?: string | null } }) => {
+                                    const note = props.payload?.note
+                                    return [note ? `${v} kg — ${note}` : `${v} kg`, "Weight"]
+                                }}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="val"
+                                stroke="#7FFA88"
+                                strokeWidth={2}
+                                fill="url(#weightGrad)"
+                                dot={{ r: 3, fill: "#7FFA88", strokeWidth: 0 }}
+                                activeDot={{ r: 5, fill: "#7FFA88" }}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                )}
             </div>
+
         </div>
     )
 }
@@ -591,13 +810,14 @@ export default function MyStats() {
     const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
 
     const currentStreak  = 7
-    const [showTargets, setShowTargets] = useState(false)
-    const [showWeight,  setShowWeight]  = useState(false)
+    const [showTargets,      setShowTargets]      = useState(false)
+    const [showWeight,       setShowWeight]       = useState(false)
+    const [weightRefreshKey, setWeightRefreshKey] = useState(0)
 
     return (
         <div className="w-full h-full flex flex-col gap-4 overflow-y-auto">
             {showTargets && <UpdateTargetsModal onClose={() => setShowTargets(false)} />}
-            {showWeight  && <LogWeightModal     onClose={() => setShowWeight(false)}  />}
+            {showWeight  && <LogWeightModal     onClose={() => setShowWeight(false)}  onSuccess={() => setWeightRefreshKey(k => k + 1)} />}
 
             {/* ── Header ── */}
             <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
@@ -618,13 +838,6 @@ export default function MyStats() {
                     <span className="text-xs text-text-muted">day streak</span>
                 </div>
 
-                {/* Log meal */}
-                <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-black
-                    transition-all duration-200 hover:opacity-90 active:scale-95 flex-shrink-0"
-                    style={{ background: "var(--primary)", boxShadow: "0 0 20px rgba(127,250,136,0.35)" }}>
-                    <AddRoundedIcon sx={{ fontSize: 18 }} />
-                    Log Meal
-                </button>
             </div>
 
             {/* ── Main section ── */}
@@ -646,7 +859,7 @@ export default function MyStats() {
                     </Panel>
 
                     <Panel className="min-h-[220px] lg:min-h-0">
-                        <WeightChart onLogWeight={() => setShowWeight(true)} />
+                        <WeightChart onLogWeight={() => setShowWeight(true)} refreshKey={weightRefreshKey} />
                     </Panel>
 
                 </div>
