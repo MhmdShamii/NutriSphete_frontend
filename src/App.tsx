@@ -15,6 +15,8 @@ import MainInfoStep from "./features/onboarding/steps/MainInfoStep"
 import BasicInfoStep from "./features/onboarding/steps/BasicInfoStep"
 import TargetsStep from "./features/onboarding/steps/TargetsStep"
 import HealthConditionsStep from "./features/onboarding/steps/HealthConditionsStep"
+import CreateMeal from "./features/mealCreation/screens/CreateMeal"
+import MyStats from "./features/MyStats"
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -43,13 +45,13 @@ function App() {
         {/* App — logged in + onboarding complete */}
         <Route element={<ProtectedRoute><OnboardedRoute><Home /></OnboardedRoute></ProtectedRoute>}>
           <Route index element={<p className="text-2xl text-primary">Dashboard</p>} />
-          <Route path="/stats" element={<p className="text-2xl text-primary">My Stats</p>} />
+          <Route path="/stats" element={<MyStats />} />
           <Route path="/feed" element={<p className="text-2xl text-primary">Feed</p>} />
           <Route path="/coaches" element={<p className="text-2xl text-primary">Coaches</p>} />
           <Route path="/personal-trainer" element={<p className="text-2xl text-primary">Personal Trainer</p>} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<p className="text-2xl text-primary">Settings</p>} />
-          <Route path="/create-meal" element={<p className="text-2xl text-primary">Create Meal</p>} />
+          <Route path="/create-meal" element={<CreateMeal />} />
         </Route>
 
       </Routes>
