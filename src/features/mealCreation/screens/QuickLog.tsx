@@ -55,7 +55,7 @@ export default function QuickLog() {
             const res = await createQuickLog(form)
             setEntry(res.logged_meal)
             setMobileStep(2)
-            if (res.health_warning.is_flagged) {
+            if (res.health_warning?.is_flagged) {
                 setWarningIngredients(res.health_warning.flagged_ingredients)
                 setShowWarning(true)
             }

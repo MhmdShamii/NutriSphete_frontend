@@ -14,60 +14,26 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import MonitorWeightRoundedIcon from "@mui/icons-material/MonitorWeightRounded"
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded"
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     AreaChart, Area, ReferenceLine,
 } from "recharts"
-import type { MealDraft } from "./mealCreation/types/meal.types"
 import { getWeightHistory, logWeight as logWeightApi } from "../services/stats/weightApi"
 import type { WeightEntry } from "../services/stats/weightApi"
 import { getCalories } from "../services/stats/caloriesApi"
 import type { CalorieDay } from "../services/stats/caloriesApi"
-
-// ─── Types & placeholder data ─────────────────────────────────────────────────
-interface LogEntry { logged_at: string; meal: MealDraft }
-
-const PLACEHOLDER_LOGS: LogEntry[] = [
-    {
-        logged_at: "08:24",
-        meal: {
-            id: 1, name: "Oatmeal with Berries", description: "", image_url: "",
-            confirmed: true, servings: 1, visibility: "private",
-            ingredients: [], preparation_steps: [],
-            macros: { calories: 320, protein: 12, carbs: 54, fats: 6, fiber: 7 },
-        },
-    },
-    {
-        logged_at: "13:10",
-        meal: {
-            id: 2, name: "Grilled Chicken Salad", description: "", image_url: "",
-            confirmed: true, servings: 1, visibility: "private",
-            ingredients: [], preparation_steps: [],
-            macros: { calories: 480, protein: 42, carbs: 18, fats: 22, fiber: 5 },
-        },
-    },
-    {
-        logged_at: "16:00",
-        meal: {
-            id: 3, name: "Greek Yogurt", description: "", image_url: "",
-            confirmed: true, servings: 1, visibility: "private",
-            ingredients: [], preparation_steps: [],
-            macros: { calories: 150, protein: 15, carbs: 12, fats: 3, fiber: 0 },
-        },
-    },
-]
+import { getMacros } from "../services/stats/macrosApi"
+import type { MacroDay } from "../services/stats/macrosApi"
+import { getTodayAnalytics, getDayAnalytics } from "../services/stats/todayLogsApi"
+import type { TodayAnalytics, TodayLogEntry } from "../services/stats/todayLogsApi"
+import { getTodayMacros } from "../services/stats/todayMacrosApi"
+import type { TodayMacros } from "../services/stats/todayMacrosApi"
+import { confirmQuickLog, deleteQuickLog } from "../services/log/quickLogApi"
+import { getStreak } from "../services/stats/streakApi"
 
 const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-const MACRO_HISTORY = [
-    { protein: 110, carbs: 220, fats: 60 },
-    { protein: 145, carbs: 250, fats: 75 },
-    { protein: 98,  carbs: 190, fats: 55 },
-    { protein: 160, carbs: 270, fats: 80 },
-    { protein: 130, carbs: 240, fats: 70 },
-    { protein: 155, carbs: 280, fats: 85 },
-    { protein: 69,  carbs: 84,  fats: 31 },
-]
 
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
@@ -306,9 +272,9 @@ function WeekNav({ label, onPrev, onNext, isCurrentWeek }: {
 
 // ─── Macro progress bar ───────────────────────────────────────────────────────
 function MacroBar({ label, value, max, unit, color, icon }: {
-    label: string; value: number; max: number; unit: string; color: string; icon: React.ReactNode
+    label: string; value: number; max: number | null; unit: string; color: string; icon: React.ReactNode
 }) {
-    const pct = Math.min((value / max) * 100, 100)
+    const pct = max !== null ? Math.min((value / max) * 100, 100) : null
     return (
         <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
@@ -317,18 +283,51 @@ function MacroBar({ label, value, max, unit, color, icon }: {
                     <span className="text-xs font-medium text-text">{label}</span>
                 </div>
                 <span className="text-xs font-semibold text-text">
-                    {value}<span className="text-text-muted font-normal">/{max}{unit}</span>
+                    {value}
+                    {max !== null
+                        ? <span className="text-text-muted font-normal">/{max}{unit}</span>
+                        : <span className="text-text-muted font-normal"> {unit}</span>}
                 </span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: color }} />
-            </div>
+            {pct !== null && (
+                <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: color }} />
+                </div>
+            )}
         </div>
     )
 }
 
 // ─── Today's macros panel ─────────────────────────────────────────────────────
-function TodaysMacros({ onEditTargets }: { onEditTargets: () => void }) {
+function TodaysMacros({
+    onEditTargets, refreshKey,
+}: {
+    onEditTargets: () => void
+    refreshKey: number
+}) {
+    const [data, setData]       = useState<TodayMacros | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        let cancelled = false
+        setLoading(true)
+        getTodayMacros()
+            .then(d  => { if (!cancelled) setData(d) })
+            .catch(() => { if (!cancelled) setData(null) })
+            .finally(() => { if (!cancelled) setLoading(false) })
+        return () => { cancelled = true }
+    }, [refreshKey])
+
+    const cal   = data?.calories_consumed ?? 0
+    const prot  = data?.protein_consumed  ?? 0
+    const carbs = data?.carbs_consumed    ?? 0
+    const fats  = data?.fats_consumed     ?? 0
+
+    const calMax  = data?.calories_target ?? null
+    const protMax = data?.protein_target  ?? null
+    const carbMax = data?.carbs_target    ?? null
+    const fatsMax = data?.fats_target     ?? null
+
     return (
         <div className="flex flex-col gap-2.5 flex-1 min-h-0">
             <div className="flex items-center justify-between flex-shrink-0">
@@ -340,16 +339,22 @@ function TodaysMacros({ onEditTargets }: { onEditTargets: () => void }) {
                     Targets
                 </button>
             </div>
-            <div className="flex flex-col gap-2.5 flex-1 justify-center">
-                <MacroBar label="Calories" value={950}  max={2400} unit=" kcal" color="#7FFA88"
-                    icon={<LocalFireDepartmentRoundedIcon sx={{ fontSize: 13 }} />} />
-                <MacroBar label="Protein"  value={69}   max={150}  unit="g"     color="#4F9CF9"
-                    icon={<FitnessCenterRoundedIcon sx={{ fontSize: 13 }} />} />
-                <MacroBar label="Carbs"    value={84}   max={270}  unit="g"     color="#FFC107"
-                    icon={<GrainRoundedIcon sx={{ fontSize: 13 }} />} />
-                <MacroBar label="Fats"     value={31}   max={80}   unit="g"     color="#FF6B9D"
-                    icon={<WaterDropRoundedIcon sx={{ fontSize: 13 }} />} />
-            </div>
+            {loading ? (
+                <div className="flex-1 flex items-center justify-center">
+                    <span className="inline-block w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                </div>
+            ) : (
+                <div className="flex flex-col gap-2.5 flex-1 justify-center">
+                    <MacroBar label="Calories" value={cal}   max={calMax}  unit="kcal" color="#7FFA88"
+                        icon={<LocalFireDepartmentRoundedIcon sx={{ fontSize: 13 }} />} />
+                    <MacroBar label="Protein"  value={prot}  max={protMax} unit="g"    color="#4F9CF9"
+                        icon={<FitnessCenterRoundedIcon sx={{ fontSize: 13 }} />} />
+                    <MacroBar label="Carbs"    value={carbs} max={carbMax} unit="g"    color="#FFC107"
+                        icon={<GrainRoundedIcon sx={{ fontSize: 13 }} />} />
+                    <MacroBar label="Fats"     value={fats}  max={fatsMax} unit="g"    color="#FF6B9D"
+                        icon={<WaterDropRoundedIcon sx={{ fontSize: 13 }} />} />
+                </div>
+            )}
         </div>
     )
 }
@@ -494,43 +499,92 @@ function CalorieChart() {
 }
 
 // ─── Macro history stacked bar chart ─────────────────────────────────────────
-const MACRO_DATA = MACRO_HISTORY.map((d, i) => ({ day: DAYS_SHORT[i], ...d }))
+function buildMacroChartData(days: MacroDay[], weekStart: Date, todayStr: string) {
+    const byDate = new Map(days.map(d => [d.date, d]))
+    return DAYS_SHORT.map((label, i) => {
+        const d       = new Date(weekStart)
+        d.setDate(weekStart.getDate() + i)
+        const dateStr = toDateStr(d)
+
+        // Future days → empty slot
+        if (dateStr > todayStr) {
+            return { label, protein: null as number | null, carbs: null as number | null, fats: null as number | null, disabled: true }
+        }
+
+        const entry = byDate.get(dateStr)
+        // All three fields are always in the same state — check protein_consumed
+        if (!entry || entry.protein_consumed === null) {
+            return { label, protein: null as number | null, carbs: null as number | null, fats: null as number | null, disabled: true }
+        }
+        // 0/null → nothing logged; number/number → normal
+        return {
+            label,
+            protein:  entry.protein_consumed,
+            carbs:    entry.carbs_consumed ?? 0,
+            fats:     entry.fats_consumed  ?? 0,
+            disabled: false,
+        }
+    })
+}
+
+const MACRO_LEGEND = [
+    { key: "protein", label: "Protein", color: "#4F9CF9" },
+    { key: "carbs",   label: "Carbs",   color: "#FFC107" },
+    { key: "fats",    label: "Fats",    color: "#FF6B9D" },
+] as const
 
 function MacroHistoryChart() {
-    const nav = useWeekNav()
-    // TODO: fetch from /api/stats/macros?week=<nav.weekStart.toISOString()> when !nav.isCurrentWeek
-    //       fetch from /api/stats/macros/current when nav.isCurrentWeek
-    const data = MACRO_DATA // replace with fetched data
+    const nav                     = useWeekNav()
+    const [days, setDays]         = useState<MacroDay[]>([])
+    const [loading, setLoading]   = useState(false)
+
+    useEffect(() => {
+        let cancelled = false
+        setLoading(true)
+        const start = toDateStr(nav.weekStart)
+        const end   = toDateStr(new Date(nav.weekStart.getTime() + 6 * 24 * 60 * 60 * 1000))
+        getMacros({ start, end })
+            .then(data => { if (!cancelled) setDays(data) })
+            .catch(() => { if (!cancelled) setDays([]) })
+            .finally(() => { if (!cancelled) setLoading(false) })
+        return () => { cancelled = true }
+    }, [nav.weekStart])
+
+    const todayStr  = toDateStr(new Date())
+    const chartData = buildMacroChartData(days, nav.weekStart, todayStr)
 
     return (
         <div className="flex flex-col gap-2 flex-1 min-h-0">
             <div className="flex items-center justify-between flex-shrink-0">
                 <PanelTitle>Macro History</PanelTitle>
-                <div className="flex items-center gap-2">
-                    <WeekNav label={nav.label} onPrev={nav.prev} onNext={nav.next} isCurrentWeek={nav.isCurrentWeek} />
-                </div>
+                <WeekNav label={nav.label} onPrev={nav.prev} onNext={nav.next} isCurrentWeek={nav.isCurrentWeek} />
             </div>
+
             <div className="flex items-center gap-3 flex-shrink-0">
-                {[
-                    { label: "Protein", color: "#4F9CF9" },
-                    { label: "Carbs",   color: "#FFC107" },
-                    { label: "Fats",    color: "#FF6B9D" },
-                ].map(m => (
-                    <div key={m.label} className="flex items-center gap-1">
+                {MACRO_LEGEND.map(m => (
+                    <div key={m.key} className="flex items-center gap-1">
                         <div className="w-2 h-2 rounded-full" style={{ background: m.color }} />
                         <span className="text-[10px] text-text-muted">{m.label}</span>
                     </div>
                 ))}
+                {loading && <span className="text-[10px] text-text-muted/40 ml-auto animate-pulse">Loading…</span>}
             </div>
+
             <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data} barSize={22} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                        <XAxis dataKey="day" tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
+                    <BarChart data={chartData} barSize={22} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
-                        <Tooltip {...TOOLTIP_STYLE} formatter={(v: number, name: string) => [`${v}g`, name]} />
-                        <Bar dataKey="protein" stackId="a" fill="#4F9CF9" />
-                        <Bar dataKey="carbs"   stackId="a" fill="#FFC107" />
-                        <Bar dataKey="fats"    stackId="a" fill="#FF6B9D" radius={[5, 5, 0, 0]} />
+                        <Tooltip
+                            {...TOOLTIP_STYLE}
+                            formatter={(v: number | null, name: string, props: { payload?: { disabled?: boolean } }) => {
+                                if (props.payload?.disabled || v === null) return ["—", name]
+                                return [`${v}g`, name]
+                            }}
+                        />
+                        <Bar dataKey="protein" stackId="a" fill="#4F9CF9" name="Protein" />
+                        <Bar dataKey="carbs"   stackId="a" fill="#FFC107" name="Carbs" />
+                        <Bar dataKey="fats"    stackId="a" fill="#FF6B9D" name="Fats" radius={[5, 5, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
@@ -685,13 +739,173 @@ function WeightChart({ onLogWeight, refreshKey }: { onLogWeight: () => void; ref
 }
 
 // ─── Meal log ─────────────────────────────────────────────────────────────────
-function MealLog({ logs }: { logs: LogEntry[] }) {
-    const navigate   = useNavigate()
-    const sorted     = [...logs].sort((a, b) => a.logged_at.localeCompare(b.logged_at))
-    const totalCal   = logs.reduce((s, e) => s + e.meal.macros.calories, 0)
-    const totalProt  = logs.reduce((s, e) => s + e.meal.macros.protein, 0)
-    const totalCarbs = logs.reduce((s, e) => s + e.meal.macros.carbs, 0)
-    const totalFats  = logs.reduce((s, e) => s + e.meal.macros.fats, 0)
+function fmtTime(iso: string): string {
+    return new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+}
+
+function fmtDateLabel(dateStr: string): string {
+    const todayStr     = toDateStr(new Date())
+    const yesterdayStr = toDateStr(new Date(Date.now() - 86_400_000))
+    if (dateStr === todayStr)     return "Today"
+    if (dateStr === yesterdayStr) return "Yesterday"
+    const [y, m, d] = dateStr.split("-").map(Number)
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+}
+
+function shiftDate(dateStr: string, days: number): string {
+    const [y, m, d] = dateStr.split("-").map(Number)
+    const dt = new Date(y, m - 1, d + days)
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`
+}
+
+function localTodayStr(): string {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+}
+
+function LogCard({
+    entry, index, allowActions, onConfirmed, onDiscarded,
+}: {
+    entry: TodayLogEntry; index: number; allowActions: boolean; onConfirmed: () => void; onDiscarded: () => void
+}) {
+    const navigate              = useNavigate()
+    const [confirming, setConfirming] = useState(false)
+    const [discarding, setDiscarding] = useState(false)
+    const busy   = confirming || discarding
+    const accent = ["#7FFA88", "#4F9CF9", "#FFC107", "#FF6B9D", "#a78bfa"][index % 5]
+    const isMeal    = entry.type === "meal"
+    const name      = entry.log_name ?? "Log"
+    const isPending = entry.confirmed_at === null
+    const cal   = parseFloat(entry.calories)
+    const prot  = parseFloat(entry.protein)
+    const carbs = parseFloat(entry.carbs)
+    const fats  = parseFloat(entry.fats)
+
+    async function handleConfirm(e: React.MouseEvent) {
+        e.stopPropagation()
+        if (busy) return
+        setConfirming(true)
+        try {
+            await confirmQuickLog(entry.id)
+            onConfirmed()
+        } catch {
+            setConfirming(false)
+        }
+    }
+
+    async function handleDiscard(e: React.MouseEvent) {
+        e.stopPropagation()
+        if (busy) return
+        setDiscarding(true)
+        try {
+            await deleteQuickLog(entry.id)
+            onDiscarded()
+        } catch {
+            setDiscarding(false)
+        }
+    }
+
+    return (
+        <div
+            className={`flex gap-3 p-3 rounded-2xl transition-all duration-200 hover:bg-white/[0.04] ${isMeal && entry.meal_post ? "cursor-pointer" : ""} ${isPending ? "opacity-70" : ""}`}
+            style={{ border: `1px solid ${isPending ? "rgba(251,146,60,0.25)" : "var(--glass-border)"}`, background: "rgba(255,255,255,0.02)" }}
+            onClick={isMeal && entry.meal_post ? () => navigate(`/feed/${entry.meal_post!.id}`) : undefined}>
+
+            {/* Thumbnail (meal) or icon (custom/estimate) */}
+            {isMeal && entry.meal_post ? (
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl overflow-hidden"
+                    style={{ border: `1px solid ${accent}40` }}>
+                    <img src={entry.meal_post.image_url} alt={name} className="w-full h-full object-cover" />
+                </div>
+            ) : (
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
+                    style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}>
+                    <RestaurantRoundedIcon sx={{ fontSize: 18 }} style={{ color: accent }} />
+                </div>
+            )}
+
+            {/* Content */}
+            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-sm font-semibold text-text truncate">{name}</span>
+                        <span className="text-[9px] text-text-muted/50 flex-shrink-0">
+                            {entry.type === "custom" ? "quick log" : entry.type === "estimate" ? "estimation" : "meal"}
+                        </span>
+                    </div>
+                    <span className="text-[10px] tabular-nums text-text-muted flex-shrink-0">{fmtTime(entry.logged_at)}</span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <LocalFireDepartmentRoundedIcon sx={{ fontSize: 12 }} style={{ color: accent }} />
+                    <span className="text-xs font-bold" style={{ color: accent }}>{Math.round(cal)} kcal</span>
+                    <span className="text-text-muted/30 text-xs">·</span>
+                    <FitnessCenterRoundedIcon sx={{ fontSize: 11 }} className="text-[#4F9CF9]" />
+                    <span className="text-[11px] text-text font-medium">{Math.round(prot)}g</span>
+                    <span className="text-text-muted/30 text-xs">·</span>
+                    <GrainRoundedIcon sx={{ fontSize: 11 }} className="text-[#FFC107]" />
+                    <span className="text-[11px] text-text font-medium">{Math.round(carbs)}g</span>
+                    <span className="text-text-muted/30 text-xs">·</span>
+                    <WaterDropRoundedIcon sx={{ fontSize: 11 }} className="text-[#FF6B9D]" />
+                    <span className="text-[11px] text-text font-medium">{Math.round(fats)}g</span>
+                </div>
+
+                {isPending && allowActions && (
+                    <div className="flex items-center gap-2 mt-0.5">
+                        <button
+                            onClick={handleConfirm}
+                            disabled={busy}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-40"
+                            style={{ background: "rgba(251,146,60,0.12)", border: "1px solid rgba(251,146,60,0.3)", color: "#fb923c" }}>
+                            {confirming
+                                ? <span className="inline-block w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin" />
+                                : <CheckCircleOutlineRoundedIcon sx={{ fontSize: 12 }} />}
+                            Confirm
+                        </button>
+                        <button
+                            onClick={handleDiscard}
+                            disabled={busy}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-40"
+                            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
+                            {discarding
+                                ? <span className="inline-block w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                                : <CloseRoundedIcon sx={{ fontSize: 12 }} />}
+                            Discard
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+function MealLog({
+    data, loading, onRefresh,
+}: {
+    data: TodayAnalytics | null; loading: boolean; onRefresh: () => void
+}) {
+    const todayStr                        = localTodayStr()
+    const [selectedDate, setSelectedDate] = useState(() => localTodayStr())
+    const isToday                         = selectedDate === todayStr
+
+    const [historyData,    setHistoryData]    = useState<TodayAnalytics | null>(null)
+    const [historyLoading, setHistoryLoading] = useState(false)
+
+    useEffect(() => {
+        if (isToday) { setHistoryData(null); return }
+        let cancelled = false
+        setHistoryLoading(true)
+        setHistoryData(null)
+        getDayAnalytics(selectedDate)
+            .then(d  => { if (!cancelled) setHistoryData(d) })
+            .catch(() => { if (!cancelled) setHistoryData(null) })
+            .finally(() => { if (!cancelled) setHistoryLoading(false) })
+        return () => { cancelled = true }
+    }, [selectedDate, isToday])
+
+    const displayData    = isToday ? data    : historyData
+    const displayLoading = isToday ? loading : historyLoading
+    const logs           = displayData?.logs ?? []
+    const isEmpty        = !displayLoading && (displayData === null || displayData.logs_count === 0)
 
     return (
         <div className="flex flex-col gap-4 p-4 h-full overflow-hidden rounded-2xl"
@@ -700,96 +914,75 @@ function MealLog({ logs }: { logs: LogEntry[] }) {
             {/* Header */}
             <div className="flex items-center justify-between flex-shrink-0">
                 <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-semibold text-text">Today's Log</span>
+                    <span className="text-sm font-semibold text-text">Log</span>
                     <span className="text-xs text-text-muted">
-                        {logs.length > 0 ? `${logs.length} meal${logs.length !== 1 ? "s" : ""} logged` : "Nothing logged yet"}
+                        {displayLoading
+                            ? "Loading…"
+                            : logs.length > 0
+                                ? `${logs.length} item${logs.length !== 1 ? "s" : ""} · ${Math.round(displayData?.calories_consumed ?? 0).toLocaleString()} kcal`
+                                : "Nothing logged"}
                     </span>
                 </div>
-                {logs.length > 0 && (
-                    <span className="text-lg font-bold text-primary">{totalCal.toLocaleString()}
-                        <span className="text-xs font-normal text-text-muted ml-1">kcal</span>
-                    </span>
-                )}
-            </div>
 
-            {/* Macro summary strip */}
-            {logs.length > 0 && (
-                <div className="flex gap-2 flex-shrink-0">
-                    {[
-                        { label: "P", val: totalProt,  unit: "g", color: "#4F9CF9" },
-                        { label: "C", val: totalCarbs, unit: "g", color: "#FFC107" },
-                        { label: "F", val: totalFats,  unit: "g", color: "#FF6B9D" },
-                    ].map(m => (
-                        <div key={m.label} className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl"
-                            style={{ background: `${m.color}0f`, border: `1px solid ${m.color}20` }}>
-                            <span className="text-[10px] font-medium text-text-muted">{m.label}</span>
-                            <span className="text-xs font-bold" style={{ color: m.color }}>{m.val}{m.unit}</span>
-                        </div>
-                    ))}
+                <div className="flex items-center gap-1">
+                    {/* Prev day */}
+                    <button
+                        onClick={() => setSelectedDate(d => shiftDate(d, -1))}
+                        className="p-1 rounded-lg text-text-muted hover:text-text transition-colors hover:bg-white/5">
+                        <ChevronLeftRoundedIcon sx={{ fontSize: 16 }} />
+                    </button>
+
+                    {/* Date label */}
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-lg min-w-[72px] text-center transition-colors ${isToday ? "text-primary" : "text-text"}`}
+                        style={{ background: isToday ? "rgba(127,250,136,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${isToday ? "rgba(127,250,136,0.2)" : "var(--glass-border)"}` }}>
+                        {fmtDateLabel(selectedDate)}
+                    </span>
+
+                    {/* Next day — disabled on today */}
+                    <button
+                        onClick={() => setSelectedDate(d => shiftDate(d, 1))}
+                        disabled={isToday}
+                        className="p-1 rounded-lg transition-colors hover:bg-white/5"
+                        style={{ color: isToday ? "rgba(179,188,181,0.25)" : undefined }}>
+                        <ChevronRightRoundedIcon sx={{ fontSize: 16 }} />
+                    </button>
                 </div>
-            )}
+            </div>
 
             <div className="h-px flex-shrink-0" style={{ background: "var(--glass-border)" }} />
 
-            {/* Cards */}
-            {logs.length === 0 ? (
+            {/* Body */}
+            {displayLoading ? (
+                <div className="flex-1 flex items-center justify-center">
+                    <span className="inline-block w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                </div>
+            ) : isEmpty ? (
                 <div className="flex flex-col items-center gap-3 flex-1 justify-center text-center">
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
                         style={{ background: "rgba(127,250,136,0.07)", border: "1px solid rgba(127,250,136,0.13)" }}>
                         <RestaurantRoundedIcon sx={{ fontSize: 22 }} className="text-primary/40" />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium text-text">No meals logged today</span>
-                        <span className="text-xs text-text-muted/50">Add a meal to start tracking</span>
+                        <span className="text-sm font-medium text-text">No meals logged</span>
+                        <span className="text-xs text-text-muted/50">
+                            {isToday ? "Add a meal to start tracking" : "Nothing was logged on this day"}
+                        </span>
                     </div>
                 </div>
             ) : (
                 <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 min-h-0 pr-0.5">
-                    {sorted.map(({ meal, logged_at }, i) => {
-                        const m        = meal.macros
-                        const fromPost = !!meal.image_url
-                        const accent   = ["#7FFA88", "#4F9CF9", "#FFC107", "#FF6B9D", "#a78bfa"][i % 5]
-
-                        return (
-                            <div key={meal.id}
-                                className={`flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 hover:bg-white/[0.04] ${fromPost ? "cursor-pointer" : ""}`}
-                                style={{ border: "1px solid var(--glass-border)", background: "rgba(255,255,255,0.02)" }}
-                                onClick={fromPost ? () => navigate(`/feed/${meal.id}`) : undefined}>
-
-                                {/* Icon */}
-                                <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-                                    style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}>
-                                    <RestaurantRoundedIcon sx={{ fontSize: 18 }} style={{ color: accent }} />
-                                </div>
-
-                                {/* Name + macros */}
-                                <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="text-sm font-semibold text-text truncate">{meal.name}</span>
-                                        <span className="text-xs tabular-nums text-text-muted flex-shrink-0">{logged_at}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-xs font-bold" style={{ color: accent }}>{m.calories} kcal</span>
-                                        <span className="text-text-muted/30 text-xs">·</span>
-                                        <span className="text-[11px] text-text-muted">P <span className="text-text font-medium">{m.protein}g</span></span>
-                                        <span className="text-text-muted/30 text-xs">·</span>
-                                        <span className="text-[11px] text-text-muted">C <span className="text-text font-medium">{m.carbs}g</span></span>
-                                        <span className="text-text-muted/30 text-xs">·</span>
-                                        <span className="text-[11px] text-text-muted">F <span className="text-text font-medium">{m.fats}g</span></span>
-                                    </div>
-                                </div>
-
-                                {/* Post thumbnail — only when image exists */}
-                                {fromPost && (
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden"
-                                        style={{ border: `1px solid ${accent}40` }}>
-                                        <img src={meal.image_url} alt={meal.name} className="w-full h-full object-cover" />
-                                    </div>
-                                )}
-
-                            </div>
-                        )
-                    })}
+                    {[...logs]
+                        .sort((a, b) => a.logged_at.localeCompare(b.logged_at))
+                        .map((entry, i) => (
+                            <LogCard
+                                key={entry.id}
+                                entry={entry}
+                                index={i}
+                                allowActions={isToday}
+                                onConfirmed={onRefresh}
+                                onDiscarded={onRefresh}
+                            />
+                        ))}
                 </div>
             )}
 
@@ -797,22 +990,50 @@ function MealLog({ logs }: { logs: LogEntry[] }) {
     )
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-export default function MyStats() {
+// ─── Clock (isolated so the 1 s interval only re-renders this tiny node) ──────
+function Clock() {
     const [now, setNow] = useState(new Date())
-
     useEffect(() => {
         const id = setInterval(() => setNow(new Date()), 1000)
         return () => clearInterval(id)
     }, [])
+    return (
+        <div className="flex flex-col gap-0 min-w-0">
+            <span className="text-base font-semibold text-text leading-tight">
+                {now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+            </span>
+            <span className="text-xs text-text-muted tabular-nums">
+                {now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+        </div>
+    )
+}
 
-    const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
-    const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-
-    const currentStreak  = 7
+// ─── Main ─────────────────────────────────────────────────────────────────────
+export default function MyStats() {
+    const [currentStreak,    setCurrentStreak]    = useState<number | null>(null)
     const [showTargets,      setShowTargets]      = useState(false)
     const [showWeight,       setShowWeight]       = useState(false)
     const [weightRefreshKey, setWeightRefreshKey] = useState(0)
+    const [todayData,        setTodayData]        = useState<TodayAnalytics | null>(null)
+    const [todayLoading,     setTodayLoading]     = useState(true)
+    const [todayRefreshKey,  setTodayRefreshKey]  = useState(0)
+
+    useEffect(() => {
+        let cancelled = false
+        setTodayLoading(true)
+        getTodayAnalytics()
+            .then(d => { if (!cancelled) setTodayData(d) })
+            .catch(() => { if (!cancelled) setTodayData(null) })
+            .finally(() => { if (!cancelled) setTodayLoading(false) })
+        return () => { cancelled = true }
+    }, [todayRefreshKey])
+
+    useEffect(() => {
+        getStreak()
+            .then(s => setCurrentStreak(s))
+            .catch(() => setCurrentStreak(null))
+    }, [])
 
     return (
         <div className="w-full h-full flex flex-col gap-4 overflow-y-auto">
@@ -822,21 +1043,19 @@ export default function MyStats() {
             {/* ── Header ── */}
             <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
 
-                {/* Date + time */}
-                <div className="flex flex-col gap-0 min-w-0">
-                    <span className="text-base font-semibold text-text leading-tight">{dateStr}</span>
-                    <span className="text-xs text-text-muted tabular-nums">{timeStr}</span>
-                </div>
+                <Clock />
 
                 <div className="flex-1" />
 
                 {/* Streak indicator */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
-                    style={{ background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.2)" }}>
-                    <WhatshotRoundedIcon sx={{ fontSize: 16 }} className="text-orange-400" />
-                    <span className="text-sm font-bold text-orange-400">{currentStreak}</span>
-                    <span className="text-xs text-text-muted">day streak</span>
-                </div>
+                {currentStreak !== null && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
+                        style={{ background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.2)" }}>
+                        <WhatshotRoundedIcon sx={{ fontSize: 16 }} className="text-orange-400" />
+                        <span className="text-sm font-bold text-orange-400">{currentStreak}</span>
+                        <span className="text-xs text-text-muted">day streak</span>
+                    </div>
+                )}
 
             </div>
 
@@ -847,7 +1066,10 @@ export default function MyStats() {
                 <div className="flex-[2] grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-rows-2 lg:min-h-0">
 
                     <Panel className="min-h-[220px] lg:min-h-0">
-                        <TodaysMacros onEditTargets={() => setShowTargets(true)} />
+                        <TodaysMacros
+                            onEditTargets={() => setShowTargets(true)}
+                            refreshKey={todayRefreshKey}
+                        />
                     </Panel>
 
                     <Panel className="min-h-[220px] lg:min-h-0">
@@ -866,7 +1088,11 @@ export default function MyStats() {
 
                 {/* Meal log: full width on small, sidebar on large */}
                 <div className="flex-1 min-h-[400px] lg:min-h-0">
-                    <MealLog logs={PLACEHOLDER_LOGS} />
+                    <MealLog
+                        data={todayData}
+                        loading={todayLoading}
+                        onRefresh={() => setTodayRefreshKey(k => k + 1)}
+                    />
                 </div>
 
             </div>
