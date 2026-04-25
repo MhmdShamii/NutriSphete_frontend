@@ -75,7 +75,7 @@ export type ProfileMealsMeta = {
     per_page: number
 }
 
-export const likeMealApi   = async (mealId: number) => apiClient.post(`/meals/${mealId}/like`)
+export const likeMealApi = async (mealId: number) => apiClient.post(`/meals/${mealId}/like`)
 export const unlikeMealApi = async (mealId: number) => apiClient.delete(`/meals/${mealId}/like`)
 
 export const getMealApi = async (mealId: number): Promise<import("../../features/mealCreation/types/meal.types").MealDetail> => {

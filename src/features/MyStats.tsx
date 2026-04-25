@@ -1036,7 +1036,7 @@ export default function MyStats() {
     }, [])
 
     return (
-        <div className="w-full flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-4 lg:h-full">
             {showTargets && <UpdateTargetsModal onClose={() => setShowTargets(false)} />}
             {showWeight  && <LogWeightModal     onClose={() => setShowWeight(false)}  onSuccess={() => setWeightRefreshKey(k => k + 1)} />}
 
