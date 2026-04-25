@@ -308,10 +308,12 @@ export default function MealPage() {
             {warningIngredients.length > 0 && (
                 <HealthWarningModal
                     flaggedIngredients={warningIngredients}
-                    onEdit={() => { setPendingLogId(null); setWarningIngredients([]) }}
+                    onEdit={handleWarningDiscard}
                     onIgnore={handleWarningIgnore}
                     onDiscard={handleWarningDiscard}
                     confirmLabel="Log anyway"
+                    discardLabel="Remove from log"
+                    hideEdit
                 />
             )}
         </div>

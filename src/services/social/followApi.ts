@@ -1,5 +1,22 @@
 import apiClient from "../apiClient"
 
+export type PublicUserProfile = {
+    id: number
+    first_name: string | null
+    last_name: string | null
+    country: { code: string | null; name: string | null }
+    image: { avatar: string; cover_image: string }
+    followers_count: number
+    following_count: number
+    is_following: boolean
+    follows_you: boolean
+}
+
+export const getUserPublicProfileApi = async (userId: number): Promise<PublicUserProfile> => {
+    const res = await apiClient.get(`/users/${userId}`)
+    return res.data.user
+}
+
 export type FollowUser = {
     id: number
     first_name: string

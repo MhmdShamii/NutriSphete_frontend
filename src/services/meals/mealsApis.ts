@@ -54,16 +54,25 @@ export const logMeal = async (mealId: number): Promise<LogMealResponse> => {
 export type ProfileMeal = {
     id: number
     name: string
-    description: string
-    image_url: string
-    servings: number
-    macros: import("../../features/mealCreation/types/meal.types").MealMacros
+    image_url: string | null
+    macros: {
+        calories: number
+        protein: number
+        carbs: number
+        fats: number
+    }
+    engagement: {
+        likes_count: number
+        relogs_count: number
+        comments_count: number
+        is_liked: boolean
+    }
 }
 
 export type ProfileMealsMeta = {
-    current_page: number
-    last_page: number
-    total: number
+    next_cursor: string | null
+    prev_cursor: string | null
+    per_page: number
 }
 
 export const likeMealApi   = async (mealId: number) => apiClient.post(`/meals/${mealId}/like`)
@@ -75,10 +84,22 @@ export const getMealApi = async (mealId: number): Promise<import("../../features
 }
 
 export const getUserMealsApi = async (
-    userId: number | "me",
-    page = 1
+    userId: number,
+    cursor?: string
 ): Promise<{ data: ProfileMeal[]; meta: ProfileMealsMeta }> => {
-    const response = await apiClient.get(`/users/${userId}/meals`, { params: { page } })
+    const response = await apiClient.get(`/users/${userId}/meals`, {
+        params: cursor ? { cursor } : {},
+    })
+    return response.data
+}
+
+export const getUserPrivateMealsApi = async (
+    userId: number,
+    cursor?: string
+): Promise<{ data: ProfileMeal[]; meta: ProfileMealsMeta }> => {
+    const response = await apiClient.get(`/users/${userId}/meals/private`, {
+        params: cursor ? { cursor } : {},
+    })
     return response.data
 }
 

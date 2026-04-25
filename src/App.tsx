@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux"
 import { fetchMe } from "./features/auth/authSlice"
 import type { AppDispatch } from "./app/store"
 
+import { Navigate } from "react-router-dom"
 import AuthPage from "./features/auth/AuthPage"
 import VerifySuccess from "./features/auth/VerifySuccess"
 import Home from "./features/Home"
@@ -46,6 +47,7 @@ function App() {
 
         {/* App — logged in + onboarding complete */}
         <Route element={<ProtectedRoute><OnboardedRoute><Home /></OnboardedRoute></ProtectedRoute>}>
+          <Route index path="/" element={<Navigate to="/stats" replace />} />
           <Route path="/stats" element={<MyStats />} />
           <Route path="/feed" element={<Feed />} />
           <Route path="/coaches" element={<p className="text-2xl text-primary">Coaches</p>} />
