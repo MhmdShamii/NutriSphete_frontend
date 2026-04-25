@@ -53,6 +53,25 @@ export interface MealDraft {
     visibility: "public" | "private"
 }
 
+export interface MealAuthor {
+    id: number
+    first_name: string
+    last_name: string
+    avatar: string
+}
+
+export interface MealEngagement {
+    likes_count: number
+    relogs_count: number
+    comments_count: number
+    is_liked: boolean
+}
+
+export interface MealDetail extends MealDraft {
+    engagement: MealEngagement
+    author: MealAuthor
+}
+
 export interface CreateMealResponse {
     meal: MealDraft
     health_warning: HealthWarning

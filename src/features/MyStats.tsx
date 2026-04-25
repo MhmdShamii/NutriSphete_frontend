@@ -809,7 +809,7 @@ function LogCard({
         <div
             className={`flex gap-3 p-3 rounded-2xl transition-all duration-200 hover:bg-white/[0.04] ${isMeal && entry.meal_post ? "cursor-pointer" : ""} ${isPending ? "opacity-70" : ""}`}
             style={{ border: `1px solid ${isPending ? "rgba(251,146,60,0.25)" : "var(--glass-border)"}`, background: "rgba(255,255,255,0.02)" }}
-            onClick={isMeal && entry.meal_post ? () => navigate(`/feed/${entry.meal_post!.id}`) : undefined}>
+            onClick={isMeal && entry.meal_post ? () => navigate(`/meals/${entry.meal_post!.id}`) : undefined}>
 
             {/* Thumbnail (meal) or icon (custom/estimate) */}
             {isMeal && entry.meal_post ? (

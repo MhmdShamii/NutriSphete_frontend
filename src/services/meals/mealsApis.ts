@@ -51,3 +51,34 @@ export const logMeal = async (mealId: number): Promise<LogMealResponse> => {
     }
 }
 
+export type ProfileMeal = {
+    id: number
+    name: string
+    description: string
+    image_url: string
+    servings: number
+    macros: import("../../features/mealCreation/types/meal.types").MealMacros
+}
+
+export type ProfileMealsMeta = {
+    current_page: number
+    last_page: number
+    total: number
+}
+
+export const likeMealApi   = async (mealId: number) => apiClient.post(`/meals/${mealId}/like`)
+export const unlikeMealApi = async (mealId: number) => apiClient.delete(`/meals/${mealId}/like`)
+
+export const getMealApi = async (mealId: number): Promise<import("../../features/mealCreation/types/meal.types").MealDetail> => {
+    const response = await apiClient.get(`/meals/${mealId}`)
+    return response.data.meal
+}
+
+export const getUserMealsApi = async (
+    userId: number | "me",
+    page = 1
+): Promise<{ data: ProfileMeal[]; meta: ProfileMealsMeta }> => {
+    const response = await apiClient.get(`/users/${userId}/meals`, { params: { page } })
+    return response.data
+}
+

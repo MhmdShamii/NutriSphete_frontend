@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useParams } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
 import type { RootState, AppDispatch } from "../app/store"
 import { fetchMe, updateMe } from "./auth/authSlice"
@@ -15,6 +16,8 @@ function alpha3to2(alpha3: string | null) {
     if (!alpha3) return null
     return isoCountries.alpha3ToAlpha2(alpha3)?.toLowerCase() ?? null
 }
+import FollowListModal from "./profile/FollowListModal"
+import ProfileRecipes from "./profile/ProfileRecipes"
 import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded"
 import LockRoundedIcon from "@mui/icons-material/LockRounded"
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded"
@@ -43,27 +46,27 @@ function ProfileSkeleton() {
                 style={{ border: "1px solid var(--glass-border)", borderRadius: "24px 24px 0 0", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}
             >
                 {/* Banner skeleton */}
-                <Shimmer className="w-full h-44 sm:h-52 !rounded-none" style={{ borderRadius: "24px 24px 0 0" } as React.CSSProperties} />
+                <Shimmer className="w-full h-32 sm:h-40 !rounded-none" style={{ borderRadius: "24px 24px 0 0" } as React.CSSProperties} />
 
                 {/* Avatar + info skeleton */}
-                <div className="px-6 sm:px-8 pb-5">
-                    <div className="relative w-fit -mt-12 sm:-mt-14 mb-4">
-                        <Shimmer className="w-24 h-24 sm:w-28 sm:h-28 !rounded-full" />
+                <div className="px-5 sm:px-6 pb-4">
+                    <div className="relative w-fit -mt-9 sm:-mt-11 mb-3">
+                        <Shimmer className="w-20 h-20 sm:w-24 sm:h-24 !rounded-full" />
                     </div>
-                    <div className="flex items-end justify-between gap-4 flex-wrap">
-                        <div className="flex flex-col gap-2">
-                            <Shimmer className="h-5 w-36" />
-                            <Shimmer className="h-3.5 w-48" />
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col gap-1.5">
+                            <Shimmer className="h-4 w-32" />
+                            <Shimmer className="h-3 w-44" />
                         </div>
-                        <div className="flex items-center gap-5 pb-0.5">
-                            <div className="flex flex-col items-center gap-1.5">
-                                <Shimmer className="h-5 w-10" />
-                                <Shimmer className="h-3 w-14" />
+                        <div className="flex items-center gap-4 flex-shrink-0">
+                            <div className="flex flex-col items-center gap-1">
+                                <Shimmer className="h-4 w-8" />
+                                <Shimmer className="h-2.5 w-14" />
                             </div>
-                            <div className="w-px h-8 bg-border/30" />
-                            <div className="flex flex-col items-center gap-1.5">
-                                <Shimmer className="h-5 w-10" />
-                                <Shimmer className="h-3 w-14" />
+                            <div className="w-px h-6 bg-border/30" />
+                            <div className="flex flex-col items-center gap-1">
+                                <Shimmer className="h-4 w-8" />
+                                <Shimmer className="h-2.5 w-14" />
                             </div>
                         </div>
                     </div>
@@ -94,6 +97,9 @@ function ProfileSkeleton() {
 }
 
 export default function Profile() {
+    const { id: profileId } = useParams<{ id: string }>()
+    const isOwnProfile = !profileId
+
     const dispatch = useDispatch<AppDispatch>()
     const { user, loading, error } = useSelector((state: RootState) => state.auth)
     const [tab, setTab] = useState<Tab>("recipes")
@@ -102,6 +108,8 @@ export default function Profile() {
     const [form, setForm] = useState({ first_name: "", last_name: "" })
     const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
     const snapshot = useRef({ first_name: "", last_name: "", country_code: "" })
+
+    const [followModal, setFollowModal] = useState<"followers" | "following" | null>(null)
 
     const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
     const [avatarLoading, setAvatarLoading] = useState(false)
@@ -184,7 +192,7 @@ export default function Profile() {
                 style={{ border: "1px solid var(--glass-border)", borderRadius: "24px 24px 0 0", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}
             >
                 {/* Banner */}
-                <div className="relative w-full h-44 sm:h-52 flex-shrink-0 overflow-hidden"
+                <div className="relative w-full h-32 sm:h-40 flex-shrink-0 overflow-hidden"
                     style={{ borderRadius: "24px 24px 0 0" }}
                 >
                     {user.image.cover_image
@@ -210,31 +218,28 @@ export default function Profile() {
                 </div>
 
                 {/* Avatar + info */}
-                <div className="px-6 sm:px-8 pb-5">
+                <div className="px-5 sm:px-6 pb-4">
                     {/* Avatar editor */}
-                    <div ref={avatarMenuRef} className="relative w-fit -mt-12 sm:-mt-14 mb-4">
-                        {/* Circle — clickable */}
+                    <div ref={avatarMenuRef} className="relative w-fit -mt-9 sm:-mt-11 mb-3">
                         <button
                             type="button"
                             onClick={() => setAvatarMenuOpen(o => !o)}
                             className="relative group block rounded-full focus:outline-none"
-                            style={{ border: "4px solid var(--background)", borderRadius: "9999px" }}
+                            style={{ border: "3px solid var(--background)", borderRadius: "9999px" }}
                         >
                             <img
                                 src={user.image.avatar}
                                 alt="avatar"
-                                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-xl block"
+                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-xl block"
                             />
-                            {/* Hover overlay */}
                             <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100
                                 transition-opacity duration-200 flex items-center justify-center">
                                 {avatarLoading
-                                    ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    : <PhotoCameraRoundedIcon sx={{ fontSize: 22 }} className="text-white" />}
+                                    ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    : <PhotoCameraRoundedIcon sx={{ fontSize: 18 }} className="text-white" />}
                             </div>
                         </button>
 
-                        {/* Dropdown menu */}
                         {avatarMenuOpen && (
                             <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl shadow-xl z-50 overflow-hidden"
                                 style={{ background: "var(--surface)", border: "1px solid var(--glass-border)" }}>
@@ -263,45 +268,41 @@ export default function Profile() {
                         )}
                     </div>
 
-                    {/* Name / edit row */}
-                    <form onSubmit={handleSave}>
-                        <div className="flex items-start justify-between gap-4">
-                            <div className="flex flex-col gap-1 min-w-0">
-
-                                {editing ? (
-                                    /* ── Edit mode ── */
-                                    <div className="flex flex-wrap items-center gap-2">
+                    {/* Name / edit form + stats */}
+                    <div className="flex items-start justify-between gap-3">
+                        <form onSubmit={handleSave} className="flex-1 min-w-0">
+                            {editing ? (
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex gap-2">
                                         <input
                                             autoFocus
                                             value={form.first_name}
                                             onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))}
-                                            placeholder="First"
-                                            className="text-xl font-bold text-text bg-white/5 border border-white/10 rounded-lg
-                                            px-2.5 py-1 outline-none w-28 focus:border-primary/60
-                                            focus:bg-primary/5 focus:shadow-[0_0_12px_rgba(127,250,136,0.15)]
-                                            transition-all duration-200 placeholder:text-text-muted/30"
+                                            placeholder="First name"
+                                            className="flex-1 min-w-0 text-sm text-text bg-white/5 border border-white/10 rounded-lg
+                                            px-3 py-2 outline-none focus:border-primary/60 focus:bg-primary/5
+                                            focus:shadow-[0_0_12px_rgba(127,250,136,0.12)] transition-all duration-200
+                                            placeholder:text-text-muted/30"
                                         />
                                         <input
                                             value={form.last_name}
                                             onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))}
-                                            placeholder="Last"
-                                            className="text-xl font-bold text-text bg-white/5 border border-white/10 rounded-lg
-                                            px-2.5 py-1 outline-none w-28 focus:border-primary/60
-                                            focus:bg-primary/5 focus:shadow-[0_0_12px_rgba(127,250,136,0.15)]
-                                            transition-all duration-200 placeholder:text-text-muted/30"
+                                            placeholder="Last name"
+                                            className="flex-1 min-w-0 text-sm text-text bg-white/5 border border-white/10 rounded-lg
+                                            px-3 py-2 outline-none focus:border-primary/60 focus:bg-primary/5
+                                            focus:shadow-[0_0_12px_rgba(127,250,136,0.12)] transition-all duration-200
+                                            placeholder:text-text-muted/30"
                                         />
-                                        {/* Country dropdown inline */}
-                                        <div className="w-44">
-                                            <CountryDropdown
-                                                countries={countries}
-                                                selected={selectedCountry}
-                                                onSelect={setSelectedCountry}
-                                                show="name"
-                                            />
-                                        </div>
-                                        {/* Save / Cancel */}
+                                    </div>
+                                    <CountryDropdown
+                                        countries={countries}
+                                        selected={selectedCountry}
+                                        onSelect={setSelectedCountry}
+                                        show="name"
+                                    />
+                                    <div className="flex items-center gap-2">
                                         <button type="submit" disabled={loading}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium
                                             bg-primary text-black hover:bg-primary/90 disabled:opacity-50 transition-all duration-200">
                                             {loading
                                                 ? <span className="w-3 h-3 border-[1.5px] border-black border-t-transparent rounded-full animate-spin" />
@@ -311,58 +312,70 @@ export default function Profile() {
                                             Save
                                         </button>
                                         <button type="button" onClick={() => setEditing(false)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium
                                             text-text-muted border border-white/10 hover:border-white/20 hover:text-text transition-all duration-200">
                                             <CloseRoundedIcon sx={{ fontSize: 12 }} />
                                             Cancel
                                         </button>
                                         {error && <p className="text-xs text-red-400">{error}</p>}
                                     </div>
-                                ) : (
-                                    /* ── View mode ── */
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-xl font-bold text-text">{user.first_name} {user.last_name}</h2>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-0.5">
+                                    <div className="flex items-center gap-1.5">
+                                        <h2 className="text-sm font-semibold text-text sm:text-base truncate">
+                                            {user.first_name} {user.last_name}
+                                        </h2>
                                         {alpha3to2(user.country.code) && (
-                                            <span className={`fi fi-${alpha3to2(user.country.code)} text-base flex-shrink-0`} />
+                                            <span className={`fi fi-${alpha3to2(user.country.code)} text-sm flex-shrink-0`} />
                                         )}
                                         <button type="button" onClick={() => setEditing(true)}
-                                            className="p-1 rounded-lg text-text-muted/40 hover:text-primary hover:bg-primary/10 transition-all duration-200">
-                                            <EditRoundedIcon sx={{ fontSize: 14 }} />
+                                            className="p-1 rounded-md text-text-muted/40 hover:text-primary hover:bg-primary/10 transition-all duration-200 flex-shrink-0">
+                                            <EditRoundedIcon sx={{ fontSize: 12 }} />
                                         </button>
                                     </div>
-                                )}
-
-                                <p className="text-sm text-text-muted">{user.email}</p>
-                                {!editing && user.country.name && (
-                                    <p className="text-xs text-text-muted/50">{user.country.name}</p>
-                                )}
-                            </div>
-
-                            {/* Stats — right side */}
-                            <div className="flex items-center gap-5 flex-shrink-0">
-                                <div className="flex flex-col items-center">
-                                    <span className="text-base font-bold text-text">2.4k</span>
-                                    <span className="text-xs text-text-muted">Followers</span>
+                                    <p className="hidden sm:block text-xs text-text-muted truncate">{user.email}</p>
+                                    {user.country.name && (
+                                        <p className="hidden sm:block text-xs text-text-muted/40">{user.country.name}</p>
+                                    )}
                                 </div>
-                                <div className="w-px h-8 bg-border/30" />
-                                <div className="flex flex-col items-center">
-                                    <span className="text-base font-bold text-text">318</span>
-                                    <span className="text-xs text-text-muted">Following</span>
-                                </div>
-                            </div>
+                            )}
+                        </form>
+
+                        {/* Stats — top right */}
+                        <div className="flex items-center gap-4 flex-shrink-0 pt-0.5">
+                            <button
+                                type="button"
+                                onClick={() => setFollowModal("followers")}
+                                className="flex flex-col items-center hover:opacity-70 transition-opacity"
+                            >
+                                <span className="text-sm font-bold text-text">{user.followers_count.toLocaleString()}</span>
+                                <span className="text-xs text-text-muted">Followers</span>
+                            </button>
+                            <div className="w-px h-6 bg-border/30" />
+                            <button
+                                type="button"
+                                onClick={() => setFollowModal("following")}
+                                className="flex flex-col items-center hover:opacity-70 transition-opacity"
+                            >
+                                <span className="text-sm font-bold text-text">{user.following_count.toLocaleString()}</span>
+                                <span className="text-xs text-text-muted">Following</span>
+                            </button>
                         </div>
-                    </form>
+                    </div>
                 </div>
 
                 {/* Tabs */}
                 <div className="flex border-t" style={{ borderColor: "var(--glass-border)" }}>
                     {([
-                        { key: "recipes", label: "Recipes", icon: <MenuBookRoundedIcon sx={{ fontSize: 16 }} /> },
-                        { key: "private", label: "Private", icon: <LockRoundedIcon sx={{ fontSize: 16 }} /> },
-                        { key: "saved", label: "Saved", icon: <BookmarkRoundedIcon sx={{ fontSize: 16 }} /> },
+                        { key: "recipes", label: "Recipes", icon: <MenuBookRoundedIcon sx={{ fontSize: 14 }} /> },
+                        ...(isOwnProfile ? [
+                            { key: "private", label: "Private", icon: <LockRoundedIcon sx={{ fontSize: 14 }} /> },
+                            { key: "saved", label: "Saved", icon: <BookmarkRoundedIcon sx={{ fontSize: 14 }} /> },
+                        ] : []),
                     ] as { key: Tab; label: string; icon: React.ReactNode }[]).map(t => (
                         <button key={t.key} onClick={() => setTab(t.key)}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-medium transition-all duration-200
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs sm:text-sm font-medium transition-all duration-200
                                 ${tab === t.key
                                     ? "text-primary border-b-2 border-primary"
                                     : "text-text-muted hover:text-text border-b-2 border-transparent"
@@ -376,8 +389,7 @@ export default function Profile() {
 
             {/* ── Recipes ── */}
             {tab === "recipes" && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
-                </div>
+                <ProfileRecipes userId={profileId ? Number(profileId) : "me"} />
             )}
 
             {/* ── Private ── */}
@@ -390,6 +402,14 @@ export default function Profile() {
             {tab === "saved" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
                 </div>
+            )}
+
+            {followModal && (
+                <FollowListModal
+                    userId={user.id}
+                    mode={followModal}
+                    onClose={() => setFollowModal(null)}
+                />
             )}
 
         </div>

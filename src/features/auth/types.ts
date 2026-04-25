@@ -82,6 +82,8 @@ export type AuthUser = {
         cover_image: string
     }
     profile: UserProfile | null
+    followers_count: number
+    following_count: number
 }
 
 export type AuthState = {
