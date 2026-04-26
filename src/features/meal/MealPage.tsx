@@ -16,6 +16,7 @@ import type { MealDetail, FlaggedIngredient } from "../mealCreation/types/meal.t
 import { getMealApi, likeMealApi, unlikeMealApi, logMeal } from "../../services/meals/mealsApis"
 import { confirmQuickLog, deleteQuickLog } from "../../services/log/quickLogApi"
 import HealthWarningModal from "../mealCreation/components/HealthWarningModal"
+import CommentsSheet from "./CommentsSheet"
 
 function Shimmer({ className }: { className?: string }) {
     return (
@@ -59,6 +60,7 @@ export default function MealPage() {
     const [logged, setLogged] = useState(false)
     const [pendingLogId, setPendingLogId] = useState<number | null>(null)
     const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
+    const [showComments, setShowComments] = useState(false)
 
     useEffect(() => {
         if (!id) return
@@ -210,7 +212,10 @@ export default function MealPage() {
                     <span className={`text-xs font-medium ${liked ? "text-red-400" : ""}`}>{likeCount.toLocaleString()}</span>
                 </button>
 
-                <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-colors text-text-muted hover:text-text">
+                <button
+                    onClick={() => setShowComments(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-colors text-text-muted hover:text-text"
+                >
                     <ChatBubbleOutlineRoundedIcon sx={{ fontSize: 17 }} />
                     <span className="text-xs font-medium">{commentCount.toLocaleString()}</span>
                 </button>
@@ -304,6 +309,15 @@ export default function MealPage() {
                 )}
 
             </div>
+
+            {showComments && meal && (
+                <CommentsSheet
+                    mealId={meal.id}
+                    mealName={meal.name}
+                    onClose={() => setShowComments(false)}
+                    onCountChange={delta => setCommentCount(c => c + delta)}
+                />
+            )}
 
             {warningIngredients.length > 0 && (
                 <HealthWarningModal
