@@ -14,7 +14,7 @@ import WaterDropRoundedIcon from "@mui/icons-material/WaterDropRounded"
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 import type { RootState } from "../../app/store"
-import { getFeed, type FeedPost } from "../../services/feed/feedApi"
+import { getFeed, getFollowingFeed, type FeedPost } from "../../services/feed/feedApi"
 import { likeMealApi, unlikeMealApi, logMeal } from "../../services/meals/mealsApis"
 import { followUserApi, unfollowUserApi } from "../../services/social/followApi"
 import { confirmQuickLog, deleteQuickLog } from "../../services/log/quickLogApi"
@@ -225,9 +225,9 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
     const [followLoading, setFollowLoading] = useState(false)
 
     // Log (relog) state
-    const [logState,          setLogState]          = useState<LogState>("idle")
-    const [pendingLogId,      setPendingLogId]       = useState<number | null>(null)
-    const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
+    const [logState,           setLogState]           = useState<LogState>("idle")
+    const [pendingLogId,       setPendingLogId]        = useState<number | null>(null)
+    const [warningIngredients, setWarningIngredients]  = useState<FlaggedIngredient[]>([])
 
     // Comments sheet
     const [showComments, setShowComments] = useState(false)
@@ -278,23 +278,19 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
         }
     }
 
-    async function handleWarningIgnore() {
-        if (!pendingLogId) return
-        try {
-            await confirmQuickLog(pendingLogId)
-            setLogState("logged")
-            setRelogCount(c => c + 1)
-        } finally {
-            setPendingLogId(null)
-            setWarningIngredients([])
-        }
+    function handleWarningIgnore() {
+        setPendingLogId(null)
+        setWarningIngredients([])
+        setLogState("logged")
+        setRelogCount(c => c + 1)
     }
 
     async function handleWarningDiscard() {
         if (!pendingLogId) return
-        try { await deleteQuickLog(pendingLogId) } catch { /* ignore */ }
+        const id = pendingLogId
         setPendingLogId(null)
         setWarningIngredients([])
+        try { await deleteQuickLog(id) } catch { /* ignore */ }
     }
 
     const showFollow = !following && currentUserId !== initialPost.author.id
@@ -483,35 +479,46 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
 
 // ─── Feed ─────────────────────────────────────────────────────────────────────
 
+type FeedTab = "explore" | "following"
+
 export default function Feed() {
-    const [posts,     setPosts]     = useState<FeedPost[]>([])
-    const [cursor,    setCursor]    = useState<string | null | undefined>(undefined) // undefined = not loaded yet
-    const [loading,   setLoading]   = useState(true)
+    const [tab,         setTab]         = useState<FeedTab>("explore")
+    const [posts,       setPosts]       = useState<FeedPost[]>([])
+    const [cursor,      setCursor]      = useState<string | null | undefined>(undefined)
+    const [loading,     setLoading]     = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
     const sentinelRef = useRef<HTMLDivElement>(null)
 
-    // Initial load
+    const fetchFn = tab === "explore" ? getFeed : getFollowingFeed
+
+    // Reload when tab changes
     useEffect(() => {
+        let cancelled = false
+        setPosts([])
+        setCursor(undefined)
         setLoading(true)
-        getFeed()
+        fetchFn()
             .then(res => {
+                if (cancelled) return
                 setPosts(res.data)
                 setCursor(res.next_cursor)
             })
-            .finally(() => setLoading(false))
-    }, [])
+            .catch(() => { if (!cancelled) setPosts([]) })
+            .finally(() => { if (!cancelled) setLoading(false) })
+        return () => { cancelled = true }
+    }, [tab])
 
     const loadMore = useCallback(async () => {
         if (!cursor || loadingMore) return
         setLoadingMore(true)
         try {
-            const res = await getFeed(cursor)
+            const res = await fetchFn(cursor)
             setPosts(prev => [...prev, ...res.data])
             setCursor(res.next_cursor)
         } finally {
             setLoadingMore(false)
         }
-    }, [cursor, loadingMore])
+    }, [cursor, loadingMore, fetchFn])
 
     useEffect(() => {
         const sentinel = sentinelRef.current
@@ -524,22 +531,40 @@ export default function Feed() {
         return () => observer.disconnect()
     }, [loadMore])
 
-    if (loading) {
-        return (
-            <div className="h-full overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-                <div className="w-full max-w-lg mx-auto flex flex-col gap-4 pb-8">
-                    {Array.from({ length: 3 }).map((_, i) => <PostSkeleton key={i} />)}
-                </div>
-            </div>
-        )
-    }
+    const emptyMessage = tab === "following"
+        ? "Follow people to see their posts here."
+        : "Nothing here yet."
 
     return (
         <div className="h-full overflow-y-auto" style={{ scrollbarWidth: "none" }}>
             <div className="w-full max-w-lg mx-auto flex flex-col gap-4 pb-8">
-                {posts.length === 0 ? (
+
+                {/* Tab toggle */}
+                <div className="flex items-center p-1 rounded-2xl sticky top-0 z-10"
+                    style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)", backdropFilter: "blur(20px)" }}>
+                    {(["explore", "following"] as FeedTab[]).map(t => (
+                        <button
+                            key={t}
+                            onClick={() => setTab(t)}
+                            className="flex-1 py-2 rounded-xl text-sm font-semibold transition-all duration-200 capitalize"
+                            style={tab === t ? {
+                                background: "rgba(127,250,136,0.12)",
+                                color: "var(--primary)",
+                                border: "1px solid rgba(127,250,136,0.25)",
+                            } : {
+                                color: "var(--text-muted)",
+                            }}
+                        >
+                            {t === "explore" ? "Explore" : "Following"}
+                        </button>
+                    ))}
+                </div>
+
+                {loading ? (
+                    Array.from({ length: 3 }).map((_, i) => <PostSkeleton key={i} />)
+                ) : posts.length === 0 ? (
                     <div className="flex flex-col items-center gap-2 py-24">
-                        <span className="text-sm text-text-muted/40">Nothing here yet.</span>
+                        <span className="text-sm text-text-muted/40">{emptyMessage}</span>
                     </div>
                 ) : (
                     posts.map(post => <PostCard key={post.id} post={post} />)

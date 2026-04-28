@@ -17,7 +17,7 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded"
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-    AreaChart, Area, ReferenceLine,
+    AreaChart, Area, Line, ComposedChart,
 } from "recharts"
 import { getWeightHistory, logWeight as logWeightApi } from "../services/stats/weightApi"
 import type { WeightEntry } from "../services/stats/weightApi"
@@ -38,7 +38,7 @@ const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 function toDateStr(d: Date): string {
-    return d.toISOString().slice(0, 10)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
 function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -360,26 +360,27 @@ function TodaysMacros({
 }
 
 // ─── Calorie area chart ───────────────────────────────────────────────────────
-function buildCalChartData(days: CalorieDay[], weekStart: Date, todayStr: string) {
+function buildCalChartData(days: CalorieDay[], weekStart: Date, todayStr: string, fallbackTarget: number | null) {
     const byDate = new Map(days.map(d => [d.date, d]))
     return DAYS_SHORT.map((label, i) => {
         const d       = new Date(weekStart)
         d.setDate(weekStart.getDate() + i)
         const dateStr = toDateStr(d)
 
-        // Future days → no dot, no line
+        const entry  = byDate.get(dateStr)
+        const target = entry?.calories_target ?? fallbackTarget
+
+        // Future days → no cal dot/line, but keep target
         if (dateStr > todayStr) {
-            return { label, cal: null as number | null, target: null as number | null, disabled: true }
+            return { label, cal: null as number | null, target, disabled: true }
         }
 
-        const entry = byDate.get(dateStr)
-        // null/null → before profile creation → disabled
+        // null/null → before profile creation → disabled, but still show target if known
         if (!entry || (entry.calories_consumed === null && entry.calories_target === null)) {
-            return { label, cal: null as number | null, target: null as number | null, disabled: true }
+            return { label, cal: null as number | null, target, disabled: true }
         }
-        // 0/null → active day, nothing logged yet
-        // number/number → normally logged day
-        return { label, cal: entry.calories_consumed ?? 0, target: entry.calories_target, disabled: false }
+
+        return { label, cal: entry.calories_consumed ?? 0, target, disabled: false }
     })
 }
 
@@ -402,7 +403,6 @@ function CalorieChart() {
 
     // Today's calorie total (current week only)
     const todayStr   = toDateStr(new Date())
-    const chartData  = buildCalChartData(days, nav.weekStart, todayStr)
     const todayEntry = days.find(d => d.date === todayStr)
     const todayCal   = todayEntry?.calories_consumed ?? null
 
@@ -414,8 +414,12 @@ function CalorieChart() {
 
     const displayCal = nav.isCurrentWeek ? todayCal : avgCal
 
-    // Use the most recent non-null target from this week's data
-    const goalCal = days.find(d => d.calories_target !== null)?.calories_target ?? null
+    // Most recent non-null target, used as fallback for days that return null
+    const fallbackTarget = [...days]
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .find(d => d.calories_target !== null)?.calories_target ?? null
+    const goalCal   = fallbackTarget
+    const chartData = buildCalChartData(days, nav.weekStart, todayStr, fallbackTarget)
 
     return (
         <div className="flex flex-col gap-1 flex-1 min-h-0">
@@ -451,7 +455,7 @@ function CalorieChart() {
 
             <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                    <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                         <defs>
                             <linearGradient id="calGrad" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%"  stopColor="#7FFA88" stopOpacity={0.2} />
@@ -462,22 +466,12 @@ function CalorieChart() {
                         <YAxis domain={[0, "auto"]} tick={{ fontSize: 9, fill: "#B3BCB5" }} axisLine={false} tickLine={false} />
                         <Tooltip
                             {...TOOLTIP_STYLE}
-                            formatter={(v: number | null, _: string, props: { payload?: { disabled?: boolean } }) => {
+                            formatter={(v: number | null, name: string, props: { payload?: { disabled?: boolean } }) => {
+                                if (name === "Target") return v !== null ? [`${v.toLocaleString()} kcal`, "Target"] : [null, null]
                                 if (props.payload?.disabled || v === null) return ["—", "Calories"]
                                 return [`${v.toLocaleString()} kcal`, "Calories"]
                             }}
                         />
-                        {/* Target reference line */}
-                        {goalCal !== null && (
-                            <ReferenceLine
-                                y={goalCal}
-                                stroke="#7FFA88"
-                                strokeDasharray="5 4"
-                                strokeOpacity={0.45}
-                                strokeWidth={1.5}
-                            />
-                        )}
-                        {/* Line breaks at null (disabled/pre-profile days); zero renders at baseline */}
                         <Area
                             type="monotone"
                             dataKey="cal"
@@ -491,7 +485,19 @@ function CalorieChart() {
                             }}
                             activeDot={{ r: 5, fill: "#7FFA88" }}
                         />
-                    </AreaChart>
+                        <Line
+                            type="monotone"
+                            dataKey="target"
+                            stroke="#7FFA88"
+                            strokeWidth={1.5}
+                            strokeDasharray="5 4"
+                            strokeOpacity={0.45}
+                            dot={false}
+                            activeDot={false}
+                            connectNulls={true}
+                            name="Target"
+                        />
+                    </ComposedChart>
                 </ResponsiveContainer>
             </div>
         </div>

@@ -58,7 +58,7 @@ export default function MealPage() {
     const [commentCount, setCommentCount] = useState(0)
     const [logging, setLogging] = useState(false)
     const [logged, setLogged] = useState(false)
-    const [pendingLogId, setPendingLogId] = useState<number | null>(null)
+    const [pendingLogId,       setPendingLogId]       = useState<number | null>(null)
     const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
     const [showComments, setShowComments] = useState(false)
 
@@ -109,22 +109,18 @@ export default function MealPage() {
         }
     }
 
-    async function handleWarningIgnore() {
-        if (!pendingLogId) return
-        try {
-            await confirmQuickLog(pendingLogId)
-            setLogged(true)
-        } finally {
-            setPendingLogId(null)
-            setWarningIngredients([])
-        }
+    function handleWarningIgnore() {
+        setPendingLogId(null)
+        setWarningIngredients([])
+        setLogged(true)
     }
 
     async function handleWarningDiscard() {
         if (!pendingLogId) return
-        try { await deleteQuickLog(pendingLogId) } catch { /* ignore */ }
+        const id = pendingLogId
         setPendingLogId(null)
         setWarningIngredients([])
+        try { await deleteQuickLog(id) } catch { /* ignore */ }
     }
 
     if (loading)  return <MealPageSkeleton />

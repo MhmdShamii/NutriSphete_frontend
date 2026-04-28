@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import { useSelector } from "react-redux"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import SendRoundedIcon from "@mui/icons-material/SendRounded"
@@ -20,21 +21,23 @@ function timeAgo(iso: string): string {
     return `${Math.floor(diff / 86400)}d`
 }
 
-function Avatar({ src, name, size = 32 }: { src?: string; name: string; size?: number }) {
+function Avatar({ src, name, size = 32, onClick }: { src?: string; name: string; size?: number; onClick?: () => void }) {
     const initials = name.trim().split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"
     const palette  = ["#7FFA88", "#4F9CF9", "#FFC107", "#FF6B9D", "#a78bfa"]
     const color    = palette[(name.charCodeAt(0) || 0) % palette.length]
+    const clickable = onClick ? "cursor-pointer hover:opacity-80 transition-opacity" : ""
     if (src) {
         return (
-            <img src={src} alt={name} className="rounded-full object-cover flex-shrink-0"
+            <img src={src} alt={name} onClick={onClick} className={`rounded-full object-cover flex-shrink-0 ${clickable}`}
                 style={{ width: size, height: size }} />
         )
     }
     return (
-        <div style={{
+        <div onClick={onClick} style={{
             width: size, height: size, borderRadius: "50%", flexShrink: 0,
             background: `${color}20`, border: `1.5px solid ${color}50`,
             display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: onClick ? "pointer" : undefined,
         }}>
             <span style={{ fontSize: size * 0.36, fontWeight: 700, color }}>{initials}</span>
         </div>
@@ -132,6 +135,7 @@ function CommentItem({
     onReply,
     onExpandReplies,
     onLoadMoreReplies,
+    onProfileClick,
 }: {
     comment: Comment
     replyState: ReplyState
@@ -141,6 +145,7 @@ function CommentItem({
     onReply: (commentId: number, authorName: string) => void
     onExpandReplies: (commentId: number) => void
     onLoadMoreReplies: (commentId: number) => void
+    onProfileClick: (userId: number) => void
 }) {
     const authorName = `${comment.author.first_name} ${comment.author.last_name}`
     const displayedReplies = replyState.replies !== null ? replyState.replies : (comment.reply_preview ?? [])
@@ -149,11 +154,14 @@ function CommentItem({
         <div className="flex flex-col gap-2">
             {/* Comment row */}
             <div className="flex gap-3">
-                <Avatar src={comment.author.avatar} name={authorName} size={34} />
+                <Avatar src={comment.author.avatar} name={authorName} size={34} onClick={() => onProfileClick(comment.author.id)} />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                            <span className="text-xs font-semibold text-text">{authorName} </span>
+                            <span
+                                onClick={() => onProfileClick(comment.author.id)}
+                                className="text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
+                            >{authorName} </span>
                             <span className="text-xs text-text-muted leading-relaxed">{comment.body}</span>
                         </div>
                         {currentUserId === comment.author.id && (
@@ -198,11 +206,14 @@ function CommentItem({
                                 const replyName = `${reply.author.first_name} ${reply.author.last_name}`
                                 return (
                                     <div key={reply.id} className="flex gap-3">
-                                        <Avatar src={reply.author.avatar} name={replyName} size={28} />
+                                        <Avatar src={reply.author.avatar} name={replyName} size={28} onClick={() => onProfileClick(reply.author.id)} />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="flex-1 min-w-0">
-                                                    <span className="text-xs font-semibold text-text">{replyName} </span>
+                                                    <span
+                                                        onClick={() => onProfileClick(reply.author.id)}
+                                                        className="text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
+                                                    >{replyName} </span>
                                                     <span className="text-xs text-text-muted leading-relaxed">{reply.body}</span>
                                                 </div>
                                                 {/* Delete only available on fully loaded replies (not preview) */}
@@ -258,6 +269,7 @@ export default function CommentsSheet({
     onClose: () => void
     onCountChange: (delta: number) => void
 }) {
+    const navigate        = useNavigate()
     const currentUserId   = useSelector((s: RootState) => s.auth.user?.id ?? null)
     const currentAvatar   = useSelector((s: RootState) => s.auth.user?.image.avatar)
     const currentUserName = useSelector((s: RootState) => {
@@ -524,6 +536,7 @@ export default function CommentsSheet({
                                         onReply={(id, name) => setReplyingTo({ id, name })}
                                         onExpandReplies={expandReplies}
                                         onLoadMoreReplies={loadMoreReplies}
+                                        onProfileClick={id => { navigate(`/profile/${id}`); onClose() }}
                                     />
                                 ))}
 

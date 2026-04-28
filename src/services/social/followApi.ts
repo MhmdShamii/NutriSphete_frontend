@@ -54,3 +54,35 @@ export const followUserApi = async (userId: number): Promise<void> => {
 export const unfollowUserApi = async (userId: number): Promise<void> => {
     await apiClient.delete(`/users/${userId}/follow`)
 }
+export const checkNotificationsApi = async (): Promise<{ has_new: boolean }> => {
+    const res = await apiClient.get(`/notifications/check`)
+    return res.data.data
+}
+
+export type NotificationActor = {
+    id: number
+    first_name: string
+    last_name: string
+    avatar: string
+}
+
+export type NotificationData = {
+    post_id?: number
+    post_name?: string
+    comment_id?: number
+    comment_body?: string
+    parent_comment_id?: number
+}
+
+export type NotificationItem = {
+    id: number
+    type: "like" | "comment" | "reply" | "relog" | "follow"
+    actor: NotificationActor
+    data: NotificationData
+    created_at: string
+}
+
+export const getNotificationsApi = async (): Promise<NotificationItem[]> => {
+    const res = await apiClient.get(`/notifications`)
+    return res.data.data
+}

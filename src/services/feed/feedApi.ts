@@ -67,3 +67,10 @@ export const getFeed = async (cursor?: string): Promise<{ data: FeedPost[]; next
     })
     return { data: response.data.data, next_cursor: response.data.next_cursor }
 }
+
+export const getFollowingFeed = async (cursor?: string): Promise<{ data: FeedPost[]; next_cursor: string | null }> => {
+    const response = await apiClient.get("/feed/following", {
+        params: cursor ? { cursor } : {},
+    })
+    return { data: response.data.data, next_cursor: response.data.next_cursor }
+}
