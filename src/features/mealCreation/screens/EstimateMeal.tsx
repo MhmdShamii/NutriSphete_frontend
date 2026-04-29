@@ -37,7 +37,7 @@ export default function EstimateMeal() {
         try {
             const res = await estimateMeal(name, description)
             setEntry(res.logged_meal)
-            if (res.health_warning.is_flagged) {
+            if (res.health_warning?.is_flagged) {
                 setWarningIngredients(res.health_warning.flagged_ingredients)
                 setShowWarning(true)
             }

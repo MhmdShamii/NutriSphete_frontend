@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux"
 import { fetchMe } from "./features/auth/authSlice"
 import type { AppDispatch } from "./app/store"
 
+import { Navigate } from "react-router-dom"
 import AuthPage from "./features/auth/AuthPage"
 import VerifySuccess from "./features/auth/VerifySuccess"
 import Home from "./features/Home"
@@ -17,6 +18,8 @@ import TargetsStep from "./features/onboarding/steps/TargetsStep"
 import HealthConditionsStep from "./features/onboarding/steps/HealthConditionsStep"
 import CreateMeal from "./features/mealCreation/screens/CreateMeal"
 import MyStats from "./features/MyStats"
+import Feed from "./features/feed/Feed"
+import MealPage from "./features/meal/MealPage"
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -44,14 +47,16 @@ function App() {
 
         {/* App — logged in + onboarding complete */}
         <Route element={<ProtectedRoute><OnboardedRoute><Home /></OnboardedRoute></ProtectedRoute>}>
-          <Route index element={<p className="text-2xl text-primary">Dashboard</p>} />
+          <Route index path="/" element={<Navigate to="/stats" replace />} />
           <Route path="/stats" element={<MyStats />} />
-          <Route path="/feed" element={<p className="text-2xl text-primary">Feed</p>} />
+          <Route path="/feed" element={<Feed />} />
           <Route path="/coaches" element={<p className="text-2xl text-primary">Coaches</p>} />
           <Route path="/personal-trainer" element={<p className="text-2xl text-primary">Personal Trainer</p>} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:id" element={<Profile />} />
           <Route path="/settings" element={<p className="text-2xl text-primary">Settings</p>} />
           <Route path="/create-meal" element={<CreateMeal />} />
+          <Route path="/meals/:id" element={<MealPage />} />
         </Route>
 
       </Routes>

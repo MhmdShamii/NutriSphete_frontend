@@ -167,7 +167,7 @@ export default function TargetsStep() {
         try {
             await dispatch(completeTargets(form)).unwrap()
             await dispatch(fetchMe()).unwrap()
-            navigate("/", { replace: true })
+            navigate("/onboarding/health-conditions", { replace: true })
         } catch { }
     }
 

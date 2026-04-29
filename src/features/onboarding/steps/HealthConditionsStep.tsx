@@ -109,7 +109,7 @@ export default function HealthConditionsStep() {
         try {
             await dispatch(completeHealthConditions()).unwrap()
             await dispatch(fetchMe()).unwrap()
-            navigate("/", { replace: true })
+            navigate("/stats", { replace: true })
         } catch {}
     }
 

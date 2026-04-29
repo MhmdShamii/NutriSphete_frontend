@@ -82,6 +82,8 @@ export type AuthUser = {
         cover_image: string
     }
     profile: UserProfile | null
+    followers_count: number
+    following_count: number
 }
 
 export type AuthState = {
@@ -97,7 +99,7 @@ const ONBOARDING_ROUTES: Record<OnboardingStep, string> = {
     basic_info: "/onboarding/basic-info",
     targets: "/onboarding/targets",
     health_conditions: "/onboarding/health-conditions",
-    complete: "/",
+    complete: "/stats",
 }
 
 export function getPostLoginRoute(step: OnboardingStep): string {

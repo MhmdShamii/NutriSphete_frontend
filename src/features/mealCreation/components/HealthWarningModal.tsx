@@ -17,9 +17,11 @@ interface Props {
     onDiscard: () => void
     loading?: boolean
     confirmLabel?: string
+    discardLabel?: string
+    hideEdit?: boolean
 }
 
-export default function HealthWarningModal({ flaggedIngredients, onEdit, onIgnore, onDiscard, loading, confirmLabel = "Ignore" }: Props) {
+export default function HealthWarningModal({ flaggedIngredients, onEdit, onIgnore, onDiscard, loading, confirmLabel = "Ignore", discardLabel = "Discard Meal", hideEdit = false }: Props) {
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -60,17 +62,19 @@ export default function HealthWarningModal({ flaggedIngredients, onEdit, onIgnor
 
                 {/* actions */}
                 <div className="flex flex-col gap-2 pt-1">
-                    <button
-                        type="button"
-                        onClick={onEdit}
-                        disabled={loading}
-                        className="flex items-center justify-center gap-1.5 w-full p-2.5 rounded-xl border border-border/20
-                            text-sm text-text-muted hover:text-primary hover:border-primary/30
-                            transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
-                    >
-                        <EditRoundedIcon sx={{ fontSize: 15 }} />
-                        Edit Meal
-                    </button>
+                    {!hideEdit && (
+                        <button
+                            type="button"
+                            onClick={onEdit}
+                            disabled={loading}
+                            className="flex items-center justify-center gap-1.5 w-full p-2.5 rounded-xl border border-border/20
+                                text-sm text-text-muted hover:text-primary hover:border-primary/30
+                                transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
+                        >
+                            <EditRoundedIcon sx={{ fontSize: 15 }} />
+                            Edit Meal
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={onIgnore}
@@ -93,7 +97,7 @@ export default function HealthWarningModal({ flaggedIngredients, onEdit, onIgnor
                             hover:text-red-400 transition-colors duration-200 disabled:opacity-30 disabled:pointer-events-none"
                     >
                         <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} />
-                        Discard Meal
+                        {discardLabel}
                     </button>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { createMeal, confirmMeal, discardMeal, logMeal } from "../../../services/meals/mealsApis"
-import { confirmQuickLog, deleteQuickLog } from "../../../services/log/quickLogApi"
+import { deleteQuickLog } from "../../../services/log/quickLogApi"
 import type { MealFormData, MealDraft, FlaggedIngredient } from "../types/meal.types"
 import HealthWarningModal from "../components/HealthWarningModal"
 import BasicInfoPanel from "../components/BasicInfoPanel"
@@ -13,18 +13,21 @@ function generateId() {
     return Math.random().toString(36).slice(2)
 }
 
-const initialForm: MealFormData = {
-    name: "",
-    description: "",
-    visibility: "public",
-    servings: 1,
-    ingredients: [{ localId: generateId(), name: "", portion: "", unit: "g" }],
-    preparation_steps: [],
+function makeInitialForm(): MealFormData {
+    return {
+        name: "",
+        description: "",
+        visibility: "public",
+        servings: 1,
+        ingredients: [{ localId: generateId(), name: "", portion: "", unit: "g" }],
+        preparation_steps: [],
+    }
 }
 
 export default function CreateMeal() {
     const [view, setView] = useState<"post" | "quick" | "estimate">("post")
-    const [form, setForm] = useState<MealFormData>(initialForm)
+    const [form, setForm] = useState<MealFormData>(makeInitialForm)
+    const [formKey, setFormKey] = useState(0)
     const [mobileStep, setMobileStep] = useState<0 | 1 | 2>(0)
     const [draft, setDraft] = useState<MealDraft | null>(null)
     const [reviewKey, setReviewKey] = useState(0)
@@ -41,6 +44,15 @@ export default function CreateMeal() {
 
     function resetDraft() {
         setDraft(null)
+        setReviewKey(k => k + 1)
+    }
+
+    function resetForm() {
+        setForm(makeInitialForm())
+        setDraft(null)
+        setMobileStep(0)
+        setSubmitError(null)
+        setFormKey(k => k + 1)
         setReviewKey(k => k + 1)
     }
 
@@ -85,9 +97,7 @@ export default function CreateMeal() {
         setSubmitError(null)
         try {
             await confirmMeal(draft.id, image)
-            setForm(initialForm)
-            resetDraft()
-            setMobileStep(0)
+            resetForm()
         } catch {
             setSubmitError("Failed to confirm meal.")
         } finally {
@@ -109,9 +119,7 @@ export default function CreateMeal() {
                 setShowWarning(true)
                 return
             }
-            setForm(initialForm)
-            resetDraft()
-            setMobileStep(0)
+            resetForm()
         } catch {
             setSubmitError("Failed to confirm and log meal.")
         } finally {
@@ -119,22 +127,15 @@ export default function CreateMeal() {
         }
     }
 
-    async function handleWarningIgnore() {
-        setLoading(true)
-        try {
-            if (warningContext === "log" && pendingLogId !== null) {
-                await confirmQuickLog(pendingLogId)
-                setPendingLogId(null)
-                setForm(initialForm)
-                resetDraft()
-                setMobileStep(0)
-            }
+    function handleWarningIgnore() {
+        if (warningContext === "log") {
+            // Meal-post logs are confirmed on creation — no second API call needed
+            setPendingLogId(null)
+            setShowWarning(false)
+            resetForm()
+        } else {
             // "create" context: draft is already set, just close and let user proceed to review
             setShowWarning(false)
-        } catch {
-            setSubmitError("Failed to log meal.")
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -146,11 +147,9 @@ export default function CreateMeal() {
                 setPendingLogId(null)
             } else if (warningContext === "create" && draft) {
                 await discardMeal(draft.id)
-                resetDraft()
             }
             setShowWarning(false)
-            setForm(initialForm)
-            setMobileStep(0)
+            resetForm()
         } catch {
             setSubmitError("Failed to discard.")
         } finally {
@@ -170,9 +169,7 @@ export default function CreateMeal() {
         setLoading(true)
         try {
             await discardMeal(draft.id)
-            setForm(initialForm)
-            resetDraft()
-            setMobileStep(0)
+            resetForm()
         } catch {
             setSubmitError("Failed to discard meal.")
         } finally {
@@ -228,11 +225,7 @@ export default function CreateMeal() {
 
     function switchView(v: "post" | "quick" | "estimate") {
         if (v === view) return
-        setForm(initialForm)
-        setDraft(null)
-        setReviewKey(k => k + 1)
-        setMobileStep(0)
-        setSubmitError(null)
+        resetForm()
         setView(v)
     }
 
@@ -293,10 +286,10 @@ export default function CreateMeal() {
                     {/* Desktop panels */}
                     <div className="hidden sm:flex flex-1 min-h-0">
                         <div className={`${panelBase} ${panelDivider}`}>
-                            <BasicInfoPanel form={form} onChange={setField} />
+                            <BasicInfoPanel key={formKey} form={form} onChange={setField} />
                         </div>
                         <div className={`${panelBase} ${panelDivider}`}>
-                            <IngredientsPanel form={form} onChange={setField} loading={loading} error={submitError} />
+                            <IngredientsPanel key={formKey} form={form} onChange={setField} loading={loading} error={submitError} />
                         </div>
                         <div className={panelBase}>
                             <ReviewPanel
@@ -317,10 +310,11 @@ export default function CreateMeal() {
                     {/* Mobile steps */}
                     <div className="flex sm:hidden flex-col flex-1 min-h-0 px-4 py-4">
                         {mobileStep === 0 && (
-                            <BasicInfoPanel form={form} onChange={setField} onNext={() => setMobileStep(1)} isMobile />
+                            <BasicInfoPanel key={formKey} form={form} onChange={setField} onNext={() => setMobileStep(1)} isMobile />
                         )}
                         {mobileStep === 1 && (
                             <IngredientsPanel
+                                key={formKey}
                                 form={form}
                                 onChange={setField}
                                 onNext={() => { setMobileStep(2); handleSubmit() }}

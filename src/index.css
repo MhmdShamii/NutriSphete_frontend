@@ -93,3 +93,11 @@ body {
 .animate-shimmer {
   animation: shimmer 1.4s infinite;
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
