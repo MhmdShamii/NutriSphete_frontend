@@ -821,7 +821,13 @@ function LogCard({
             {isMeal && entry.meal_post ? (
                 <div className="flex-shrink-0 w-11 h-11 rounded-xl overflow-hidden"
                     style={{ border: `1px solid ${accent}40` }}>
-                    <img src={entry.meal_post.image_url} alt={name} className="w-full h-full object-cover" />
+                    {entry.meal_post.image_url
+                        ? <img src={entry.meal_post.image_url} alt={name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center"
+                            style={{ background: `${accent}15` }}>
+                            <RestaurantRoundedIcon sx={{ fontSize: 18 }} style={{ color: accent }} />
+                          </div>
+                    }
                 </div>
             ) : (
                 <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"

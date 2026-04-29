@@ -44,8 +44,8 @@ export interface MealDraft {
     id: number
     name: string
     description: string
-    image_url: string
-    confirmed: boolean
+    image_url: string | null
+    confirmed?: boolean
     servings: number
     ingredients: MealIngredientResponse[]
     macros: MealMacros
@@ -99,13 +99,13 @@ export interface QuickLogFormData {
 export interface QuickLogEntry {
     id: number
     type: "meal" | "custom" | "estimate"
-    log_name: string
-    description?: string
+    log_name: string | null
+    description?: string | null
     calories: string
     protein: string
     carbs: string
     fats: string
-    fiber: string
+    fiber: string | null
     logged_at: string
     confirmed_at: string | null
 }

@@ -443,7 +443,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
                 {/* ── Meal name + description ── */}
                 <div className="flex flex-col gap-0.5 px-4 pt-1 pb-2">
                     <button
-                        onClick={() => navigate(`/meal/${initialPost.id}`)}
+                        onClick={() => navigate(`/meals/${initialPost.id}`)}
                         className="text-sm font-bold text-text text-left hover:text-primary transition-colors"
                     >
                         {initialPost.name}

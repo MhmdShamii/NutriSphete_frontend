@@ -12,7 +12,7 @@ export interface TodayLogEntry {
     fiber: string | null
     logged_at: string
     confirmed_at: string | null
-    meal_post: { id: number; image_url: string } | null
+    meal_post: { id: number; image_url: string | null } | null
 }
 
 export interface TodayAnalytics {

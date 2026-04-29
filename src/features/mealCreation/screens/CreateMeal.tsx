@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { createMeal, confirmMeal, discardMeal, logMeal } from "../../../services/meals/mealsApis"
-import { confirmQuickLog, deleteQuickLog } from "../../../services/log/quickLogApi"
+import { deleteQuickLog } from "../../../services/log/quickLogApi"
 import type { MealFormData, MealDraft, FlaggedIngredient } from "../types/meal.types"
 import HealthWarningModal from "../components/HealthWarningModal"
 import BasicInfoPanel from "../components/BasicInfoPanel"
@@ -127,20 +127,15 @@ export default function CreateMeal() {
         }
     }
 
-    async function handleWarningIgnore() {
-        setLoading(true)
-        try {
-            if (warningContext === "log" && pendingLogId !== null) {
-                await confirmQuickLog(pendingLogId)
-                setPendingLogId(null)
-                resetForm()
-            }
+    function handleWarningIgnore() {
+        if (warningContext === "log") {
+            // Meal-post logs are confirmed on creation — no second API call needed
+            setPendingLogId(null)
+            setShowWarning(false)
+            resetForm()
+        } else {
             // "create" context: draft is already set, just close and let user proceed to review
             setShowWarning(false)
-        } catch {
-            setSubmitError("Failed to log meal.")
-        } finally {
-            setLoading(false)
         }
     }
 
