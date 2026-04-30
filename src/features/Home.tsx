@@ -21,7 +21,7 @@ export default function Home() {
             <div className="absolute top-[-250px] left-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy pointer-events-none" />
             <div className="absolute top-[-250px] right-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy pointer-events-none" />
 
-            <div className="relative z-10 flex-shrink-0">
+            <div className="relative z-20 flex-shrink-0">
                 <TopBar user={user} />
             </div>
 

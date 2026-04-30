@@ -2,9 +2,17 @@ import AuthCover from "./AuthCover"
 import LoginForm from "../../components/auth/LoginForm"
 import SignupForm from "../../components/auth/SignupForm"
 import { useState } from "react"
+import { Navigate } from "react-router-dom"
+import { useSelector } from "react-redux"
+import type { RootState } from "../../app/store"
+import { getPostLoginRoute } from "../auth/types"
+
 export default function AuthPage() {
 
     const [mode, setMode] = useState<"login" | "signup">("login")
+    const user = useSelector((state: RootState) => state.auth.user)
+
+    if (user) return <Navigate to={getPostLoginRoute(user.onboarding_step)} replace />
 
     return (
         <div className="bg-background text-text h-screen flex items-center justify-center relative overflow-hidden px-5 ">
