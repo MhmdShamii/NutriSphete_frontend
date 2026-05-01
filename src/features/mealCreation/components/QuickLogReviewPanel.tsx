@@ -10,9 +10,9 @@ import type { QuickLogEntry } from "../types/meal.types"
 
 const MACROS = [
     { key: "protein" as const, label: "Protein", unit: "g", icon: <FitnessCenterRoundedIcon sx={{ fontSize: 16 }} />, color: "#4F9CF9" },
-    { key: "carbs"   as const, label: "Carbs",   unit: "g", icon: <GrainRoundedIcon sx={{ fontSize: 16 }} />,         color: "#FFC107" },
-    { key: "fats"    as const, label: "Fat",      unit: "g", icon: <WaterDropRoundedIcon sx={{ fontSize: 16 }} />,    color: "#FF6B9D" },
-    { key: "fiber"   as const, label: "Fiber",    unit: "g", icon: <SpaRoundedIcon sx={{ fontSize: 16 }} />,          color: "#7FFA88" },
+    { key: "carbs" as const, label: "Carbs", unit: "g", icon: <GrainRoundedIcon sx={{ fontSize: 16 }} />, color: "#FFC107" },
+    { key: "fats" as const, label: "Fat", unit: "g", icon: <WaterDropRoundedIcon sx={{ fontSize: 16 }} />, color: "#FF6B9D" },
+    { key: "fiber" as const, label: "Fiber", unit: "g", icon: <SpaRoundedIcon sx={{ fontSize: 16 }} />, color: "#7FFA88" },
 ]
 
 const BEAM_KEYFRAMES = `
@@ -122,33 +122,33 @@ export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate,
     /* ── Results ───────────────────────────────────────────────── */
     if (entry) {
         return (
-            <div className="flex flex-col gap-4 h-full">
-                <div className="relative overflow-hidden rounded-2xl border border-[#FF6B35]/20 bg-gradient-to-br from-[#FF6B35]/8 via-surface to-surface p-4 flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:gap-4 sm:h-full">
+                <div className="relative overflow-hidden rounded-2xl border border-[#FF6B35]/20 bg-gradient-to-br from-[#FF6B35]/8 via-surface to-surface p-3 sm:p-4 flex items-center gap-3">
                     <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-[#FF6B35]/10 blur-2xl pointer-events-none" />
-                    <div className="w-10 h-10 rounded-full bg-[#FF6B35]/15 flex items-center justify-center flex-shrink-0">
-                        <LocalFireDepartmentRoundedIcon sx={{ fontSize: 20 }} style={{ color: "#FF6B35" }} />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#FF6B35]/15 flex items-center justify-center flex-shrink-0">
+                        <LocalFireDepartmentRoundedIcon sx={{ fontSize: 18 }} style={{ color: "#FF6B35" }} />
                     </div>
-                    <div>
-                        <p className="text-[11px] text-text-muted/70 uppercase tracking-widest font-medium">Calories</p>
-                        <p className="text-2xl font-bold text-text leading-tight">
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-[11px] text-text-muted/70 uppercase tracking-widest font-medium">Calories</p>
+                        <p className="text-xl sm:text-2xl font-bold text-text leading-tight">
                             {Math.round(Number(entry.calories)).toLocaleString()}
-                            <span className="text-sm font-normal text-text-muted ml-1">kcal</span>
+                            <span className="text-xs sm:text-sm font-normal text-text-muted ml-1">kcal</span>
                         </p>
                     </div>
-                    <p className="ml-auto text-xs font-medium text-primary/70 truncate max-w-[30%]">{entry.log_name}</p>
+                    <p className="ml-auto text-[11px] sm:text-xs font-medium text-primary/70 truncate max-w-[30%]">{entry.log_name}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                     {MACROS.map(({ key, label, unit, icon, color }) => (
-                        <div key={key} className="rounded-xl border border-border/20 bg-surface p-3 flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}18` }}>
+                        <div key={key} className="rounded-xl border border-border/20 bg-surface p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}18` }}>
                                 <span style={{ color }}>{icon}</span>
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-[10px] text-text-muted/70 uppercase tracking-wide font-medium">{label}</p>
-                                <p className="text-base font-bold text-text leading-tight">
+                                <p className="text-sm sm:text-base font-bold text-text leading-tight">
                                     {Math.round(Number(entry[key]))}
-                                    <span className="text-xs font-normal text-text-muted ml-0.5">{unit}</span>
+                                    <span className="text-[11px] sm:text-xs font-normal text-text-muted ml-0.5">{unit}</span>
                                 </p>
                             </div>
                         </div>

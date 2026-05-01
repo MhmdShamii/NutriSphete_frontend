@@ -449,18 +449,18 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
                         {initialPost.name}
                     </button>
                     {initialPost.description && (
-                        <span className="text-xs text-text-muted leading-relaxed">{initialPost.description}</span>
+                        <span className="text-xs text-text-muted leading-relaxed break-words">{initialPost.description}</span>
                     )}
                 </div>
 
                 {/* ── First comment preview ── */}
                 {initialPost.first_comment && (
                     <div className="px-4 pb-3">
-                        <div className="flex gap-1.5">
-                            <span className="text-xs font-semibold text-text flex-shrink-0">
+                        <div className="flex gap-1.5 min-w-0">
+                            <span className="text-xs font-semibold text-text truncate max-w-[40%]">
                                 {initialPost.first_comment.author.first_name} {initialPost.first_comment.author.last_name}
                             </span>
-                            <span className="text-xs text-text-muted line-clamp-1">{initialPost.first_comment.body}</span>
+                            <span className="text-xs text-text-muted line-clamp-1 min-w-0">{initialPost.first_comment.body}</span>
                         </div>
                         {commentCount > 1 && (
                             <button

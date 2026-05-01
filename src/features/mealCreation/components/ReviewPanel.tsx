@@ -154,36 +154,36 @@ export default function ReviewPanel({
         /* ── Mobile ── */
         if (isMobile) {
             return (
-                <div className="flex flex-col gap-4 h-full">
+                <div className="flex flex-col h-full">
                     <style>{BEAM_KEYFRAMES}</style>
-                    <div className="flex flex-col gap-4 h-full">
+                    <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col gap-3 pb-3">
                         {skeletonCards}
-                        <button type="button" disabled className="flex items-center justify-center gap-1.5 w-full p-2.5 rounded-xl border border-border/20 text-sm text-text-muted opacity-40 pointer-events-none">
+                        <button type="button" disabled className="flex items-center justify-center gap-1.5 w-full p-2 rounded-xl border border-border/20 text-xs text-text-muted opacity-40 pointer-events-none">
                             <EditRoundedIcon sx={{ fontSize: 15 }} /> Edit Ingredients
                         </button>
                         <div className="flex flex-col gap-1.5">
-                            <p className="text-sm text-text-muted">Meal photo <span className="text-red-400">*</span></p>
-                            <div className="relative rounded-2xl overflow-hidden border-2 border-dashed border-border/30 opacity-50" style={isMobile ? { minHeight: "80px" } : { aspectRatio: "16/9" }}>
-                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5">
-                                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <AddPhotoAlternateRoundedIcon sx={{ fontSize: 24 }} style={{ color: "var(--primary)" }} />
+                            <p className="text-xs text-text-muted">Meal photo <span className="text-red-400">*</span></p>
+                            <div className="relative rounded-2xl overflow-hidden border-2 border-dashed border-border/30 opacity-50 h-36">
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <AddPhotoAlternateRoundedIcon sx={{ fontSize: 20 }} style={{ color: "var(--primary)" }} />
                                     </div>
-                                    <p className="text-sm font-medium text-text">Upload meal photo</p>
+                                    <p className="text-xs font-medium text-text">Upload meal photo</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="flex flex-col gap-2 mt-auto">
-                            <button type="button" disabled className="w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-semibold bg-primary/30 text-black/50 pointer-events-none">
-                                <CheckRoundedIcon sx={{ fontSize: 16 }} /> Confirm &amp; Log
+                    </div>
+                    <div className="flex-shrink-0 flex flex-col gap-2 pt-3 border-t border-border/20">
+                        <button type="button" disabled className="w-full flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-sm font-semibold bg-primary/30 text-black/50 pointer-events-none">
+                            <CheckRoundedIcon sx={{ fontSize: 16 }} /> Confirm &amp; Log
+                        </button>
+                        <div className="flex gap-2">
+                            <button type="button" disabled className="flex-1 flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-medium border border-border/20 text-text-muted/40 pointer-events-none">
+                                <CheckRoundedIcon sx={{ fontSize: 15 }} /> Confirm only
                             </button>
-                            <div className="flex gap-2">
-                                <button type="button" disabled className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-medium border border-border/20 text-text-muted/40 pointer-events-none">
-                                    <CheckRoundedIcon sx={{ fontSize: 15 }} /> Confirm only
-                                </button>
-                                <button type="button" disabled className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-red-400/30 rounded-xl border border-red-400/10 pointer-events-none">
-                                    <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} /> Discard meal
-                                </button>
-                            </div>
+                            <button type="button" disabled className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] text-red-400/30 rounded-xl border border-red-400/10 pointer-events-none">
+                                <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} /> Discard meal
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -200,40 +200,42 @@ export default function ReviewPanel({
     }
 
     return (
-        <div className="flex flex-col gap-5 h-full">
+        <div className="flex flex-col h-full">
             {draft ? (
                 /* ── Post-submission: macros + image + actions ─────── */
-                <div className="flex flex-col gap-4 h-full">
+                <div className="flex flex-col h-full min-h-0">
+                    {/* Scrollable content */}
+                    <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col gap-3 sm:gap-4 pb-3 sm:pb-4">
                     {/* Calories highlight */}
-                    <div className="relative overflow-hidden rounded-2xl border border-[#FF6B35]/20 bg-gradient-to-br from-[#FF6B35]/8 via-surface to-surface p-4 flex items-center gap-3">
+                    <div className="relative overflow-hidden rounded-2xl border border-[#FF6B35]/20 bg-gradient-to-br from-[#FF6B35]/8 via-surface to-surface p-3 sm:p-4 flex items-center gap-3">
                         <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-[#FF6B35]/10 blur-2xl pointer-events-none" />
-                        <div className="w-10 h-10 rounded-full bg-[#FF6B35]/15 flex items-center justify-center flex-shrink-0">
-                            <LocalFireDepartmentRoundedIcon sx={{ fontSize: 20 }} style={{ color: "#FF6B35" }} />
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#FF6B35]/15 flex items-center justify-center flex-shrink-0">
+                            <LocalFireDepartmentRoundedIcon sx={{ fontSize: 18 }} style={{ color: "#FF6B35" }} />
                         </div>
                         <div>
-                            <p className="text-[11px] text-text-muted/70 uppercase tracking-widest font-medium">Calories</p>
-                            <p className="text-2xl font-bold text-text leading-tight">
+                            <p className="text-[10px] sm:text-[11px] text-text-muted/70 uppercase tracking-widest font-medium">Calories</p>
+                            <p className="text-xl sm:text-2xl font-bold text-text leading-tight">
                                 {draft.macros.calories.toLocaleString()}
-                                <span className="text-sm font-normal text-text-muted ml-1">kcal</span>
+                                <span className="text-xs sm:text-sm font-normal text-text-muted ml-1">kcal</span>
                             </p>
                         </div>
                     </div>
 
                     {/* Macro grid */}
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                         {MACROS.map(({ key, label, unit, icon, color }) => (
-                            <div key={key} className="rounded-xl border border-border/20 bg-surface p-3 flex items-center gap-2.5">
+                            <div key={key} className="rounded-xl border border-border/20 bg-surface p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5">
                                 <div
-                                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0"
                                     style={{ backgroundColor: `${color}18` }}
                                 >
                                     <span style={{ color }}>{icon}</span>
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <p className="text-[10px] text-text-muted/70 uppercase tracking-wide font-medium">{label}</p>
-                                    <p className="text-base font-bold text-text leading-tight">
+                                    <p className="text-sm sm:text-base font-bold text-text leading-tight">
                                         {draft.macros[key]}
-                                        <span className="text-xs font-normal text-text-muted ml-0.5">{unit}</span>
+                                        <span className="text-[11px] sm:text-xs font-normal text-text-muted ml-0.5">{unit}</span>
                                     </p>
                                 </div>
                             </div>
@@ -245,8 +247,8 @@ export default function ReviewPanel({
                         type="button"
                         onClick={isMobile ? onEditMobile : onRecalculate}
                         disabled={loading}
-                        className="flex items-center justify-center gap-1.5 w-full p-2.5 rounded-xl border border-border/20
-                            text-sm text-text-muted hover:text-primary hover:border-primary/30
+                        className="flex items-center justify-center gap-1.5 w-full p-2 sm:p-2.5 rounded-xl border border-border/20
+                            text-xs sm:text-sm text-text-muted hover:text-primary hover:border-primary/30
                             transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
                     >
                         <EditRoundedIcon sx={{ fontSize: 15 }} />
@@ -254,13 +256,13 @@ export default function ReviewPanel({
                     </button>
 
                     {/* Image upload */}
-                    <div className={`flex flex-col gap-1.5 ${isMobile ? "flex-1 min-h-0" : ""}`}>
-                        <p className="text-sm text-text-muted">
+                    <div className="flex flex-col gap-1.5">
+                        <p className="text-xs sm:text-sm text-text-muted">
                             Meal photo <span className="text-red-400">*</span>
                         </p>
                         <div
                             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 border-dashed
-                                ${isMobile ? "h-full" : ""}
+                                ${isMobile ? "h-36" : ""}
                                 ${dragging
                                     ? "border-primary/70 bg-primary/5 shadow-[0_0_20px_rgba(127,250,136,0.2)]"
                                     : imagePreview
@@ -282,12 +284,12 @@ export default function ReviewPanel({
                                     </div>
                                 </>
                             ) : (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5">
-                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center">
                                         <AddPhotoAlternateRoundedIcon sx={{ fontSize: 20 }} style={{ color: "var(--primary)" }} />
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-sm font-medium text-text">Upload meal photo</p>
+                                        <p className="text-xs sm:text-sm font-medium text-text">Upload meal photo</p>
                                         {!isMobile && <p className="text-[11px] text-text-muted mt-0.5">JPG, PNG or WebP · max 5 MB</p>}
                                     </div>
                                     {dragging && <p className="text-xs text-primary font-medium">Drop it here</p>}
@@ -302,14 +304,15 @@ export default function ReviewPanel({
                             onChange={e => handleFile(e.target.files?.[0] ?? null)}
                         />
                     </div>
+                    </div>
 
-                    {/* Actions */}
-                    <div className={`flex flex-col gap-2 ${isMobile ? "mt-auto pt-1" : "mt-1"}`}>
+                    {/* Pinned actions bar */}
+                    <div className="flex-shrink-0 flex flex-col gap-2 pt-3 border-t border-border/20">
                         <button
                             type="button"
                             onClick={() => image && onConfirmAndLog(image)}
                             disabled={!image || loading}
-                            className={`w-full flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-semibold transition-all duration-300
+                            className={`w-full flex items-center justify-center gap-1.5 p-2.5 sm:p-3 rounded-xl text-sm font-semibold transition-all duration-300
                                 ${image && !loading
                                     ? "bg-primary text-black hover:bg-primary-hover hover:shadow-[0_0_18px_rgba(127,250,136,0.45)] active:scale-[0.98]"
                                     : "bg-primary/30 text-black/50 pointer-events-none"
@@ -325,7 +328,7 @@ export default function ReviewPanel({
                             type="button"
                             onClick={() => image && onConfirm(image)}
                             disabled={!image || loading}
-                            className={`flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl text-sm font-medium border transition-all duration-200
+                            className={`flex-1 flex items-center justify-center gap-1.5 p-2.5 sm:p-3 rounded-xl text-xs sm:text-sm font-medium border transition-all duration-200
                                 ${image && !loading
                                     ? "border-border/40 text-text-muted hover:border-primary/40 hover:text-primary"
                                     : "border-border/20 text-text-muted/40 pointer-events-none"
@@ -337,7 +340,7 @@ export default function ReviewPanel({
                             type="button"
                             onClick={onDiscard}
                             disabled={loading}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-red-400/60 rounded-xl border border-red-400/20
+                            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] sm:text-xs text-red-400/60 rounded-xl border border-red-400/20
                                 hover:text-red-400 hover:border-red-400/40 transition-colors duration-200 disabled:opacity-30 disabled:pointer-events-none"
                         >
                             <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} />
