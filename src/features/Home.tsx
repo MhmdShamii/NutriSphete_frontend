@@ -18,8 +18,8 @@ export default function Home() {
 
     return (
         <div className="flex flex-col w-full h-dvh gap-5 relative p-3 sm:p-5 overflow-hidden">
-            <div className="absolute top-[-250px] left-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy pointer-events-none" />
-            <div className="absolute top-[-250px] right-[30%] w-[700px] h-[400px] bg-primary/15 blur-[180px] rounded-full animate-energy pointer-events-none" />
+            <div className="absolute top-[-150px] sm:top-[-250px] left-[30%] w-[400px] h-[200px] sm:w-[700px] sm:h-[400px] bg-primary/15 blur-[120px] sm:blur-[180px] rounded-full animate-energy pointer-events-none" />
+            <div className="absolute top-[-150px] sm:top-[-250px] right-[30%] w-[400px] h-[200px] sm:w-[700px] sm:h-[400px] bg-primary/15 blur-[120px] sm:blur-[180px] rounded-full animate-energy pointer-events-none" />
 
             <div className="relative z-10 flex-shrink-0">
                 <TopBar user={user} />
