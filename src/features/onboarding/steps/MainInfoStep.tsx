@@ -89,7 +89,7 @@ export default function MainInfoStep() {
             </div>
 
             <div className="flex flex-col gap-4">
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                     <Input id="first_name" label="First name" placeholder="John"
                         value={form.first_name}
                         onChange={(v) => setForm(p => ({ ...p, first_name: v }))} />

@@ -47,11 +47,11 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className={`flex flex-col p-8 gap-7 ${className}`}>
+        <form onSubmit={handleSubmit} className={`flex flex-col p-5 sm:p-8 gap-5 sm:gap-7 ${className}`}>
 
             <div className="flex flex-col gap-1">
-                <h1 className="text-3xl font-bold text-primary">Welcome Back</h1>
-                <p className="text-sm text-text-muted">Your meals, progress and insights are waiting</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-primary">Welcome Back</h1>
+                <p className="text-xs sm:text-sm text-text-muted">Your meals, progress and insights are waiting</p>
             </div>
 
             <div className="flex flex-col gap-5 flex-1 justify-center">

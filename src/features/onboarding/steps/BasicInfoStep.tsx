@@ -46,7 +46,7 @@ export default function BasicInfoStep() {
 
             <div className="flex flex-col gap-4">
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                     <DatePicker
                         label="Date of birth"
                         value={form.date_of_birth}
@@ -64,7 +64,7 @@ export default function BasicInfoStep() {
                     />
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                     <Input id="weight" label="Weight (kg)" placeholder="70"
                         value={form.weight_kg || ""}
                         onChange={(v) => set("weight_kg", Number(v.replace(/\D/g, "")))} />

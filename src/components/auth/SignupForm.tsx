@@ -99,11 +99,11 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
     /* -------------------- UI -------------------- */
 
     return (
-        <form onSubmit={handleSubmit} className={`flex flex-col p-8 gap-3 ${className}`}>
+        <form onSubmit={handleSubmit} className={`flex flex-col p-5 sm:p-8 gap-3 ${className}`}>
 
             <div className="flex flex-col gap-1">
-                <h1 className="text-3xl font-bold text-primary">Create Account</h1>
-                <p className="text-sm text-text-muted">Join us and start your nutrition journey today</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-primary">Create Account</h1>
+                <p className="text-xs sm:text-sm text-text-muted">Join us and start your nutrition journey today</p>
             </div>
 
             <StepIndicator step={step} />
