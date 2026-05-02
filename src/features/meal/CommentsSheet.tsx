@@ -157,7 +157,7 @@ function CommentItem({
                 <Avatar src={comment.author.avatar} name={authorName} size={34} onClick={() => onProfileClick(comment.author.id)} />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 break-words">
                             <span
                                 onClick={() => onProfileClick(comment.author.id)}
                                 className="text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"

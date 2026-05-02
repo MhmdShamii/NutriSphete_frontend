@@ -173,10 +173,10 @@ export default function MealPage() {
 
             {/* ── Title + author ── */}
             <div className="px-5 pt-4 flex flex-col gap-3">
-                <div className="flex flex-col gap-1.5">
-                    <h1 className="text-lg font-bold text-text leading-snug">{meal.name}</h1>
+                <div className="flex flex-col gap-1.5 min-w-0">
+                    <h1 className="text-lg font-bold text-text leading-snug break-words">{meal.name}</h1>
                     {meal.description && (
-                        <p className="text-sm text-text-muted leading-relaxed">{meal.description}</p>
+                        <p className="text-sm text-text-muted leading-relaxed break-words">{meal.description}</p>
                     )}
                 </div>
 
@@ -297,7 +297,7 @@ export default function MealPage() {
                                         style={{ background: "var(--primary)" }}>
                                         {step.step_number}
                                     </div>
-                                    <p className="text-sm text-text-muted leading-relaxed">{step.description}</p>
+                                    <p className="text-sm text-text-muted leading-relaxed break-words min-w-0 flex-1">{step.description}</p>
                                 </div>
                             ))}
                         </div>
