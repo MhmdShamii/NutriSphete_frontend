@@ -20,6 +20,7 @@ import CreateMeal from "./features/mealCreation/screens/CreateMeal"
 import MyStats from "./features/MyStats"
 import FeedPage from "./features/feed/FeedPage"
 import MealPage from "./features/meal/MealPage"
+import ComingSoon from "./components/ui/ComingSoon"
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -50,11 +51,11 @@ function App() {
         <Route element={<ProtectedRoute><OnboardedRoute><Home /></OnboardedRoute></ProtectedRoute>}>
           <Route index path="/" element={<Navigate to="/stats" replace />} />
           <Route path="/stats" element={<MyStats />} />
-          <Route path="/coaches" element={<p className="text-2xl text-primary">Coaches</p>} />
-          <Route path="/personal-trainer" element={<p className="text-2xl text-primary">Personal Trainer</p>} />
+          <Route path="/coaches" element={<ComingSoon title="Coaches" description="Connect with certified nutrition and fitness coaches to guide your journey." />} />
+          <Route path="/personal-trainer" element={<ComingSoon title="Personal Trainer" description="Get personalized workout plans tailored to your goals and fitness level." />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/settings" element={<p className="text-2xl text-primary">Settings</p>} />
+          <Route path="/settings" element={<ComingSoon title="Settings" description="Manage your account, preferences, and privacy options — all in one place." />} />
           <Route path="/create-meal" element={<CreateMeal />} />
           <Route path="/meals/:id" element={<MealPage />} />
         </Route>

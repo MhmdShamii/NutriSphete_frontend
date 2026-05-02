@@ -1,11 +1,14 @@
+import { useState } from "react"
 import { useSelector } from "react-redux"
 import type { RootState } from "../../app/store"
 import TopBar from "../../components/Home/TopBar"
 import NavBar from "../../components/Home/NavBar"
 import Feed from "./Feed"
+import GuestSignInPrompt from "../../components/ui/GuestSignInPrompt"
 
 export default function FeedPage() {
     const { user, initialized } = useSelector((s: RootState) => s.auth)
+    const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
     if (!initialized) {
         return (
@@ -17,6 +20,7 @@ export default function FeedPage() {
 
     return (
         <div className="flex flex-col w-full h-[100dvh] bg-background text-text gap-5 relative p-2 sm:p-4 overflow-hidden safe-area-top safe-area-bottom safe-area-x">
+            {showGuestPrompt && <GuestSignInPrompt onClose={() => setShowGuestPrompt(false)} />}
             <div className="absolute top-[-150px] sm:top-[-250px] left-[30%] w-[400px] h-[200px] sm:w-[700px] sm:h-[400px] bg-primary/15 blur-[120px] sm:blur-[180px] rounded-full animate-energy pointer-events-none" />
             <div className="absolute top-[-150px] sm:top-[-250px] right-[30%] w-[400px] h-[200px] sm:w-[700px] sm:h-[400px] bg-primary/15 blur-[120px] sm:blur-[180px] rounded-full animate-energy pointer-events-none" />
 
@@ -25,7 +29,7 @@ export default function FeedPage() {
             </div>
 
             <div className="flex w-full flex-1 min-h-0 flex-col-reverse gap-3 sm:flex-row sm:gap-5">
-                <NavBar />
+                <NavBar isGuest={!user} onGuestAction={() => setShowGuestPrompt(true)} />
                 <div className="flex-1 min-h-0 overflow-auto no-scrollbar">
                     <Feed isGuest={!user} />
                 </div>
