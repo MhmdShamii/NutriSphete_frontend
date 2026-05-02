@@ -2,10 +2,10 @@ import Input from "../ui/Input"
 import Button from "../ui/Button"
 import PasswordInput from "../ui/PasswordInput"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { useDispatch, useSelector } from "react-redux"
-import { login } from "../../features/auth/authSlice"
+import { login, clearError } from "../../features/auth/authSlice"
 
 import { useNavigate } from "react-router-dom"
 
@@ -13,6 +13,7 @@ import type { LoginPayload } from "../../features/auth/types"
 import { getPostLoginRoute } from "../../features/auth/types"
 import type { RootState, AppDispatch } from "../../app/store"
 import GoogleButton from "../ui/GoogleButton"
+import { useToast } from "../../context/ToastContext"
 
 type LoginFormProps = {
     onSwitchToSignup: () => void
@@ -28,9 +29,17 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
 
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
+    const { showError } = useToast()
 
     const loading = useSelector((state: RootState) => state.auth.loading)
     const error = useSelector((state: RootState) => state.auth.error)
+
+    useEffect(() => {
+        if (error) {
+            showError(error)
+            dispatch(clearError())
+        }
+    }, [error])
 
     function handleChange<K extends keyof LoginPayload>(field: K, value: LoginPayload[K]) {
         setLoginForm(prev => ({ ...prev, [field]: value }))
@@ -41,9 +50,7 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
         try {
             const { user } = await dispatch(login(loginForm)).unwrap()
             navigate(getPostLoginRoute(user.onboarding_step))
-        } catch {
-            // error is stored in Redux state, displayed below
-        }
+        } catch { }
     }
 
     return (
@@ -80,9 +87,6 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                     </span>
                 </div>
 
-                {error && (
-                    <p className="text-xs text-red-400 text-center -mt-2">{error}</p>
-                )}
 
             </div>
 

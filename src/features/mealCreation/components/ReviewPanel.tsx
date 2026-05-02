@@ -9,6 +9,7 @@ import GrainRoundedIcon from "@mui/icons-material/GrainRounded"
 import WaterDropRoundedIcon from "@mui/icons-material/WaterDropRounded"
 import SpaRoundedIcon from "@mui/icons-material/SpaRounded"
 import type { MealDraft } from "../types/meal.types"
+import { useToast } from "../../../context/ToastContext"
 
 interface Props {
     draft: MealDraft | null
@@ -21,7 +22,6 @@ interface Props {
     onBack?: () => void
     isMobile?: boolean
     loading?: boolean
-    error?: string | null
     submitReady: boolean
 }
 
@@ -96,8 +96,9 @@ function GlowCard({ children, className = "", speed = 2.8, delay = 0, rounded = 
 
 export default function ReviewPanel({
     draft, onSubmit, onConfirm, onConfirmAndLog, onDiscard, onRecalculate, onEditMobile,
-    onBack, isMobile, loading, error, submitReady,
+    onBack, isMobile, loading, submitReady,
 }: Props) {
+    const { showError } = useToast()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [dragging, setDragging] = useState(false)
     const [image, setImage] = useState<File | null>(null)
@@ -105,8 +106,19 @@ export default function ReviewPanel({
 
     function handleFile(file: File | null) {
         if (!file) return
-        if (!["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type)) return
-        if (file.size > 5 * 1024 * 1024) return
+        const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+        if (!allowed.includes(file.type)) {
+            showError("Only JPEG, PNG, and WebP images are supported.")
+            return
+        }
+        if (file.size === 0) {
+            showError("The selected image appears to be empty. Please try a different file.")
+            return
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showError("Image must be smaller than 5 MB.")
+            return
+        }
         setImage(file)
         setImagePreview(URL.createObjectURL(file))
     }
@@ -305,9 +317,6 @@ export default function ReviewPanel({
 
                     {/* Pinned actions bar */}
                     <div className="flex-shrink-0 flex flex-col gap-2 pt-3 border-t border-border/20">
-                        {error && (
-                            <p className="text-xs text-red-400 text-center px-1 leading-snug">{error}</p>
-                        )}
                         <button
                             type="button"
                             onClick={() => image && onConfirmAndLog(image)}
@@ -364,7 +373,6 @@ export default function ReviewPanel({
 
                     {!isMobile && (
                         <div className="flex flex-col gap-2.5">
-                            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
                             <button
                                 type="button"
                                 onClick={onSubmit}
@@ -383,9 +391,6 @@ export default function ReviewPanel({
                         </div>
                     )}
 
-                    {isMobile && error && (
-                        <p className="text-xs text-red-400 text-center">{error}</p>
-                    )}
                 </div>
             )}
         </div>

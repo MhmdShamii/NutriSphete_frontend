@@ -8,14 +8,11 @@ import IngredientsPanel from "../components/IngredientsPanel"
 import ReviewPanel from "../components/ReviewPanel"
 import QuickLog from "./QuickLog"
 import EstimateMeal from "./EstimateMeal"
+import { useToast } from "../../../context/ToastContext"
+import { extractApiError } from "../../../utils/apiError"
 
 function generateId() {
     return Math.random().toString(36).slice(2)
-}
-
-function extractError(err: unknown) {
-    return (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? "Something went wrong. Please try again."
 }
 
 function makeInitialForm(): MealFormData {
@@ -30,6 +27,7 @@ function makeInitialForm(): MealFormData {
 }
 
 export default function CreateMeal() {
+    const { showError, showWarning: toastWarning } = useToast()
     const [view, setView] = useState<"post" | "quick" | "estimate">("post")
     const [form, setForm] = useState<MealFormData>(makeInitialForm)
     const [formKey, setFormKey] = useState(0)
@@ -37,7 +35,6 @@ export default function CreateMeal() {
     const [draft, setDraft] = useState<MealDraft | null>(null)
     const [reviewKey, setReviewKey] = useState(0)
     const [loading, setLoading] = useState(false)
-    const [submitError, setSubmitError] = useState<string | null>(null)
     const [showWarning, setShowWarning] = useState(false)
     const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
     const [warningContext, setWarningContext] = useState<"create" | "log">("create")
@@ -56,7 +53,6 @@ export default function CreateMeal() {
         setForm(makeInitialForm())
         setDraft(null)
         setMobileStep(0)
-        setSubmitError(null)
         setFormKey(k => k + 1)
         setReviewKey(k => k + 1)
     }
@@ -76,7 +72,6 @@ export default function CreateMeal() {
     async function handleSubmit() {
         if (!submitReady) return
         setLoading(true)
-        setSubmitError(null)
         try {
             const [res] = await Promise.all([
                 createMeal(form),
@@ -89,8 +84,8 @@ export default function CreateMeal() {
                 setShowWarning(true)
             }
         } catch (err: unknown) {
-            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-            setSubmitError(msg ?? "Something went wrong. Please try again.")
+            if (window.innerWidth < 640) setMobileStep(1)
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -99,12 +94,11 @@ export default function CreateMeal() {
     async function handleConfirm(image: File) {
         if (!draft) return
         setLoading(true)
-        setSubmitError(null)
         try {
             await confirmMeal(draft.id, image)
             resetForm()
         } catch (err) {
-            setSubmitError(extractError(err))
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -113,7 +107,6 @@ export default function CreateMeal() {
     async function handleConfirmAndLog(image: File) {
         if (!draft) return
         setLoading(true)
-        setSubmitError(null)
         try {
             await confirmMeal(draft.id, image)
             // Meal is now confirmed on the backend. Log it separately so a
@@ -132,9 +125,9 @@ export default function CreateMeal() {
                 logFailed = true
             }
             resetForm()
-            if (logFailed) setSubmitError("Meal saved! Couldn't add it to today's log — try logging from your profile.")
+            if (logFailed) toastWarning("Meal saved! Couldn't add it to today's log — try logging from your profile.")
         } catch (err) {
-            setSubmitError(extractError(err))
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -164,7 +157,7 @@ export default function CreateMeal() {
             setShowWarning(false)
             resetForm()
         } catch (err) {
-            setSubmitError(extractError(err))
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -184,7 +177,7 @@ export default function CreateMeal() {
             await discardMeal(draft.id)
             resetForm()
         } catch (err) {
-            setSubmitError(extractError(err))
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -194,7 +187,6 @@ export default function CreateMeal() {
     async function handleRecalculate() {
         if (!draft) return
         setLoading(true)
-        setSubmitError(null)
         try {
             await discardMeal(draft.id)
             setDraft(null)
@@ -204,8 +196,7 @@ export default function CreateMeal() {
         } catch (err: unknown) {
             setDraft(null)
             setReviewKey(k => k + 1)
-            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-            setSubmitError(msg ?? "Something went wrong. Please try again.")
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -215,13 +206,12 @@ export default function CreateMeal() {
     async function handleEditMobile() {
         if (!draft) return
         setLoading(true)
-        setSubmitError(null)
         try {
             await discardMeal(draft.id)
             resetDraft()
             setMobileStep(1)
         } catch (err) {
-            setSubmitError(extractError(err))
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -302,7 +292,7 @@ export default function CreateMeal() {
                             <BasicInfoPanel key={formKey} form={form} onChange={setField} />
                         </div>
                         <div className={`${panelBase} ${panelDivider}`}>
-                            <IngredientsPanel key={formKey} form={form} onChange={setField} loading={loading} error={submitError} />
+                            <IngredientsPanel key={formKey} form={form} onChange={setField} loading={loading} />
                         </div>
                         <div className={panelBase}>
                             <ReviewPanel
@@ -314,7 +304,6 @@ export default function CreateMeal() {
                                 onDiscard={handleDiscard}
                                 onRecalculate={handleRecalculate}
                                 loading={loading}
-                                error={submitError}
                                 submitReady={submitReady}
                             />
                         </div>
@@ -334,7 +323,6 @@ export default function CreateMeal() {
                                 onBack={() => setMobileStep(0)}
                                 isMobile
                                 loading={loading}
-                                error={submitError}
                             />
                         )}
                         {mobileStep === 2 && (
@@ -349,7 +337,6 @@ export default function CreateMeal() {
                                 onBack={() => setMobileStep(1)}
                                 isMobile
                                 loading={loading}
-                                error={submitError}
                                 submitReady={submitReady}
                             />
                         )}

@@ -4,11 +4,12 @@ import SignUpStepOne from "./SignUpStepOne"
 import SignUpStepTwo from "./SignUpStepTwo"
 import StepIndicator from "./StepIndicator"
 import { useDispatch, useSelector } from "react-redux"
-import { register } from "../../features/auth/authSlice"
+import { register, clearError } from "../../features/auth/authSlice"
 import type { AppDispatch, RootState } from "../../app/store"
 import type { RegisterPayload } from "../../features/auth/types"
 import GoogleButton from "../ui/GoogleButton"
 import Button from "../ui/Button"
+import { useToast } from "../../context/ToastContext"
 
 type SignupFormProps = {
     onSwitchToLogin: () => void
@@ -32,6 +33,14 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
     const dispatch = useDispatch<AppDispatch>()
     const loading = useSelector((state: RootState) => state.auth.loading)
     const reduxError = useSelector((state: RootState) => state.auth.error)
+    const { showError } = useToast()
+
+    useEffect(() => {
+        if (reduxError) {
+            showError(reduxError)
+            dispatch(clearError())
+        }
+    }, [reduxError])
 
     /* -------------------- VALIDATION -------------------- */
 
@@ -124,10 +133,6 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
 
                 {step === 1 && (
                     <>
-                        {reduxError && (
-                            <p className="text-xs text-red-400 text-center">{reduxError}</p>
-                        )}
-
                         <Button
                             type="submit"
                             className="flex items-center justify-center gap-2 w-full"

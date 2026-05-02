@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { updateTargets } from "./auth/authSlice"
+import { updateTargets, clearError } from "./auth/authSlice"
 import type { AppDispatch, RootState } from "../app/store"
+import { useToast } from "../context/ToastContext"
 import { useNavigate } from "react-router-dom"
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded"
 import FitnessCenterRoundedIcon from "@mui/icons-material/FitnessCenterRounded"
@@ -105,8 +106,16 @@ function ModalInput({ label, value, onChange, unit, color }: {
 // ─── Update targets modal ─────────────────────────────────────────────────────
 function UpdateTargetsModal({ onClose }: { onClose: () => void }) {
     const dispatch = useDispatch<AppDispatch>()
+    const { showError } = useToast()
     const { user, loading, error } = useSelector((state: RootState) => state.auth)
     const profile = user?.profile
+
+    useEffect(() => {
+        if (error) {
+            showError(error)
+            dispatch(clearError())
+        }
+    }, [error])
 
     const [calories, setCalories] = useState(String(profile?.daily_calorie_target ?? ""))
     const [protein,  setProtein]  = useState(String(profile?.daily_protein_g ?? ""))
@@ -137,7 +146,6 @@ function UpdateTargetsModal({ onClose }: { onClose: () => void }) {
                 <ModalInput label="Carbs"    value={carbs}    onChange={setCarbs}    unit="g" color="#FFC107" />
                 <ModalInput label="Fats"     value={fats}     onChange={setFats}     unit="g" color="#FF6B9D" />
             </div>
-            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
             <button
                 onClick={handleSave}
                 disabled={!valid || loading}
@@ -153,10 +161,10 @@ function UpdateTargetsModal({ onClose }: { onClose: () => void }) {
 
 // ─── Log weight modal ─────────────────────────────────────────────────────────
 function LogWeightModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+    const { showError } = useToast()
     const [weight, setWeight]   = useState("")
     const [note, setNote]       = useState("")
     const [loading, setLoading] = useState(false)
-    const [error, setError]     = useState<string | null>(null)
 
     const kg     = parseFloat(weight)
     const valid  = weight !== "" && !isNaN(kg) && kg > 0 && kg < 700
@@ -164,13 +172,12 @@ function LogWeightModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
     async function handleSave() {
         if (!valid || loading) return
         setLoading(true)
-        setError(null)
         try {
             await logWeightApi({ weight_kg: kg, note: note || undefined })
             onSuccess()
             onClose()
         } catch {
-            setError("Could not save weight. Please try again.")
+            showError("Could not save weight. Please try again.")
         } finally {
             setLoading(false)
         }
@@ -185,7 +192,7 @@ function LogWeightModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
                     style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--glass-border)" }}>
                     <input
                         type="number" placeholder="e.g. 81.5" value={weight}
-                        onChange={e => { setWeight(e.target.value); setError(null) }}
+                        onChange={e => setWeight(e.target.value)}
                         className="flex-1 bg-transparent text-2xl font-bold text-text outline-none min-w-0"
                         style={{ appearance: "textfield" } as React.CSSProperties}
                         autoFocus
@@ -207,8 +214,6 @@ function LogWeightModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
                     style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--glass-border)" }}
                 />
             </div>
-
-            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
 
             <button onClick={handleSave}
                 disabled={!valid || loading}

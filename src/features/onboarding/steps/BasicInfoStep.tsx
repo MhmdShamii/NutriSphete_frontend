@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { completeBasicInfo, fetchMe } from "../../auth/authSlice"
+import { completeBasicInfo, fetchMe, clearError } from "../../auth/authSlice"
 import type { AppDispatch, RootState } from "../../../app/store"
+import { useToast } from "../../../context/ToastContext"
 import type { BasicInfoPayload } from "../../auth/types"
 import Input from "../../../components/ui/Input"
 import Button from "../../../components/ui/Button"
@@ -19,8 +20,16 @@ const initialForm: BasicInfoPayload = {
 export default function BasicInfoStep() {
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
+    const { showError } = useToast()
     const { loading, error } = useSelector((state: RootState) => state.auth)
     const [form, setForm] = useState<BasicInfoPayload>(initialForm)
+
+    useEffect(() => {
+        if (error) {
+            showError(error)
+            dispatch(clearError())
+        }
+    }, [error])
 
     function set<K extends keyof BasicInfoPayload>(field: K, value: BasicInfoPayload[K]) {
         setForm(p => ({ ...p, [field]: value }))
@@ -119,8 +128,6 @@ export default function BasicInfoStep() {
                     ]}
                 />
             </div>
-
-            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
 
             <Button type="submit" disabled={!valid || loading} className="flex items-center justify-center gap-2 w-full">
                 {loading

@@ -141,7 +141,10 @@ const authSlice = createSlice({
             state.user = null
             state.token = null
             localStorage.removeItem("token")
-        }
+        },
+        clearError(state) {
+            state.error = null
+        },
     },
 
     extraReducers: (builder) => {
@@ -241,5 +244,5 @@ const authSlice = createSlice({
     }
 })
 
-export const { logout } = authSlice.actions
+export const { logout, clearError } = authSlice.actions
 export default authSlice.reducer

@@ -66,12 +66,11 @@ interface Props {
     editLabel?: string
     isMobile?: boolean
     loading?: boolean
-    error?: string | null
     submitReady: boolean
     submitLabel?: string
 }
 
-export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate, onConfirm, onDiscard, onBack, onEdit, editLabel = "Edit", isMobile, loading, error, submitReady, submitLabel = "Calculate Macros" }: Props) {
+export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate, onConfirm, onDiscard, onBack, onEdit, editLabel = "Edit", isMobile, loading, submitReady, submitLabel = "Calculate Macros" }: Props) {
 
     /* ── Skeleton while AI calculates ─────────────────────────── */
     if (loading && !entry) {
@@ -158,7 +157,6 @@ export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate,
                         ))}
                     </div>
 
-                    {error && <p className="text-xs text-red-400 text-center">{error}</p>}
                 </div>
 
                 <div className="flex-shrink-0 flex flex-col gap-2 pt-3 border-t border-border/20">
@@ -215,7 +213,6 @@ export default function QuickLogReviewPanel({ entry, onCalculate, onRecalculate,
                     <p className="text-xs text-text-muted/60 mt-1">Fill in the details &amp; ingredients first</p>
                 </div>
             </div>
-            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
             {!isMobile && (
                 <button
                     type="button"

@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react"
 import { useParams } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
 import type { RootState, AppDispatch } from "../app/store"
-import { fetchMe, updateMe } from "./auth/authSlice"
+import { fetchMe, updateMe, clearError } from "./auth/authSlice"
+import { useToast } from "../context/ToastContext"
 import type { UpdateMePayload } from "./auth/types"
 import { uploadAvatarApi, deleteAvatarApi } from "../services/auth/authApi"
 import CountryDropdown, { type Country } from "../components/ui/CountryDropdown"
@@ -277,6 +278,7 @@ function VisitedProfile({ userId }: { userId: number }) {
 
 function OwnProfile() {
     const dispatch = useDispatch<AppDispatch>()
+    const { showError } = useToast()
     const { user, loading, error } = useSelector((state: RootState) => state.auth)
     const [tab, setTab] = useState<Tab>("recipes")
     const [fetched, setFetched] = useState(false)
@@ -301,6 +303,13 @@ function OwnProfile() {
         document.addEventListener("mousedown", handleOutside)
         return () => document.removeEventListener("mousedown", handleOutside)
     }, [])
+
+    useEffect(() => {
+        if (error) {
+            showError(error)
+            dispatch(clearError())
+        }
+    }, [error])
 
     useEffect(() => {
         dispatch(fetchMe()).finally(() => setFetched(true))
@@ -470,7 +479,6 @@ function OwnProfile() {
                                             <CloseRoundedIcon sx={{ fontSize: 12 }} />
                                             Cancel
                                         </button>
-                                        {error && <p className="text-xs text-red-400">{error}</p>}
                                     </div>
                                 </div>
                             ) : (
