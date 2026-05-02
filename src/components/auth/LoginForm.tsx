@@ -2,10 +2,10 @@ import Input from "../ui/Input"
 import Button from "../ui/Button"
 import PasswordInput from "../ui/PasswordInput"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import { useDispatch, useSelector } from "react-redux"
-import { login, clearError } from "../../features/auth/authSlice"
+import { login } from "../../features/auth/authSlice"
 
 import { useNavigate } from "react-router-dom"
 
@@ -13,7 +13,6 @@ import type { LoginPayload } from "../../features/auth/types"
 import { getPostLoginRoute } from "../../features/auth/types"
 import type { RootState, AppDispatch } from "../../app/store"
 import GoogleButton from "../ui/GoogleButton"
-import { useToast } from "../../context/ToastContext"
 
 type LoginFormProps = {
     onSwitchToSignup: () => void
@@ -26,22 +25,15 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
         email: "",
         password: ""
     })
+    const [credError, setCredError] = useState<string | null>(null)
 
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
-    const { showError } = useToast()
 
     const loading = useSelector((state: RootState) => state.auth.loading)
-    const error = useSelector((state: RootState) => state.auth.error)
-
-    useEffect(() => {
-        if (error) {
-            showError(error)
-            dispatch(clearError())
-        }
-    }, [error])
 
     function handleChange<K extends keyof LoginPayload>(field: K, value: LoginPayload[K]) {
+        setCredError(null)
         setLoginForm(prev => ({ ...prev, [field]: value }))
     }
 
@@ -50,7 +42,9 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
         try {
             const { user } = await dispatch(login(loginForm)).unwrap()
             navigate(getPostLoginRoute(user.onboarding_step))
-        } catch { }
+        } catch {
+            setCredError("Invalid email or password")
+        }
     }
 
     return (
@@ -70,7 +64,7 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                     placeholder="Enter your email"
                     value={loginForm.email}
                     onChange={(v) => handleChange("email", v)}
-                    error={!!error}
+                    error={!!credError}
                 />
 
                 <div className="flex flex-col gap-1">
@@ -80,8 +74,11 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                         placeholder="Enter your password"
                         value={loginForm.password}
                         onChange={(v) => handleChange("password", v)}
-                        error={!!error}
+                        error={!!credError}
                     />
+                    {credError && (
+                        <p className="text-xs text-red-400">{credError}</p>
+                    )}
                     <span className="text-xs w-full text-right text-text-muted hover:text-primary cursor-pointer transition-colors">
                         Forgot password?
                     </span>
