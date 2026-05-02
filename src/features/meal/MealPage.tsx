@@ -17,6 +17,8 @@ import { getMealApi, likeMealApi, unlikeMealApi, logMeal } from "../../services/
 import { confirmQuickLog, deleteQuickLog } from "../../services/log/quickLogApi"
 import HealthWarningModal from "../mealCreation/components/HealthWarningModal"
 import CommentsSheet from "./CommentsSheet"
+import LazyImage from "../../components/ui/LazyImage"
+import Avatar from "../../components/ui/Avatar"
 
 function Shimmer({ className }: { className?: string }) {
     return (
@@ -148,8 +150,9 @@ export default function MealPage() {
             <div className="relative px-4 pt-4">
                 <div className="relative w-full h-64 sm:h-80 overflow-hidden rounded-3xl bg-white/5">
                     {meal.image_url
-                        ? <img src={meal.image_url} alt={meal.name} className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center text-6xl opacity-10">🍽</div>
+                        ? <LazyImage src={meal.image_url} alt={meal.name} className="w-full h-full object-cover"
+                            fallback={<div className="absolute inset-0 flex items-center justify-center text-6xl opacity-10">🍽</div>} />
+                        : <div className="absolute inset-0 flex items-center justify-center text-6xl opacity-10">🍽</div>
                     }
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-3xl" />
 
@@ -185,9 +188,7 @@ export default function MealPage() {
                     onClick={() => navigate(`/profile/${meal.author.id}`)}
                     className="flex items-center gap-2.5 w-fit hover:opacity-75 transition-opacity"
                 >
-                    <img src={meal.author.avatar} alt={meal.author.first_name}
-                        className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                        style={{ border: "1px solid var(--glass-border)" }} />
+                    <Avatar src={meal.author.avatar} name={`${meal.author.first_name} ${meal.author.last_name}`} size={28} />
                     <span className="text-xs font-medium text-text-muted">
                         {meal.author.first_name} {meal.author.last_name}
                     </span>

@@ -4,6 +4,7 @@ import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartm
 import EggRoundedIcon from "@mui/icons-material/EggRounded"
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded"
 import { getUserMealsApi, getUserPrivateMealsApi, type ProfileMeal } from "../../services/meals/mealsApis"
+import LazyImage from "../../components/ui/LazyImage"
 
 function RecipeCardSkeleton() {
     return (
@@ -29,7 +30,8 @@ function RecipeCard({ meal, onClick }: { meal: ProfileMeal; onClick: () => void 
 
             <div className="relative w-full aspect-[4/3] overflow-hidden bg-white/5 flex-shrink-0">
                 {meal.image_url
-                    ? <img src={meal.image_url} alt={meal.name} className="w-full h-full object-cover" />
+                    ? <LazyImage src={meal.image_url} alt={meal.name} className="w-full h-full object-cover"
+                        fallback={<div className="absolute inset-0 flex items-center justify-center"><span className="text-3xl opacity-20">🍽</span></div>} />
                     : <div className="absolute inset-0 flex items-center justify-center">
                         <span className="text-3xl opacity-20">🍽</span>
                     </div>

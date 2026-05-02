@@ -1,5 +1,6 @@
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import type { ProfileMeal } from "../../services/meals/mealsApis"
+import LazyImage from "../../components/ui/LazyImage"
 
 interface Props {
     meal: ProfileMeal
@@ -30,8 +31,9 @@ export default function MealSheet({ meal, onClose }: Props) {
                 {/* Hero */}
                 <div className="relative w-full h-56 sm:h-72 flex-shrink-0 overflow-hidden">
                     {meal.image_url
-                        ? <img src={meal.image_url} alt={meal.name} className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center"
+                        ? <LazyImage src={meal.image_url} alt={meal.name} className="w-full h-full object-cover"
+                            fallback={<div className="absolute inset-0 flex items-center justify-center" style={{ background: "var(--glass-bg)" }}><span className="text-6xl opacity-10">🍽</span></div>} />
+                        : <div className="absolute inset-0 flex items-center justify-center"
                             style={{ background: "var(--glass-bg)" }}>
                             <span className="text-6xl opacity-10">🍽</span>
                           </div>

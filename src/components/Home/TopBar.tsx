@@ -6,6 +6,7 @@ import type { AppDispatch } from "../../app/store"
 import type { AuthUser } from "../../features/auth/types"
 import GlassCard from "../ui/GlassCard"
 import Logo from "../ui/Logo"
+import Avatar from "../ui/Avatar"
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded"
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded"
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
@@ -193,11 +194,12 @@ export default function TopBar({ user }: { user: AuthUser }) {
                                             className="flex items-start gap-3 px-3 py-2.5 rounded-xl
                                                 hover:bg-primary/5 transition-colors duration-150 cursor-pointer"
                                         >
-                                            <img
+                                            <Avatar
                                                 src={n.actor.avatar}
-                                                alt={n.actor.first_name}
+                                                name={`${n.actor.first_name} ${n.actor.last_name}`}
+                                                size={32}
                                                 onClick={e => { e.stopPropagation(); navigate(`/profile/${n.actor.id}`); setNotifOpen(false) }}
-                                                className="w-8 h-8 rounded-full object-cover ring-1 ring-primary/20 shrink-0 mt-0.5 hover:ring-primary/60 transition-all"
+                                                className="mt-0.5 shrink-0 hover:opacity-80 transition-opacity"
                                             />
                                             <div className="min-w-0">
                                                 <p className="text-xs text-text leading-snug">
@@ -232,8 +234,7 @@ export default function TopBar({ user }: { user: AuthUser }) {
                             hover:bg-primary/10 transition-all duration-200 active:scale-95"
                     >
                         <div className="relative">
-                            <img src={user.image.avatar} alt="avatar"
-                                className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/30" />
+                            <Avatar src={user.image.avatar} name={`${user.first_name} ${user.last_name}`} size={32} ring="rgba(127,250,136,0.3)" />
                             <span className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
                         </div>
                         <span className="text-sm font-medium text-text hidden sm:block">{user.first_name}</span>

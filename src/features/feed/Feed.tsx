@@ -18,6 +18,8 @@ import { getFeed, getFollowingFeed, type FeedPost } from "../../services/feed/fe
 import { likeMealApi, unlikeMealApi, logMeal } from "../../services/meals/mealsApis"
 import { followUserApi, unfollowUserApi } from "../../services/social/followApi"
 import { confirmQuickLog, deleteQuickLog } from "../../services/log/quickLogApi"
+import AvatarUI from "../../components/ui/Avatar"
+import LazyImage from "../../components/ui/LazyImage"
 import HealthWarningModal from "../mealCreation/components/HealthWarningModal"
 import CommentsSheet from "../meal/CommentsSheet"
 import type { FlaggedIngredient } from "../mealCreation/types/meal.types"
@@ -32,26 +34,7 @@ function timeAgo(iso: string): string {
     return `${Math.floor(diff / 86400)}d`
 }
 
-function Avatar({ src, name, size = 36 }: { src?: string; name: string; size?: number }) {
-    const initials = name.trim().split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"
-    const palette  = ["#7FFA88", "#4F9CF9", "#FFC107", "#FF6B9D", "#a78bfa"]
-    const color    = palette[(name.charCodeAt(0) || 0) % palette.length]
-    if (src) {
-        return (
-            <img src={src} alt={name} className="rounded-full object-cover flex-shrink-0"
-                style={{ width: size, height: size }} />
-        )
-    }
-    return (
-        <div style={{
-            width: size, height: size, borderRadius: "50%", flexShrink: 0,
-            background: `${color}20`, border: `1.5px solid ${color}50`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-            <span style={{ fontSize: size * 0.36, fontWeight: 700, color }}>{initials}</span>
-        </div>
-    )
-}
+const Avatar = AvatarUI
 
 // ─── Post carousel (image → ingredients → steps) ─────────────────────────────
 
@@ -105,11 +88,20 @@ function PostCarousel({
                     style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none" } as React.CSSProperties}>
 
                     {/* Slide 0: Image */}
-                    <div className="flex-shrink-0 w-full h-full bg-white/5" style={{ scrollSnapAlign: "start" }}>
+                    <div className="flex-shrink-0 w-full h-full relative bg-white/5" style={{ scrollSnapAlign: "start" }}>
                         {imageUrl ? (
-                            <img src={imageUrl} alt={mealName} className="w-full h-full object-cover" />
+                            <LazyImage
+                                src={imageUrl}
+                                alt={mealName}
+                                className="w-full h-full object-cover"
+                                fallback={
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-text-muted/30 text-sm">No image</span>
+                                    </div>
+                                }
+                            />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center">
+                            <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-text-muted/30 text-sm">No image</span>
                             </div>
                         )}

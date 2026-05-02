@@ -17,6 +17,8 @@ import {
 } from "../services/social/followApi"
 import FollowListModal from "./profile/FollowListModal"
 import ProfileRecipes from "./profile/ProfileRecipes"
+import LazyImage from "../components/ui/LazyImage"
+import AvatarUI from "../components/ui/Avatar"
 import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded"
 import LockRoundedIcon from "@mui/icons-material/LockRounded"
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded"
@@ -102,7 +104,7 @@ function ProfileSkeleton() {
 
 function ProfileBanner({ coverImage }: { coverImage: string | null }) {
     if (coverImage) {
-        return <img src={coverImage} alt="banner" className="w-full h-full object-cover" />
+        return <LazyImage src={coverImage} alt="banner" className="w-full h-full object-cover" />
     }
     return (
         <>
@@ -196,11 +198,11 @@ function VisitedProfile({ userId }: { userId: number }) {
                 {/* Avatar + info — same structure as OwnProfile so the -mt overlap works */}
                 <div className="px-5 sm:px-6 pb-4">
                     <div className="relative w-fit -mt-9 sm:-mt-11 mb-3">
-                        <img
+                        <AvatarUI
                             src={profile.image.avatar}
-                            alt="avatar"
-                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-xl block"
-                            style={{ border: "3px solid var(--background)" }}
+                            name={`${profile.first_name} ${profile.last_name}`}
+                            size={80}
+                            className="shadow-xl sm:!w-24 sm:!h-24"
                         />
                     </div>
 
@@ -378,10 +380,11 @@ function OwnProfile() {
                             className="relative group block rounded-full focus:outline-none"
                             style={{ border: "3px solid var(--background)", borderRadius: "9999px" }}
                         >
-                            <img
+                            <AvatarUI
                                 src={user.image.avatar}
-                                alt="avatar"
-                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-xl block"
+                                name={`${user.first_name} ${user.last_name}`}
+                                size={80}
+                                className="shadow-xl sm:!w-24 sm:!h-24"
                             />
                             <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100
                                 transition-opacity duration-200 flex items-center justify-center">

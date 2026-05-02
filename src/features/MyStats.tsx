@@ -31,6 +31,7 @@ import { getTodayMacros } from "../services/stats/todayMacrosApi"
 import type { TodayMacros } from "../services/stats/todayMacrosApi"
 import { confirmQuickLog, deleteQuickLog } from "../services/log/quickLogApi"
 import { getStreak } from "../services/stats/streakApi"
+import LazyImage from "../components/ui/LazyImage"
 
 const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
@@ -822,8 +823,9 @@ function LogCard({
                 <div className="flex-shrink-0 w-11 h-11 rounded-xl overflow-hidden"
                     style={{ border: `1px solid ${accent}40` }}>
                     {entry.meal_post.image_url
-                        ? <img src={entry.meal_post.image_url} alt={name} className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center"
+                        ? <LazyImage src={entry.meal_post.image_url} alt={name} className="w-full h-full object-cover"
+                            fallback={<div className="absolute inset-0 flex items-center justify-center" style={{ background: `${accent}15` }}><RestaurantRoundedIcon sx={{ fontSize: 18 }} style={{ color: accent }} /></div>} />
+                        : <div className="absolute inset-0 flex items-center justify-center"
                             style={{ background: `${accent}15` }}>
                             <RestaurantRoundedIcon sx={{ fontSize: 18 }} style={{ color: accent }} />
                           </div>
