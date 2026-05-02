@@ -27,9 +27,9 @@ interface Props {
 
 const MACROS = [
     { key: "protein" as const, label: "Protein", unit: "g", icon: <FitnessCenterRoundedIcon sx={{ fontSize: 16 }} />, color: "#4F9CF9" },
-    { key: "carbs"   as const, label: "Carbs",   unit: "g", icon: <GrainRoundedIcon sx={{ fontSize: 16 }} />,         color: "#FFC107" },
-    { key: "fats"    as const, label: "Fat",      unit: "g", icon: <WaterDropRoundedIcon sx={{ fontSize: 16 }} />,    color: "#FF6B9D" },
-    { key: "fiber"   as const, label: "Fiber",    unit: "g", icon: <SpaRoundedIcon sx={{ fontSize: 16 }} />,          color: "#7FFA88" },
+    { key: "carbs" as const, label: "Carbs", unit: "g", icon: <GrainRoundedIcon sx={{ fontSize: 16 }} />, color: "#FFC107" },
+    { key: "fats" as const, label: "Fat", unit: "g", icon: <WaterDropRoundedIcon sx={{ fontSize: 16 }} />, color: "#FF6B9D" },
+    { key: "fiber" as const, label: "Fiber", unit: "g", icon: <SpaRoundedIcon sx={{ fontSize: 16 }} />, color: "#7FFA88" },
 ]
 
 const BEAM_KEYFRAMES = `
@@ -42,14 +42,14 @@ const BEAM_KEYFRAMES = `
 `
 
 const PARTICLES = [
-    { left: "12%",  top: "22%", dur: 2.4, delay: 0    },
-    { left: "78%",  top: "35%", dur: 2.9, delay: 0.5  },
-    { left: "35%",  top: "58%", dur: 2.2, delay: 0.9  },
-    { left: "88%",  top: "18%", dur: 3.1, delay: 0.2  },
-    { left: "22%",  top: "78%", dur: 2.6, delay: 1.1  },
-    { left: "62%",  top: "82%", dur: 2.8, delay: 0.7  },
-    { left: "50%",  top: "12%", dur: 2.3, delay: 0.3  },
-    { left: "5%",   top: "50%", dur: 3.0, delay: 1.3  },
+    { left: "12%", top: "22%", dur: 2.4, delay: 0 },
+    { left: "78%", top: "35%", dur: 2.9, delay: 0.5 },
+    { left: "35%", top: "58%", dur: 2.2, delay: 0.9 },
+    { left: "88%", top: "18%", dur: 3.1, delay: 0.2 },
+    { left: "22%", top: "78%", dur: 2.6, delay: 1.1 },
+    { left: "62%", top: "82%", dur: 2.8, delay: 0.7 },
+    { left: "50%", top: "12%", dur: 2.3, delay: 0.3 },
+    { left: "5%", top: "50%", dur: 3.0, delay: 1.3 },
 ]
 
 function GlowCard({ children, className = "", speed = 2.8, delay = 0, rounded = "rounded-2xl", innerRounded = "rounded-[15px]", innerClass = "" }: {
@@ -132,10 +132,10 @@ export default function ReviewPanel({
                 </GlowCard>
                 <div className="grid grid-cols-2 gap-2.5">
                     {[
-                        { speed: 2.6, delay: 0    },
+                        { speed: 2.6, delay: 0 },
                         { speed: 2.2, delay: 0.35 },
                         { speed: 2.9, delay: 0.15 },
-                        { speed: 2.4, delay: 0.5  },
+                        { speed: 2.4, delay: 0.5 },
                     ].map((cfg, i) => (
                         <GlowCard key={i} rounded="rounded-xl" innerRounded="rounded-[11px]" speed={cfg.speed} delay={cfg.delay}>
                             <div className="p-3 flex items-center gap-2.5">
@@ -206,104 +206,101 @@ export default function ReviewPanel({
                 <div className="flex flex-col h-full min-h-0">
                     {/* Scrollable content */}
                     <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col gap-3 sm:gap-4 pb-3 sm:pb-4">
-                    {/* Calories highlight */}
-                    <div className="relative overflow-hidden rounded-2xl border border-[#FF6B35]/20 bg-gradient-to-br from-[#FF6B35]/8 via-surface to-surface p-3 sm:p-4 flex items-center gap-3">
-                        <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-[#FF6B35]/10 blur-2xl pointer-events-none" />
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#FF6B35]/15 flex items-center justify-center flex-shrink-0">
+                        {/* Calories highlight */}
+                        <div className="relative overflow-hidden rounded-2xl border border-[#FF6B35]/20 bg-gradient-to-br from-[#FF6B35]/8 via-surface to-surface py-5 px-4 flex items-center gap-3">
+                            <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-[#FF6B35]/10 blur-2xl pointer-events-none" />
                             <LocalFireDepartmentRoundedIcon sx={{ fontSize: 18 }} style={{ color: "#FF6B35" }} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] sm:text-[11px] text-text-muted/70 uppercase tracking-widest font-medium">Calories</p>
-                            <p className="text-xl sm:text-2xl font-bold text-text leading-tight">
-                                {draft.macros.calories.toLocaleString()}
-                                <span className="text-xs sm:text-sm font-normal text-text-muted ml-1">kcal</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Macro grid */}
-                    <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-                        {MACROS.map(({ key, label, unit, icon, color }) => (
-                            <div key={key} className="rounded-xl border border-border/20 bg-surface p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5">
-                                <div
-                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                                    style={{ backgroundColor: `${color}18` }}
-                                >
-                                    <span style={{ color }}>{icon}</span>
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-[10px] text-text-muted/70 uppercase tracking-wide font-medium">{label}</p>
-                                    <p className="text-sm sm:text-base font-bold text-text leading-tight">
-                                        {draft.macros[key]}
-                                        <span className="text-[11px] sm:text-xs font-normal text-text-muted ml-0.5">{unit}</span>
-                                    </p>
-                                </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xl font-bold text-text leading-tight">
+                                    {draft.macros.calories.toLocaleString()}
+                                    <span className="text-sm font-normal text-text-muted ml-1">calories</span>
+                                </p>
                             </div>
-                        ))}
-                    </div>
+                        </div>
 
-                    {/* Recalculate (desktop) / Edit Ingredients (mobile) */}
-                    <button
-                        type="button"
-                        onClick={isMobile ? onEditMobile : onRecalculate}
-                        disabled={loading}
-                        className="flex items-center justify-center gap-1.5 w-full p-2 sm:p-2.5 rounded-xl border border-border/20
+                        {/* Macro grid */}
+                        <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                            {MACROS.map(({ key, label, unit, icon, color }) => (
+                                <div key={key} className="rounded-xl border border-border/20 bg-surface p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5">
+                                    <div
+                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                        style={{ backgroundColor: `${color}18` }}
+                                    >
+                                        <span style={{ color }}>{icon}</span>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] text-text-muted/70 uppercase tracking-wide font-medium">{label}</p>
+                                        <p className="text-sm sm:text-base font-bold text-text leading-tight">
+                                            {draft.macros[key]}
+                                            <span className="text-[11px] sm:text-xs font-normal text-text-muted ml-0.5">{unit}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Recalculate (desktop) / Edit Ingredients (mobile) */}
+                        <button
+                            type="button"
+                            onClick={isMobile ? onEditMobile : onRecalculate}
+                            disabled={loading}
+                            className="flex items-center justify-center gap-1.5 w-full p-2 sm:p-2.5 rounded-xl border border-border/20
                             text-xs sm:text-sm text-text-muted hover:text-primary hover:border-primary/30
                             transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
-                    >
-                        <EditRoundedIcon sx={{ fontSize: 15 }} />
-                        {isMobile ? "Edit Ingredients" : "Recalculate"}
-                    </button>
+                        >
+                            <EditRoundedIcon sx={{ fontSize: 15 }} />
+                            {isMobile ? "Edit Ingredients" : "Recalculate"}
+                        </button>
 
-                    {/* Image upload */}
-                    <div className="flex flex-col gap-1.5">
-                        <p className="text-xs sm:text-sm text-text-muted">
-                            Meal photo <span className="text-red-400">*</span>
-                        </p>
-                        <div
-                            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 border-dashed
+                        {/* Image upload */}
+                        <div className="flex flex-col gap-1.5">
+                            <p className="text-xs sm:text-sm text-text-muted">
+                                Meal photo <span className="text-red-400">*</span>
+                            </p>
+                            <div
+                                className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 border-dashed
                                 ${isMobile ? "h-36" : ""}
                                 ${dragging
-                                    ? "border-primary/70 bg-primary/5 shadow-[0_0_20px_rgba(127,250,136,0.2)]"
-                                    : imagePreview
-                                        ? "border-transparent"
-                                        : "border-border/30 hover:border-primary/40"
-                                }`}
-                            style={isMobile ? undefined : { aspectRatio: "16/9" }}
-                            onClick={() => fileInputRef.current?.click()}
-                            onDragOver={e => { e.preventDefault(); setDragging(true) }}
-                            onDragLeave={() => setDragging(false)}
-                            onDrop={handleDrop}
-                        >
-                            {imagePreview ? (
-                                <>
-                                    <img src={imagePreview} alt="Meal" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
-                                        <EditRoundedIcon sx={{ fontSize: 18 }} className="text-white" />
-                                        <span className="text-white text-sm font-medium">Change photo</span>
+                                        ? "border-primary/70 bg-primary/5 shadow-[0_0_20px_rgba(127,250,136,0.2)]"
+                                        : imagePreview
+                                            ? "border-transparent"
+                                            : "border-border/30 hover:border-primary/40"
+                                    }`}
+                                style={isMobile ? undefined : { aspectRatio: "16/9" }}
+                                onClick={() => fileInputRef.current?.click()}
+                                onDragOver={e => { e.preventDefault(); setDragging(true) }}
+                                onDragLeave={() => setDragging(false)}
+                                onDrop={handleDrop}
+                            >
+                                {imagePreview ? (
+                                    <>
+                                        <img src={imagePreview} alt="Meal" className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+                                            <EditRoundedIcon sx={{ fontSize: 18 }} className="text-white" />
+                                            <span className="text-white text-sm font-medium">Change photo</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <AddPhotoAlternateRoundedIcon sx={{ fontSize: 20 }} style={{ color: "var(--primary)" }} />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-xs sm:text-sm font-medium text-text">Upload meal photo</p>
+                                            {!isMobile && <p className="text-[11px] text-text-muted mt-0.5">JPG, PNG or WebP · max 5 MB</p>}
+                                        </div>
+                                        {dragging && <p className="text-xs text-primary font-medium">Drop it here</p>}
                                     </div>
-                                </>
-                            ) : (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <AddPhotoAlternateRoundedIcon sx={{ fontSize: 20 }} style={{ color: "var(--primary)" }} />
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-xs sm:text-sm font-medium text-text">Upload meal photo</p>
-                                        {!isMobile && <p className="text-[11px] text-text-muted mt-0.5">JPG, PNG or WebP · max 5 MB</p>}
-                                    </div>
-                                    {dragging && <p className="text-xs text-primary font-medium">Drop it here</p>}
-                                </div>
-                            )}
+                                )}
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/jpg,image/png,image/webp"
+                                className="hidden"
+                                onChange={e => handleFile(e.target.files?.[0] ?? null)}
+                            />
                         </div>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/jpeg,image/jpg,image/png,image/webp"
-                            className="hidden"
-                            onChange={e => handleFile(e.target.files?.[0] ?? null)}
-                        />
-                    </div>
                     </div>
 
                     {/* Pinned actions bar */}
@@ -324,28 +321,28 @@ export default function ReviewPanel({
                             }
                         </button>
                         <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={() => image && onConfirm(image)}
-                            disabled={!image || loading}
-                            className={`flex-1 flex items-center justify-center gap-1.5 p-2.5 sm:p-3 rounded-xl text-xs sm:text-sm font-medium border transition-all duration-200
+                            <button
+                                type="button"
+                                onClick={() => image && onConfirm(image)}
+                                disabled={!image || loading}
+                                className={`flex-1 flex items-center justify-center gap-1.5 p-2.5 sm:p-3 rounded-xl text-xs sm:text-sm font-medium border transition-all duration-200
                                 ${image && !loading
-                                    ? "border-border/40 text-text-muted hover:border-primary/40 hover:text-primary"
-                                    : "border-border/20 text-text-muted/40 pointer-events-none"
-                                }`}
-                        >
-                            <CheckRoundedIcon sx={{ fontSize: 15 }} /> Confirm only
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onDiscard}
-                            disabled={loading}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] sm:text-xs text-red-400/60 rounded-xl border border-red-400/20
+                                        ? "border-border/40 text-text-muted hover:border-primary/40 hover:text-primary"
+                                        : "border-border/20 text-text-muted/40 pointer-events-none"
+                                    }`}
+                            >
+                                <CheckRoundedIcon sx={{ fontSize: 15 }} /> Confirm only
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onDiscard}
+                                disabled={loading}
+                                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] sm:text-xs text-red-400/60 rounded-xl border border-red-400/20
                                 hover:text-red-400 hover:border-red-400/40 transition-colors duration-200 disabled:opacity-30 disabled:pointer-events-none"
-                        >
-                            <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} />
-                            Discard meal
-                        </button>
+                            >
+                                <DeleteOutlineRoundedIcon sx={{ fontSize: 13 }} />
+                                Discard meal
+                            </button>
                         </div>
                     </div>
                 </div>
