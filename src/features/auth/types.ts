@@ -103,5 +103,5 @@ const ONBOARDING_ROUTES: Record<OnboardingStep, string> = {
 }
 
 export function getPostLoginRoute(step: OnboardingStep): string {
-    return ONBOARDING_ROUTES[step]
+    return ONBOARDING_ROUTES[step] ?? "/onboarding/main-info"
 }

@@ -28,7 +28,7 @@ function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label
 export default function NavBar() {
     return (
         // Mobile: full-width horizontal row | Desktop: vertical column full height
-        <div className="relative flex items-center justify-between gap-4
+        <div className="relative flex items-center justify-between gap-2 sm:gap-4
             flex-row w-full
             sm:flex-col sm:w-fit sm:h-full sm:justify-center
         ">
@@ -37,7 +37,7 @@ export default function NavBar() {
                 bg-primary/30 blur-3xl rounded-full pointer-events-none z-0"
             />
 
-            <GlassCard className="relative z-10 p-3 rounded-2xl flex gap-2
+            <GlassCard className="relative z-10 p-2 sm:p-3 rounded-2xl flex gap-1 sm:gap-2
                 flex-row flex-1 justify-around
                 sm:flex-col sm:flex-none sm:w-full sm:justify-start
             ">
@@ -63,7 +63,7 @@ export default function NavBar() {
             </Link>
 
             {/* Bottom/Right glass card */}
-            <GlassCard className="relative z-10 p-3 rounded-2xl flex gap-2
+            <GlassCard className="relative z-10 p-2 sm:p-3 rounded-2xl flex gap-1 sm:gap-2
                 flex-row flex-1 justify-around
                 sm:flex-col sm:flex-none sm:w-full sm:justify-between
             ">

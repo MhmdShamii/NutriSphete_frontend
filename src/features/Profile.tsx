@@ -64,7 +64,7 @@ function ProfileSkeleton() {
                             <Shimmer className="h-4 w-32" />
                             <Shimmer className="h-3 w-44" />
                         </div>
-                        <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                             <div className="flex flex-col items-center gap-1">
                                 <Shimmer className="h-4 w-8" />
                                 <Shimmer className="h-2.5 w-14" />
@@ -492,7 +492,7 @@ function OwnProfile() {
                             )}
                         </form>
 
-                        <div className="flex items-center gap-4 flex-shrink-0 pt-0.5">
+                        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 pt-0.5">
                             <button
                                 type="button"
                                 onClick={() => setFollowModal("followers")}

@@ -50,7 +50,7 @@ export default function MealSheet({ meal, onClose }: Props) {
 
                     {/* Title + servings sitting on the gradient */}
                     <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end justify-between gap-3">
-                        <h2 className="text-lg font-bold text-white leading-tight">{meal.name}</h2>
+                        <h2 className="text-lg font-bold text-white leading-tight min-w-0 break-words">{meal.name}</h2>
                         <span className="text-xs text-white/60 flex-shrink-0 pb-0.5">
                             {meal.servings} {meal.servings === 1 ? "serving" : "servings"}
                         </span>
