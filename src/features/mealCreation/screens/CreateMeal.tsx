@@ -13,6 +13,11 @@ function generateId() {
     return Math.random().toString(36).slice(2)
 }
 
+function extractError(err: unknown) {
+    return (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? "Something went wrong. Please try again."
+}
+
 function makeInitialForm(): MealFormData {
     return {
         name: "",
@@ -98,8 +103,8 @@ export default function CreateMeal() {
         try {
             await confirmMeal(draft.id, image)
             resetForm()
-        } catch {
-            setSubmitError("Failed to confirm meal.")
+        } catch (err) {
+            setSubmitError(extractError(err))
         } finally {
             setLoading(false)
         }
@@ -111,17 +116,25 @@ export default function CreateMeal() {
         setSubmitError(null)
         try {
             await confirmMeal(draft.id, image)
-            const logRes = await logMeal(draft.id)
-            if (logRes.health_warning.is_flagged) {
-                setPendingLogId(logRes.logged_meal.id)
-                setWarningContext("log")
-                setWarningIngredients(logRes.health_warning.flagged_ingredients)
-                setShowWarning(true)
-                return
+            // Meal is now confirmed on the backend. Log it separately so a
+            // logMeal failure doesn't prevent the confirmed meal from resetting.
+            let logFailed = false
+            try {
+                const logRes = await logMeal(draft.id)
+                if (logRes.health_warning.is_flagged) {
+                    setPendingLogId(logRes.logged_meal.id)
+                    setWarningContext("log")
+                    setWarningIngredients(logRes.health_warning.flagged_ingredients)
+                    setShowWarning(true)
+                    return
+                }
+            } catch {
+                logFailed = true
             }
             resetForm()
-        } catch {
-            setSubmitError("Failed to confirm and log meal.")
+            if (logFailed) setSubmitError("Meal saved! Couldn't add it to today's log — try logging from your profile.")
+        } catch (err) {
+            setSubmitError(extractError(err))
         } finally {
             setLoading(false)
         }
@@ -150,8 +163,8 @@ export default function CreateMeal() {
             }
             setShowWarning(false)
             resetForm()
-        } catch {
-            setSubmitError("Failed to discard.")
+        } catch (err) {
+            setSubmitError(extractError(err))
         } finally {
             setLoading(false)
         }
@@ -170,8 +183,8 @@ export default function CreateMeal() {
         try {
             await discardMeal(draft.id)
             resetForm()
-        } catch {
-            setSubmitError("Failed to discard meal.")
+        } catch (err) {
+            setSubmitError(extractError(err))
         } finally {
             setLoading(false)
         }
@@ -207,8 +220,8 @@ export default function CreateMeal() {
             await discardMeal(draft.id)
             resetDraft()
             setMobileStep(1)
-        } catch {
-            setSubmitError("Failed to reset. Try again.")
+        } catch (err) {
+            setSubmitError(extractError(err))
         } finally {
             setLoading(false)
         }

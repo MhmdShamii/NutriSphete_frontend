@@ -305,6 +305,9 @@ export default function ReviewPanel({
 
                     {/* Pinned actions bar */}
                     <div className="flex-shrink-0 flex flex-col gap-2 pt-3 border-t border-border/20">
+                        {error && (
+                            <p className="text-xs text-red-400 text-center px-1 leading-snug">{error}</p>
+                        )}
                         <button
                             type="button"
                             onClick={() => image && onConfirmAndLog(image)}
