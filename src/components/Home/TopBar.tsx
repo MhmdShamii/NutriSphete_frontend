@@ -52,7 +52,7 @@ function relativeTime(iso: string): string {
     return `${Math.floor(h / 24)}d ago`
 }
 
-export default function TopBar({ user }: { user: AuthUser }) {
+export default function TopBar({ user }: { user: AuthUser | null }) {
     const [menuOpen, setMenuOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
     const notifRef = useRef<HTMLDivElement>(null)
@@ -86,6 +86,8 @@ export default function TopBar({ user }: { user: AuthUser }) {
     }
 
     useEffect(() => {
+        if (!user) return
+
         let timeoutId: ReturnType<typeof setTimeout>
 
         function scheduleNext() {
@@ -102,7 +104,7 @@ export default function TopBar({ user }: { user: AuthUser }) {
         scheduleNext()
 
         return () => clearTimeout(timeoutId)
-    }, [])
+    }, [user])
 
     async function handleBellClick() {
         if (notifOpen) {
@@ -148,149 +150,162 @@ export default function TopBar({ user }: { user: AuthUser }) {
             {/* Right side */}
             <div className="flex items-center gap-3">
 
-                {/* Notification bell */}
-                <div ref={notifRef} className="relative">
+                {!user && (
                     <button
-                        onClick={handleBellClick}
-                        className="relative p-2 rounded-xl text-text-muted
-                            hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                        onClick={() => navigate("/auth")}
+                        className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200
+                            hover:bg-primary/10 active:scale-95"
+                        style={{ color: "var(--primary)", border: "1px solid rgba(127,250,136,0.35)" }}
                     >
-                        <NotificationsNoneRoundedIcon sx={{ fontSize: 20 }} />
-                        {hasNewNotifications && (
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary
-                                shadow-[0_0_6px_rgba(127,250,136,0.8)]" />
-                        )}
+                        Sign in
                     </button>
+                )}
 
-                    {/* Notification panel */}
-                    <div
-                        className="fixed left-2 right-2 top-[4.5rem] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-80 rounded-2xl shadow-xl z-50 bg-surface overflow-hidden"
-                        style={{
-                            border: "1px solid var(--glass-border)",
-                            backdropFilter: "blur(20px)",
-                            transition: "opacity 250ms ease, transform 250ms ease",
-                            opacity: notifOpen ? 1 : 0,
-                            transform: notifOpen ? "translateY(0)" : "translateY(-8px)",
-                            pointerEvents: notifOpen ? "auto" : "none",
-                        }}
-                    >
-                        <div className="px-4 py-3 border-b border-white/8">
-                            <p className="text-sm font-semibold text-text">Notifications</p>
-                        </div>
-
-                        <div className="max-h-80 overflow-y-auto">
-                            {notifLoading ? (
-                                <div className="flex items-center justify-center py-8">
-                                    <span className="w-5 h-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                                </div>
-                            ) : notifications.length === 0 ? (
-                                <p className="text-center text-xs text-text-muted py-8">No new notifications</p>
-                            ) : (
-                                <div className="p-2 flex flex-col gap-0.5">
-                                    {notifications.map(n => (
-                                        <div
-                                            key={n.id}
-                                            onClick={() => { navigate(notifTarget(n)); setNotifOpen(false) }}
-                                            className="flex items-start gap-3 px-3 py-2.5 rounded-xl
-                                                hover:bg-primary/5 transition-colors duration-150 cursor-pointer"
-                                        >
-                                            <Avatar
-                                                src={n.actor.avatar}
-                                                name={`${n.actor.first_name} ${n.actor.last_name}`}
-                                                size={32}
-                                                onClick={e => { e.stopPropagation(); navigate(`/profile/${n.actor.id}`); setNotifOpen(false) }}
-                                                className="mt-0.5 shrink-0 hover:opacity-80 transition-opacity"
-                                            />
-                                            <div className="min-w-0">
-                                                <p className="text-xs text-text leading-snug">
-                                                    <span
-                                                        onClick={e => { e.stopPropagation(); navigate(`/profile/${n.actor.id}`); setNotifOpen(false) }}
-                                                        className="font-semibold hover:text-primary transition-colors cursor-pointer"
-                                                    >
-                                                        {n.actor.first_name} {n.actor.last_name}
-                                                    </span>
-                                                    {" "}{notifMessage(n)}
-                                                </p>
-                                                {n.type === "comment" || n.type === "reply" ? (
-                                                    <p className="text-xs text-text-muted mt-0.5 truncate">
-                                                        "{n.data.comment_body}"
-                                                    </p>
-                                                ) : null}
-                                                <p className="text-[10px] text-text-muted mt-1">{relativeTime(n.created_at)}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                {user && <>
+                    {/* Notification bell */}
+                    <div ref={notifRef} className="relative">
+                        <button
+                            onClick={handleBellClick}
+                            className="relative p-2 rounded-xl text-text-muted
+                                hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                        >
+                            <NotificationsNoneRoundedIcon sx={{ fontSize: 20 }} />
+                            {hasNewNotifications && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary
+                                    shadow-[0_0_6px_rgba(127,250,136,0.8)]" />
                             )}
+                        </button>
+
+                        {/* Notification panel */}
+                        <div
+                            className="fixed left-2 right-2 top-[4.5rem] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-80 rounded-2xl shadow-xl z-50 bg-surface overflow-hidden"
+                            style={{
+                                border: "1px solid var(--glass-border)",
+                                backdropFilter: "blur(20px)",
+                                transition: "opacity 250ms ease, transform 250ms ease",
+                                opacity: notifOpen ? 1 : 0,
+                                transform: notifOpen ? "translateY(0)" : "translateY(-8px)",
+                                pointerEvents: notifOpen ? "auto" : "none",
+                            }}
+                        >
+                            <div className="px-4 py-3 border-b border-white/8">
+                                <p className="text-sm font-semibold text-text">Notifications</p>
+                            </div>
+
+                            <div className="max-h-80 overflow-y-auto">
+                                {notifLoading ? (
+                                    <div className="flex items-center justify-center py-8">
+                                        <span className="w-5 h-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                                    </div>
+                                ) : notifications.length === 0 ? (
+                                    <p className="text-center text-xs text-text-muted py-8">No new notifications</p>
+                                ) : (
+                                    <div className="p-2 flex flex-col gap-0.5">
+                                        {notifications.map(n => (
+                                            <div
+                                                key={n.id}
+                                                onClick={() => { navigate(notifTarget(n)); setNotifOpen(false) }}
+                                                className="flex items-start gap-3 px-3 py-2.5 rounded-xl
+                                                    hover:bg-primary/5 transition-colors duration-150 cursor-pointer"
+                                            >
+                                                <Avatar
+                                                    src={n.actor.avatar}
+                                                    name={`${n.actor.first_name} ${n.actor.last_name}`}
+                                                    size={32}
+                                                    onClick={e => { e.stopPropagation(); navigate(`/profile/${n.actor.id}`); setNotifOpen(false) }}
+                                                    className="mt-0.5 shrink-0 hover:opacity-80 transition-opacity"
+                                                />
+                                                <div className="min-w-0">
+                                                    <p className="text-xs text-text leading-snug">
+                                                        <span
+                                                            onClick={e => { e.stopPropagation(); navigate(`/profile/${n.actor.id}`); setNotifOpen(false) }}
+                                                            className="font-semibold hover:text-primary transition-colors cursor-pointer"
+                                                        >
+                                                            {n.actor.first_name} {n.actor.last_name}
+                                                        </span>
+                                                        {" "}{notifMessage(n)}
+                                                    </p>
+                                                    {n.type === "comment" || n.type === "reply" ? (
+                                                        <p className="text-xs text-text-muted mt-0.5 truncate">
+                                                            "{n.data.comment_body}"
+                                                        </p>
+                                                    ) : null}
+                                                    <p className="text-[10px] text-text-muted mt-1">{relativeTime(n.created_at)}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Profile dropdown */}
-                <div ref={menuRef} className="relative">
-                    <button
-                        onClick={() => setMenuOpen(o => !o)}
-                        className="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-xl
-                            hover:bg-primary/10 transition-all duration-200 active:scale-95"
-                    >
-                        <div className="relative">
-                            <Avatar src={user.image.avatar} name={`${user.first_name} ${user.last_name}`} size={32} ring="rgba(127,250,136,0.3)" />
-                            <span className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
-                        </div>
-                        <span className="text-sm font-medium text-text hidden sm:block">{user.first_name}</span>
-                        <KeyboardArrowDownRoundedIcon
-                            sx={{ fontSize: 16 }}
-                            className={`text-text-muted transition-transform duration-200 hidden sm:block ${menuOpen ? "rotate-180" : ""}`}
-                        />
-                    </button>
+                    {/* Profile dropdown */}
+                    <div ref={menuRef} className="relative">
+                        <button
+                            onClick={() => setMenuOpen(o => !o)}
+                            className="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-xl
+                                hover:bg-primary/10 transition-all duration-200 active:scale-95"
+                        >
+                            <div className="relative">
+                                <Avatar src={user.image.avatar} name={`${user.first_name} ${user.last_name}`} size={32} ring="rgba(127,250,136,0.3)" />
+                                <span className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
+                            </div>
+                            <span className="text-sm font-medium text-text hidden sm:block">{user.first_name}</span>
+                            <KeyboardArrowDownRoundedIcon
+                                sx={{ fontSize: 16 }}
+                                className={`text-text-muted transition-transform duration-200 hidden sm:block ${menuOpen ? "rotate-180" : ""}`}
+                            />
+                        </button>
 
-                    {/* Dropdown menu */}
-                    <div
-                        className="absolute right-0 top-full w-48 rounded-2xl shadow-xl z-50 bg-surface"
-                        style={{
-                            border: "1px solid var(--glass-border)",
-                            backdropFilter: "blur(20px)",
-                            transition: "opacity 250ms ease, transform 250ms ease",
-                            opacity: menuOpen ? 1 : 0,
-                            transform: menuOpen ? "translateY(12px)" : "translateY(-8px)",
-                            pointerEvents: menuOpen ? "auto" : "none",
-                        }}
-                    >
-                        {/* User info header */}
-                        <div className="px-4 py-3 border-b border-white/8">
-                            <p className="text-sm font-semibold text-text">{user.first_name} {user.last_name}</p>
-                            <p className="text-xs text-text-muted truncate">{user.email}</p>
-                        </div>
+                        {/* Dropdown menu */}
+                        <div
+                            className="absolute right-0 top-full w-48 rounded-2xl shadow-xl z-50 bg-surface"
+                            style={{
+                                border: "1px solid var(--glass-border)",
+                                backdropFilter: "blur(20px)",
+                                transition: "opacity 250ms ease, transform 250ms ease",
+                                opacity: menuOpen ? 1 : 0,
+                                transform: menuOpen ? "translateY(12px)" : "translateY(-8px)",
+                                pointerEvents: menuOpen ? "auto" : "none",
+                            }}
+                        >
+                            {/* User info header */}
+                            <div className="px-4 py-3 border-b border-white/8">
+                                <p className="text-sm font-semibold text-text">{user.first_name} {user.last_name}</p>
+                                <p className="text-xs text-text-muted truncate">{user.email}</p>
+                            </div>
 
-                        {/* Menu items */}
-                        <div className="p-1.5 flex flex-col gap-0.5">
-                            {menuItems.map(item => (
+                            {/* Menu items */}
+                            <div className="p-1.5 flex flex-col gap-0.5">
+                                {menuItems.map(item => (
+                                    <button
+                                        key={item.path}
+                                        onClick={() => { navigate(item.path); setMenuOpen(false) }}
+                                        className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-text-muted
+                                            hover:text-primary hover:bg-primary/10 transition-all duration-150 text-left"
+                                    >
+                                        <span className="text-text-muted group-hover:text-primary">{item.icon}</span>
+                                        {item.label}
+                                    </button>
+                                ))}
+
+                                {/* Divider */}
+                                <div className="h-px bg-white/8 my-1" />
+
+                                {/* Logout */}
                                 <button
-                                    key={item.path}
-                                    onClick={() => { navigate(item.path); setMenuOpen(false) }}
-                                    className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-text-muted
-                                        hover:text-primary hover:bg-primary/10 transition-all duration-150 text-left"
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm
+                                        text-red-400 hover:bg-red-400/10 transition-all duration-150 text-left"
                                 >
-                                    <span className="text-text-muted group-hover:text-primary">{item.icon}</span>
-                                    {item.label}
+                                    <LogoutRoundedIcon sx={{ fontSize: 16 }} />
+                                    Logout
                                 </button>
-                            ))}
-
-                            {/* Divider */}
-                            <div className="h-px bg-white/8 my-1" />
-
-                            {/* Logout */}
-                            <button
-                                onClick={handleLogout}
-                                className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm
-                                    text-red-400 hover:bg-red-400/10 transition-all duration-150 text-left"
-                            >
-                                <LogoutRoundedIcon sx={{ fontSize: 16 }} />
-                                Logout
-                            </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </>}
 
             </div>
         </GlassCard>

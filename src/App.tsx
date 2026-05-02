@@ -18,7 +18,7 @@ import TargetsStep from "./features/onboarding/steps/TargetsStep"
 import HealthConditionsStep from "./features/onboarding/steps/HealthConditionsStep"
 import CreateMeal from "./features/mealCreation/screens/CreateMeal"
 import MyStats from "./features/MyStats"
-import Feed from "./features/feed/Feed"
+import FeedPage from "./features/feed/FeedPage"
 import MealPage from "./features/meal/MealPage"
 
 function App() {
@@ -36,6 +36,7 @@ function App() {
         {/* Public */}
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/verify-success" element={<VerifySuccess />} />
+        <Route path="/feed" element={<FeedPage />} />
 
         {/* Onboarding — logged in but not yet complete */}
         <Route element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>}>
@@ -49,7 +50,6 @@ function App() {
         <Route element={<ProtectedRoute><OnboardedRoute><Home /></OnboardedRoute></ProtectedRoute>}>
           <Route index path="/" element={<Navigate to="/stats" replace />} />
           <Route path="/stats" element={<MyStats />} />
-          <Route path="/feed" element={<Feed />} />
           <Route path="/coaches" element={<p className="text-2xl text-primary">Coaches</p>} />
           <Route path="/personal-trainer" element={<p className="text-2xl text-primary">Personal Trainer</p>} />
           <Route path="/profile" element={<Profile />} />

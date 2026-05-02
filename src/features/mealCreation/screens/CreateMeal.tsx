@@ -78,7 +78,7 @@ export default function CreateMeal() {
                 new Promise<void>(resolve => setTimeout(resolve, 4500)),
             ])
             setDraft(res.meal)
-            if (res.health_warning.is_flagged) {
+            if (res.health_warning?.is_flagged) {
                 setWarningContext("create")
                 setWarningIngredients(res.health_warning.flagged_ingredients)
                 setShowWarning(true)
@@ -114,7 +114,7 @@ export default function CreateMeal() {
             let logFailed = false
             try {
                 const logRes = await logMeal(draft.id)
-                if (logRes.health_warning.is_flagged) {
+                if (logRes.health_warning?.is_flagged) {
                     setPendingLogId(logRes.logged_meal.id)
                     setWarningContext("log")
                     setWarningIngredients(logRes.health_warning.flagged_ingredients)

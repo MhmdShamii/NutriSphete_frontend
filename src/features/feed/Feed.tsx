@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { useSelector } from "react-redux"
+import Button from "../../components/ui/Button"
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded"
 import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded"
 import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded"
@@ -196,13 +197,48 @@ function PostSkeleton() {
     )
 }
 
+// ─── Guest sign-in prompt ─────────────────────────────────────────────────────
+
+function GuestSignInPrompt({ onClose }: { onClose: () => void }) {
+    const navigate = useNavigate()
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}
+            onClick={onClose}
+        >
+            <div
+                className="w-full max-w-sm rounded-3xl p-6 flex flex-col gap-5"
+                style={{ background: "var(--surface)", border: "1px solid var(--glass-border)" }}
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="flex flex-col gap-1.5 text-center">
+                    <h2 className="text-lg font-bold text-text">Sign in to NutriSphere</h2>
+                    <p className="text-sm text-text-muted">Like, comment, log meals and follow other users.</p>
+                </div>
+                <div className="flex flex-col gap-2">
+                    <Button onClick={() => navigate("/auth")} className="w-full">Sign in</Button>
+                    <button
+                        onClick={onClose}
+                        className="text-sm text-text-muted hover:text-text transition-colors py-2"
+                    >
+                        Continue browsing
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 // ─── Post card ────────────────────────────────────────────────────────────────
 
 type LogState = "idle" | "logging" | "logged"
 
-function PostCard({ post: initialPost }: { post: FeedPost }) {
+function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: boolean }) {
     const navigate      = useNavigate()
     const currentUserId = useSelector((s: RootState) => s.auth.user?.id ?? null)
+
+    const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
     const authorName = `${initialPost.author.first_name} ${initialPost.author.last_name}`
 
@@ -224,7 +260,13 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
     // Comments sheet
     const [showComments, setShowComments] = useState(false)
 
+    function requireAuth(action: () => void) {
+        if (isGuest) { setShowGuestPrompt(true); return }
+        action()
+    }
+
     async function toggleLike() {
+        if (isGuest) { setShowGuestPrompt(true); return }
         const wasLiked = liked
         setLiked(!wasLiked)
         setLikeCount(c => wasLiked ? c - 1 : c + 1)
@@ -238,6 +280,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
     }
 
     async function toggleFollow() {
+        if (isGuest) { setShowGuestPrompt(true); return }
         if (followLoading) return
         const wasFollowing = following
         setFollowing(!wasFollowing)
@@ -253,6 +296,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
     }
 
     async function handleLog() {
+        if (isGuest) { setShowGuestPrompt(true); return }
         if (logState !== "idle") return
         setLogState("logging")
         try {
@@ -289,6 +333,8 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
 
     return (
         <>
+            {showGuestPrompt && <GuestSignInPrompt onClose={() => setShowGuestPrompt(false)} />}
+
             {showComments && (
                 <CommentsSheet
                     mealId={initialPost.id}
@@ -392,7 +438,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
                     </button>
 
                     <button
-                        onClick={() => setShowComments(true)}
+                        onClick={() => requireAuth(() => setShowComments(true))}
                         className="p-2 rounded-xl transition-all duration-200 hover:bg-white/5 text-text-muted"
                     >
                         <ChatBubbleOutlineRoundedIcon sx={{ fontSize: 21 }} />
@@ -425,7 +471,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
                     </span>
                     <span className="text-text-muted/30 text-xs">·</span>
                     <button
-                        onClick={() => setShowComments(true)}
+                        onClick={() => requireAuth(() => setShowComments(true))}
                         className="text-xs font-semibold text-text hover:text-primary transition-colors"
                     >
                         {commentCount.toLocaleString()} <span className="font-normal text-text-muted">comments</span>
@@ -456,7 +502,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
                         </div>
                         {commentCount > 1 && (
                             <button
-                                onClick={() => setShowComments(true)}
+                                onClick={() => requireAuth(() => setShowComments(true))}
                                 className="text-[11px] text-text-muted/40 hover:text-text-muted transition-colors mt-1"
                             >
                                 View all {commentCount} comments
@@ -473,7 +519,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
 
 type FeedTab = "explore" | "following"
 
-export default function Feed() {
+export default function Feed({ isGuest }: { isGuest?: boolean }) {
     const [tab,         setTab]         = useState<FeedTab>("explore")
     const [posts,       setPosts]       = useState<FeedPost[]>([])
     const [cursor,      setCursor]      = useState<string | null | undefined>(undefined)
@@ -534,7 +580,7 @@ export default function Feed() {
                 {/* Tab toggle */}
                 <div className="flex items-center p-1 rounded-2xl sticky top-0 z-10"
                     style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)", backdropFilter: "blur(20px)" }}>
-                    {(["explore", "following"] as FeedTab[]).map(t => (
+                    {(["explore", "following"] as FeedTab[]).filter(t => !isGuest || t === "explore").map(t => (
                         <button
                             key={t}
                             onClick={() => setTab(t)}
@@ -559,7 +605,7 @@ export default function Feed() {
                         <span className="text-sm text-text-muted/40">{emptyMessage}</span>
                     </div>
                 ) : (
-                    posts.map(post => <PostCard key={post.id} post={post} />)
+                    posts.map(post => <PostCard key={post.id} post={post} isGuest={isGuest} />)
                 )}
 
                 <div ref={sentinelRef} />
