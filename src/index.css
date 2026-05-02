@@ -16,6 +16,23 @@ html, body, #root {
   overscroll-behavior: none;
 }
 
+/* Mobile: freeze layout height so keyboard doesn't resize the screen */
+@media (max-width: 639px) {
+  html, body, #root {
+    height: 100svh;
+  }
+  #root {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+@media (min-width: 640px) {
+  #root {
+    padding: 16px;
+  }
+}
+
 body {
   background: var(--background);
   -webkit-tap-highlight-color: transparent;
