@@ -103,3 +103,18 @@ export const completeHealthConditionsApi = async () => {
     const response = await apiClient.post("/users/me/complete-health-conditions")
     return response.data
 }
+
+export type UserHealthCondition = {
+    id: number
+    custom_condition: string | null
+    condition: { id: number; name: string } | null
+}
+
+export const getUserHealthConditionsApi = async (): Promise<UserHealthCondition[]> => {
+    const response = await apiClient.get("/users/me/settings/health-conditions")
+    return response.data.conditions
+}
+
+export const deleteUserHealthConditionApi = async (id: number): Promise<void> => {
+    await apiClient.delete(`/users/me/settings/health-conditions/${id}`)
+}
