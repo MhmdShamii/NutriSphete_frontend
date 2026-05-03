@@ -21,6 +21,7 @@ import MyStats from "./features/MyStats"
 import FeedPage from "./features/feed/FeedPage"
 import MealPage from "./features/meal/MealPage"
 import ComingSoon from "./components/ui/ComingSoon"
+import Settings from "./features/Settings"
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -55,7 +56,7 @@ function App() {
           <Route path="/personal-trainer" element={<ComingSoon title="Personal Trainer" description="Get personalized workout plans tailored to your goals and fitness level." />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/settings" element={<ComingSoon title="Settings" description="Manage your account, preferences, and privacy options — all in one place." />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/create-meal" element={<CreateMeal />} />
           <Route path="/meals/:id" element={<MealPage />} />
         </Route>
