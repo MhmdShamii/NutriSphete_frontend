@@ -110,6 +110,10 @@ export type UserHealthCondition = {
     condition: { id: number; name: string } | null
 }
 
+export const logoutAllDevicesApi = async (): Promise<void> => {
+    await apiClient.post("/auth/logout-all")
+}
+
 export const getUserHealthConditionsApi = async (): Promise<UserHealthCondition[]> => {
     const response = await apiClient.get("/users/me/settings/health-conditions")
     return response.data.conditions
