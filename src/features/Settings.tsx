@@ -27,12 +27,20 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded"
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded"
 import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded"
+import {
+    getCoachApplicationApi,
+    submitCoachApplicationApi,
+    type CoachApplication,
+    type CoachDocument,
+} from "../services/coach/coachApi"
 import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded"
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded"
 import PictureAsPdfRoundedIcon from "@mui/icons-material/PictureAsPdfRounded"
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded"
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded"
+import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded"
 
 const countries = countriesData as Country[]
 
@@ -586,6 +594,8 @@ function formatFileSize(bytes: number) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+// ── Local file chip (for new uploads, uses object URL preview) ────────────────
+
 function FileChip({ file, onRemove }: { file: File; onRemove: () => void }) {
     const isPdf = file.type === "application/pdf"
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -601,30 +611,20 @@ function FileChip({ file, onRemove }: { file: File; onRemove: () => void }) {
     return (
         <div className="relative group flex flex-col rounded-xl overflow-hidden flex-shrink-0"
             style={{ width: 120, border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
-
-            {/* Preview area */}
             <div className="w-full h-16 flex items-center justify-center overflow-hidden flex-shrink-0"
                 style={{ background: "rgba(255,255,255,0.03)" }}>
-                {previewUrl ? (
-                    <img src={previewUrl} alt={file.name} className="w-full h-full object-cover" />
-                ) : (
-                    <div className="flex flex-col items-center gap-1">
+                {previewUrl
+                    ? <img src={previewUrl} alt={file.name} className="w-full h-full object-cover" />
+                    : <div className="flex flex-col items-center gap-1">
                         <PictureAsPdfRoundedIcon sx={{ fontSize: 22 }} className="text-red-400" />
-                        <span className="text-xs font-bold tracking-wide"
-                            style={{ color: "rgba(248,113,113,0.6)", fontSize: 10 }}>PDF</span>
-                    </div>
-                )}
+                        <span className="font-bold tracking-wide" style={{ color: "rgba(248,113,113,0.6)", fontSize: 10 }}>PDF</span>
+                      </div>
+                }
             </div>
-
-            {/* File info */}
             <div className="px-2 py-1.5">
                 <p className="text-xs font-medium text-text truncate leading-tight">{file.name}</p>
-                <p className="text-xs leading-tight" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
-                    {formatFileSize(file.size)}
-                </p>
+                <p className="text-xs leading-tight" style={{ color: "var(--text-muted)", opacity: 0.5 }}>{formatFileSize(file.size)}</p>
             </div>
-
-            {/* Remove overlay */}
             <button type="button" onClick={onRemove}
                 className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-md
                 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
@@ -635,15 +635,166 @@ function FileChip({ file, onRemove }: { file: File; onRemove: () => void }) {
     )
 }
 
+// ── Submitted doc chip (uses signed URL from API) ─────────────────────────────
+
+function DocChip({ doc }: { doc: CoachDocument }) {
+    const isImage = doc.type === "image"
+    return (
+        <a href={doc.url} target="_blank" rel="noopener noreferrer"
+            className="relative group flex flex-col rounded-xl overflow-hidden flex-shrink-0 cursor-pointer"
+            style={{ width: 120, border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
+            <div className="w-full h-16 flex items-center justify-center overflow-hidden flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.03)" }}>
+                {isImage
+                    ? <img src={doc.url} alt={doc.original_name} className="w-full h-full object-cover" />
+                    : <div className="flex flex-col items-center gap-1">
+                        <PictureAsPdfRoundedIcon sx={{ fontSize: 22 }} className="text-red-400" />
+                        <span className="font-bold tracking-wide" style={{ color: "rgba(248,113,113,0.6)", fontSize: 10 }}>PDF</span>
+                      </div>
+                }
+            </div>
+            <div className="px-2 py-1.5">
+                <p className="text-xs font-medium text-text truncate leading-tight">{doc.original_name}</p>
+                <p className="text-xs leading-tight text-primary/50">View</p>
+            </div>
+        </a>
+    )
+}
+
+// ── Status views ──────────────────────────────────────────────────────────────
+
+function PendingView({ application }: { application: CoachApplication }) {
+    return (
+        <div className="flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                    <p className="text-xs text-text-muted mt-0.5">Your application is being reviewed.</p>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary/80 flex-shrink-0"
+                    style={{ background: "rgba(127,250,136,0.10)", border: "1px solid rgba(127,250,136,0.2)" }}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    Pending review
+                </div>
+            </div>
+
+            <div className="flex flex-col gap-4 p-4 rounded-2xl"
+                style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
+                <div className="flex flex-col gap-1.5">
+                    <p className="text-xs font-medium text-text-muted">Your description</p>
+                    <p className="text-sm text-text leading-relaxed whitespace-pre-wrap break-words min-w-0">{application.description}</p>
+                </div>
+
+                {application.documents.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                        <p className="text-xs font-medium text-text-muted">Submitted documents</p>
+                        <div className="flex flex-wrap gap-2">
+                            {application.documents.map(doc => (
+                                <DocChip key={doc.id} doc={doc} />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                <p className="text-xs text-text-muted/40">
+                    Submitted {new Date(application.submitted_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                </p>
+            </div>
+
+            <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
+                style={{ border: "1px solid rgba(127,250,136,0.15)", background: "rgba(127,250,136,0.05)" }}>
+                <HourglassEmptyRoundedIcon sx={{ fontSize: 15 }} className="text-primary/60 flex-shrink-0 mt-px" />
+                <p className="text-xs text-text-muted leading-relaxed">
+                    Our team is reviewing your application. You'll be notified by email once a decision has been made.
+                </p>
+            </div>
+        </div>
+    )
+}
+
+function ApprovedView() {
+    return (
+        <div className="flex flex-col gap-5">
+            <div>
+                <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                <p className="text-xs text-text-muted mt-0.5">Your application status.</p>
+            </div>
+            <div className="flex flex-col items-center text-center gap-4 py-10 px-6 rounded-2xl"
+                style={{ border: "1px solid rgba(127,250,136,0.2)", background: "rgba(127,250,136,0.06)" }}>
+                <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(127,250,136,0.15)", border: "1px solid rgba(127,250,136,0.25)" }}>
+                    <CheckCircleRoundedIcon sx={{ fontSize: 28 }} className="text-primary" />
+                </div>
+                <div>
+                    <p className="text-sm font-semibold text-text">You're a Coach!</p>
+                    <p className="text-xs text-text-muted mt-1.5 max-w-xs leading-relaxed">
+                        Your application has been approved. You now have access to coach tools and your profile is visible to members.
+                    </p>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary"
+                    style={{ background: "rgba(127,250,136,0.12)", border: "1px solid rgba(127,250,136,0.25)" }}>
+                    <WorkspacePremiumRoundedIcon sx={{ fontSize: 13 }} />
+                    Approved
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function RejectedView({ application, onReapply }: { application: CoachApplication; onReapply: () => void }) {
+    return (
+        <div className="flex flex-col gap-5">
+            <div>
+                <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                <p className="text-xs text-text-muted mt-0.5">Your application was not approved.</p>
+            </div>
+
+            <div className="flex flex-col gap-3 p-4 rounded-2xl"
+                style={{ border: "1px solid rgba(248,113,113,0.2)", background: "rgba(248,113,113,0.04)" }}>
+                <div className="flex items-center gap-2.5">
+                    <ErrorRoundedIcon sx={{ fontSize: 16 }} className="text-red-400 flex-shrink-0" />
+                    <p className="text-sm font-medium text-text">Application not approved</p>
+                </div>
+                {application.rejection_reason && (
+                    <p className="text-xs text-text-muted leading-relaxed pl-6">{application.rejection_reason}</p>
+                )}
+            </div>
+
+            <div className="flex justify-end">
+                <button type="button" onClick={onReapply}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold
+                    bg-primary text-black hover:bg-primary/90 transition-all duration-200
+                    shadow-[0_0_20px_rgba(127,250,136,0.2)]">
+                    <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />
+                    Apply again
+                </button>
+            </div>
+        </div>
+    )
+}
+
+// ── Main section ──────────────────────────────────────────────────────────────
+
 function CoachApplicationSection() {
     const { showError, showSuccess } = useToast()
+
+    const [initLoading, setInitLoading] = useState(true)
+    const [application, setApplication] = useState<CoachApplication | null>(null)
+    const [reapplying, setReapplying] = useState(false)
+
     const [description, setDescription] = useState("")
     const [files, setFiles] = useState<File[]>([])
     const [dragging, setDragging] = useState(false)
     const [submitting, setSubmitting] = useState(false)
-    const [submitted, setSubmitted] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const dropRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        getCoachApplicationApi()
+            .then(setApplication)
+            .catch(() => showError("Failed to load application status"))
+            .finally(() => setInitLoading(false))
+    }, [])
 
     function addFiles(incoming: FileList | null) {
         if (!incoming) return
@@ -651,94 +802,70 @@ function CoachApplicationSection() {
         const all = Array.from(incoming)
         const tooBig = all.filter(f => f.size > MAX_BYTES)
         if (tooBig.length) showError(`${tooBig.map(f => f.name).join(", ")} exceed${tooBig.length === 1 ? "s" : ""} the 10 MB limit`)
-        const valid = all.filter(f =>
-            f.size <= MAX_BYTES && (f.type === "application/pdf" || f.type.startsWith("image/"))
-        )
+        const valid = all.filter(f => f.size <= MAX_BYTES && (f.type === "application/pdf" || f.type.startsWith("image/")))
         setFiles(prev => {
             const existingKeys = new Set(prev.map(f => f.name + f.size))
             const next = [...prev, ...valid.filter(f => !existingKeys.has(f.name + f.size))]
-            if (next.length > MAX_FILES) {
-                showError(`Max ${MAX_FILES} files allowed`)
-                return next.slice(0, MAX_FILES)
-            }
+            if (next.length > MAX_FILES) { showError(`Max ${MAX_FILES} files allowed`); return next.slice(0, MAX_FILES) }
             return next
         })
     }
 
-    function removeFile(index: number) {
-        setFiles(prev => prev.filter((_, i) => i !== index))
-    }
-
-    function handleDragOver(e: React.DragEvent) {
-        e.preventDefault()
-        setDragging(true)
-    }
-
+    function handleDragOver(e: React.DragEvent) { e.preventDefault(); setDragging(true) }
     function handleDragLeave(e: React.DragEvent) {
-        if (dropRef.current && !dropRef.current.contains(e.relatedTarget as Node)) {
-            setDragging(false)
-        }
+        if (dropRef.current && !dropRef.current.contains(e.relatedTarget as Node)) setDragging(false)
     }
-
-    function handleDrop(e: React.DragEvent) {
-        e.preventDefault()
-        setDragging(false)
-        addFiles(e.dataTransfer.files)
-    }
+    function handleDrop(e: React.DragEvent) { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files) }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         if (!description.trim()) { showError("Please write a short description about yourself"); return }
         if (description.trim().length < 50) { showError("Description must be at least 50 characters"); return }
+        if (files.length === 0) { showError("Please attach at least one document"); return }
 
-        const form = new FormData()
-        form.append("description", description.trim())
-        files.forEach(f => form.append("documents[]", f))
+        const formData = new FormData()
+        formData.append("description", description.trim())
+        files.forEach(f => formData.append("documents[]", f))
 
         setSubmitting(true)
         try {
-            // TODO: replace with real endpoint — await applyAsCoachApi(form)
-            await new Promise(r => setTimeout(r, 1200))
-            setSubmitted(true)
+            const result = await submitCoachApplicationApi(formData)
+            setApplication(result)
+            setReapplying(false)
             showSuccess("Application submitted successfully!")
-        } catch {
-            showError("Failed to submit application — please try again")
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+            showError(msg ?? "Failed to submit application — please try again")
         } finally {
             setSubmitting(false)
         }
     }
 
-    // ── Submitted state ──────────────────────────────────────────────────────
+    // ── Loading ──────────────────────────────────────────────────────────────
 
-    if (submitted) {
+    if (initLoading) {
         return (
             <div className="flex flex-col gap-5">
                 <div>
                     <h2 className="text-base font-semibold text-text">Become a Coach</h2>
-                    <p className="text-xs text-text-muted mt-0.5">Your application status.</p>
                 </div>
-
-                <div className="flex flex-col items-center text-center gap-4 py-10 px-6 rounded-2xl"
-                    style={{ border: "1px solid rgba(127,250,136,0.15)", background: "rgba(127,250,136,0.04)" }}>
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(127,250,136,0.12)", border: "1px solid rgba(127,250,136,0.2)" }}>
-                        <HourglassEmptyRoundedIcon sx={{ fontSize: 26 }} className="text-primary" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-semibold text-text">Application Under Review</p>
-                        <p className="text-xs text-text-muted mt-1.5 max-w-xs leading-relaxed">
-                            We've received your application and our team will review it shortly.
-                            You'll be notified by email once a decision has been made.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary/80"
-                        style={{ background: "rgba(127,250,136,0.10)", border: "1px solid rgba(127,250,136,0.2)" }}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                        Pending review
-                    </div>
+                <div className="flex items-center gap-2 py-6">
+                    <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs text-text-muted">Loading…</span>
                 </div>
             </div>
         )
+    }
+
+    // ── Status views ─────────────────────────────────────────────────────────
+
+    if (application?.status === "pending") return <PendingView application={application} />
+    if (application?.status === "approved") return <ApprovedView />
+    if (application?.status === "rejected" && !reapplying) {
+        return <RejectedView application={application} onReapply={() => {
+            setDescription(application.description)
+            setReapplying(true)
+        }} />
     }
 
     // ── Application form ─────────────────────────────────────────────────────
@@ -751,7 +878,6 @@ function CoachApplicationSection() {
                 style={{ background: "linear-gradient(135deg, rgba(127,250,136,0.12) 0%, rgba(127,250,136,0.04) 60%, transparent 100%)", border: "1px solid rgba(127,250,136,0.2)" }}>
                 <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-10"
                     style={{ background: "radial-gradient(circle, #7FFA88 0%, transparent 70%)" }} />
-
                 <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
                         style={{ background: "rgba(127,250,136,0.15)", border: "1px solid rgba(127,250,136,0.25)" }}>
@@ -759,12 +885,9 @@ function CoachApplicationSection() {
                     </div>
                     <div>
                         <h2 className="text-base font-semibold text-text">Become a Coach</h2>
-                        <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-                            Share your expertise and help our community thrive.
-                        </p>
+                        <p className="text-xs text-text-muted mt-0.5 leading-relaxed">Share your expertise and help our community thrive.</p>
                     </div>
                 </div>
-
                 <ul className="mt-4 flex flex-col gap-2">
                     {PERKS.map((perk, i) => (
                         <li key={i} className="flex items-start gap-2.5 text-xs text-text-muted">
@@ -797,17 +920,11 @@ function CoachApplicationSection() {
             <div className="flex flex-col gap-2.5">
                 <label className="text-xs font-medium text-text-muted">
                     Supporting documents
-                    <span className="ml-1.5 text-text-muted/40 font-normal">PDF or images · up to {MAX_FILES} files</span>
+                    <span className="ml-1.5 text-text-muted/40 font-normal">PDF or images · at least 1, up to {MAX_FILES} files</span>
                 </label>
-
-                <div
-                    ref={dropRef}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
+                <div ref={dropRef} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200
-                        ${dragging ? "border-primary/50 bg-primary/8" : "border-dashed border-white/10"}`}
-                >
+                    ${dragging ? "border-primary/50 bg-primary/8" : "border-dashed border-white/10"}`}>
                     <button type="button" onClick={() => fileInputRef.current?.click()}
                         className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium flex-shrink-0
                         bg-white/6 border border-white/10 text-text-muted hover:text-text hover:border-white/20 transition-all duration-150">
@@ -817,21 +934,14 @@ function CoachApplicationSection() {
                     <p className="text-xs text-text-muted/40 truncate">
                         {dragging ? "Drop to add…" : "PDF, JPG, PNG · up to 10 MB each"}
                     </p>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept={ACCEPTED}
-                        multiple
-                        className="hidden"
-                        onChange={e => { addFiles(e.target.files); e.target.value = "" }}
-                    />
+                    <input ref={fileInputRef} type="file" accept={ACCEPTED} multiple className="hidden"
+                        onChange={e => { addFiles(e.target.files); e.target.value = "" }} />
                 </div>
 
-                {/* File chips */}
                 {files.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-1">
                         {files.map((file, i) => (
-                            <FileChip key={i} file={file} onRemove={() => removeFile(i)} />
+                            <FileChip key={i} file={file} onRemove={() => setFiles(prev => prev.filter((_, j) => j !== i))} />
                         ))}
                     </div>
                 )}
@@ -845,12 +955,10 @@ function CoachApplicationSection() {
                     transition-all duration-200 shadow-[0_0_20px_rgba(127,250,136,0.2)]">
                     {submitting
                         ? <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                        : <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />
-                    }
+                        : <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />}
                     {submitting ? "Submitting…" : "Submit Application"}
                 </button>
             </div>
-
         </form>
     )
 }
