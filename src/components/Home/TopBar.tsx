@@ -25,6 +25,7 @@ const menuItems = [
 
 function notifTarget(n: NotificationItem): string {
     if (n.type === "follow") return `/profile/${n.actor.id}`
+    if (n.type === "coach_application") return `/settings`
     const base = `/meals/${n.data.post_id}`
     if ((n.type === "comment" || n.type === "reply") && n.data.comment_id) {
         return `${base}#comment-${n.data.comment_id}`
@@ -34,11 +35,12 @@ function notifTarget(n: NotificationItem): string {
 
 function notifMessage(n: NotificationItem): string {
     switch (n.type) {
-        case "like":    return `liked your post "${n.data.post_name}"`
-        case "comment": return `commented on "${n.data.post_name}"`
-        case "reply":   return `replied to your comment on "${n.data.post_name}"`
-        case "relog":   return `relogged your meal "${n.data.post_name}"`
-        case "follow":  return `started following you`
+        case "like":              return `liked your post "${n.data.post_name}"`
+        case "comment":           return `commented on "${n.data.post_name}"`
+        case "reply":             return `replied to your comment on "${n.data.post_name}"`
+        case "relog":             return `relogged your meal "${n.data.post_name}"`
+        case "follow":            return `started following you`
+        case "coach_application": return `submitted a coach application`
     }
 }
 
