@@ -27,15 +27,22 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded"
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded"
 import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded"
+import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded"
+import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded"
+import PictureAsPdfRoundedIcon from "@mui/icons-material/PictureAsPdfRounded"
+import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded"
 
 const countries = countriesData as Country[]
 
-type Section = "personal" | "nutrition" | "health" | "danger"
+type Section = "personal" | "nutrition" | "health" | "coach" | "danger"
 
 const NAV: { key: Section; label: string; icon: React.ReactNode }[] = [
     { key: "personal",  label: "Personal Info",       icon: <PersonRoundedIcon sx={{ fontSize: 17 }} /> },
     { key: "nutrition", label: "Nutrition Goals",     icon: <LocalFireDepartmentRoundedIcon sx={{ fontSize: 17 }} /> },
     { key: "health",    label: "Health Conditions",   icon: <FavoriteRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "coach",     label: "Become a Coach",      icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
     { key: "danger",    label: "Account",             icon: <WarningAmberRoundedIcon sx={{ fontSize: 17 }} /> },
 ]
 
@@ -562,6 +569,292 @@ function HealthSection() {
     )
 }
 
+// ─── Coach Application ────────────────────────────────────────────────────────
+
+const MAX_CHARS = 1000
+const MAX_FILES = 8
+const ACCEPTED = ".pdf,image/*"
+
+const PERKS = [
+    "Get discovered by thousands of members looking for guidance",
+    "Build your personal brand and coaching portfolio",
+    "Access exclusive coach tools and analytics",
+]
+
+function formatFileSize(bytes: number) {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function FileChip({ file, onRemove }: { file: File; onRemove: () => void }) {
+    const isPdf = file.type === "application/pdf"
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (!isPdf) {
+            const url = URL.createObjectURL(file)
+            setPreviewUrl(url)
+            return () => URL.revokeObjectURL(url)
+        }
+    }, [file, isPdf])
+
+    return (
+        <div className="relative group flex flex-col rounded-xl overflow-hidden flex-shrink-0"
+            style={{ width: 120, border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
+
+            {/* Preview area */}
+            <div className="w-full h-16 flex items-center justify-center overflow-hidden flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.03)" }}>
+                {previewUrl ? (
+                    <img src={previewUrl} alt={file.name} className="w-full h-full object-cover" />
+                ) : (
+                    <div className="flex flex-col items-center gap-1">
+                        <PictureAsPdfRoundedIcon sx={{ fontSize: 22 }} className="text-red-400" />
+                        <span className="text-xs font-bold tracking-wide"
+                            style={{ color: "rgba(248,113,113,0.6)", fontSize: 10 }}>PDF</span>
+                    </div>
+                )}
+            </div>
+
+            {/* File info */}
+            <div className="px-2 py-1.5">
+                <p className="text-xs font-medium text-text truncate leading-tight">{file.name}</p>
+                <p className="text-xs leading-tight" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
+                    {formatFileSize(file.size)}
+                </p>
+            </div>
+
+            {/* Remove overlay */}
+            <button type="button" onClick={onRemove}
+                className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-md
+                opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                style={{ background: "rgba(0,0,0,0.65)" }}>
+                <CloseRoundedIcon sx={{ fontSize: 11 }} className="text-white" />
+            </button>
+        </div>
+    )
+}
+
+function CoachApplicationSection() {
+    const { showError, showSuccess } = useToast()
+    const [description, setDescription] = useState("")
+    const [files, setFiles] = useState<File[]>([])
+    const [dragging, setDragging] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
+    const [submitted, setSubmitted] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const dropRef = useRef<HTMLDivElement>(null)
+
+    function addFiles(incoming: FileList | null) {
+        if (!incoming) return
+        const MAX_BYTES = 10 * 1024 * 1024
+        const all = Array.from(incoming)
+        const tooBig = all.filter(f => f.size > MAX_BYTES)
+        if (tooBig.length) showError(`${tooBig.map(f => f.name).join(", ")} exceed${tooBig.length === 1 ? "s" : ""} the 10 MB limit`)
+        const valid = all.filter(f =>
+            f.size <= MAX_BYTES && (f.type === "application/pdf" || f.type.startsWith("image/"))
+        )
+        setFiles(prev => {
+            const existingKeys = new Set(prev.map(f => f.name + f.size))
+            const next = [...prev, ...valid.filter(f => !existingKeys.has(f.name + f.size))]
+            if (next.length > MAX_FILES) {
+                showError(`Max ${MAX_FILES} files allowed`)
+                return next.slice(0, MAX_FILES)
+            }
+            return next
+        })
+    }
+
+    function removeFile(index: number) {
+        setFiles(prev => prev.filter((_, i) => i !== index))
+    }
+
+    function handleDragOver(e: React.DragEvent) {
+        e.preventDefault()
+        setDragging(true)
+    }
+
+    function handleDragLeave(e: React.DragEvent) {
+        if (dropRef.current && !dropRef.current.contains(e.relatedTarget as Node)) {
+            setDragging(false)
+        }
+    }
+
+    function handleDrop(e: React.DragEvent) {
+        e.preventDefault()
+        setDragging(false)
+        addFiles(e.dataTransfer.files)
+    }
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault()
+        if (!description.trim()) { showError("Please write a short description about yourself"); return }
+        if (description.trim().length < 50) { showError("Description must be at least 50 characters"); return }
+
+        const form = new FormData()
+        form.append("description", description.trim())
+        files.forEach(f => form.append("documents[]", f))
+
+        setSubmitting(true)
+        try {
+            // TODO: replace with real endpoint — await applyAsCoachApi(form)
+            await new Promise(r => setTimeout(r, 1200))
+            setSubmitted(true)
+            showSuccess("Application submitted successfully!")
+        } catch {
+            showError("Failed to submit application — please try again")
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    // ── Submitted state ──────────────────────────────────────────────────────
+
+    if (submitted) {
+        return (
+            <div className="flex flex-col gap-5">
+                <div>
+                    <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                    <p className="text-xs text-text-muted mt-0.5">Your application status.</p>
+                </div>
+
+                <div className="flex flex-col items-center text-center gap-4 py-10 px-6 rounded-2xl"
+                    style={{ border: "1px solid rgba(127,250,136,0.15)", background: "rgba(127,250,136,0.04)" }}>
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                        style={{ background: "rgba(127,250,136,0.12)", border: "1px solid rgba(127,250,136,0.2)" }}>
+                        <HourglassEmptyRoundedIcon sx={{ fontSize: 26 }} className="text-primary" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-text">Application Under Review</p>
+                        <p className="text-xs text-text-muted mt-1.5 max-w-xs leading-relaxed">
+                            We've received your application and our team will review it shortly.
+                            You'll be notified by email once a decision has been made.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary/80"
+                        style={{ background: "rgba(127,250,136,0.10)", border: "1px solid rgba(127,250,136,0.2)" }}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        Pending review
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // ── Application form ─────────────────────────────────────────────────────
+
+    return (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+            {/* Hero card */}
+            <div className="relative overflow-hidden rounded-2xl p-5"
+                style={{ background: "linear-gradient(135deg, rgba(127,250,136,0.12) 0%, rgba(127,250,136,0.04) 60%, transparent 100%)", border: "1px solid rgba(127,250,136,0.2)" }}>
+                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-10"
+                    style={{ background: "radial-gradient(circle, #7FFA88 0%, transparent 70%)" }} />
+
+                <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
+                        style={{ background: "rgba(127,250,136,0.15)", border: "1px solid rgba(127,250,136,0.25)" }}>
+                        <WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} className="text-primary" />
+                    </div>
+                    <div>
+                        <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                        <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
+                            Share your expertise and help our community thrive.
+                        </p>
+                    </div>
+                </div>
+
+                <ul className="mt-4 flex flex-col gap-2">
+                    {PERKS.map((perk, i) => (
+                        <li key={i} className="flex items-start gap-2.5 text-xs text-text-muted">
+                            <CheckRoundedIcon sx={{ fontSize: 13 }} className="text-primary flex-shrink-0 mt-px" />
+                            {perk}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Description */}
+            <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-text-muted">About you</label>
+                    <span className={`text-xs tabular-nums transition-colors ${description.length > MAX_CHARS * 0.9 ? "text-amber-400" : "text-text-muted/40"}`}>
+                        {description.length} / {MAX_CHARS}
+                    </span>
+                </div>
+                <textarea
+                    value={description}
+                    onChange={e => setDescription(e.target.value.slice(0, MAX_CHARS))}
+                    rows={5}
+                    placeholder="Tell us about your background, certifications, areas of expertise, and what makes you a great coach…"
+                    className={inputCls + " resize-none leading-relaxed"}
+                />
+                <p className="text-xs text-text-muted/40">Minimum 50 characters.</p>
+            </div>
+
+            {/* File upload */}
+            <div className="flex flex-col gap-2.5">
+                <label className="text-xs font-medium text-text-muted">
+                    Supporting documents
+                    <span className="ml-1.5 text-text-muted/40 font-normal">PDF or images · up to {MAX_FILES} files</span>
+                </label>
+
+                <div
+                    ref={dropRef}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200
+                        ${dragging ? "border-primary/50 bg-primary/8" : "border-dashed border-white/10"}`}
+                >
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium flex-shrink-0
+                        bg-white/6 border border-white/10 text-text-muted hover:text-text hover:border-white/20 transition-all duration-150">
+                        <UploadFileRoundedIcon sx={{ fontSize: 14 }} />
+                        Add files
+                    </button>
+                    <p className="text-xs text-text-muted/40 truncate">
+                        {dragging ? "Drop to add…" : "PDF, JPG, PNG · up to 10 MB each"}
+                    </p>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept={ACCEPTED}
+                        multiple
+                        className="hidden"
+                        onChange={e => { addFiles(e.target.files); e.target.value = "" }}
+                    />
+                </div>
+
+                {/* File chips */}
+                {files.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        {files.map((file, i) => (
+                            <FileChip key={i} file={file} onRemove={() => removeFile(i)} />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Submit */}
+            <div className="flex justify-end pt-1">
+                <button type="submit" disabled={submitting}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold
+                    bg-primary text-black hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed
+                    transition-all duration-200 shadow-[0_0_20px_rgba(127,250,136,0.2)]">
+                    {submitting
+                        ? <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                        : <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />
+                    }
+                    {submitting ? "Submitting…" : "Submit Application"}
+                </button>
+            </div>
+
+        </form>
+    )
+}
+
 // ─── Danger Zone ──────────────────────────────────────────────────────────────
 
 function DangerZoneSection() {
@@ -658,6 +951,7 @@ const SECTIONS: { key: Section; component: React.ReactNode }[] = [
     { key: "personal",  component: <PersonalInfoSection /> },
     { key: "nutrition", component: <NutritionGoalsSection /> },
     { key: "health",    component: <HealthSection /> },
+    { key: "coach",     component: <CoachApplicationSection /> },
     { key: "danger",    component: <DangerZoneSection /> },
 ]
 
