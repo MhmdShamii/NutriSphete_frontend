@@ -12,16 +12,19 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded"
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded"
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded"
+import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded"
 import {
     checkNotificationsApi,
     getNotificationsApi,
     type NotificationItem,
 } from "../../services/social/followApi"
 
-const menuItems = [
-    { label: "Profile", icon: <PersonRoundedIcon sx={{ fontSize: 16 }} />, path: "/profile" },
+const BASE_MENU_ITEMS = [
+    { label: "Profile",  icon: <PersonRoundedIcon sx={{ fontSize: 16 }} />,   path: "/profile" },
     { label: "Settings", icon: <SettingsRoundedIcon sx={{ fontSize: 16 }} />, path: "/settings" },
 ]
+
+const ADMIN_MENU_ITEM = { label: "Dashboard", icon: <DashboardRoundedIcon sx={{ fontSize: 16 }} />, path: "/admin" }
 
 function notifTarget(n: NotificationItem): string {
     if (n.type === "follow") return `/profile/${n.actor.id}`
@@ -280,7 +283,7 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
 
                             {/* Menu items */}
                             <div className="p-1.5 flex flex-col gap-0.5">
-                                {menuItems.map(item => (
+                                {[...BASE_MENU_ITEMS, ...(user.role === "admin" ? [ADMIN_MENU_ITEM] : [])].map(item => (
                                     <button
                                         key={item.path}
                                         onClick={() => { navigate(item.path); setMenuOpen(false) }}
