@@ -56,19 +56,26 @@ input, textarea, [contenteditable="true"], .selectable {
 }
 
 :root {
-  --background: #ffffff;
-  --surface: #f4f6f5;
-  --border: #d1d5db;
+  --background: #e6e6e6;
+  --surface: #ffffff;
+  --border: #c0c0c0;
 
   --text: #0A0B0A;
   --text-muted: #5E625F;
 
-  --primary: #7FFA88;
-  --primary-hover: #5EF071;
+  --primary: #00db58;
+  --primary-hover: #00c24f;
 
   /* glass */
-  --glass-bg: rgba(255, 255, 255, 0.685);
-  --glass-border: rgba(194, 194, 194, 0.244);
+  --glass-bg: rgba(255, 255, 255, 0.80);
+  --glass-border: rgba(0, 0, 0, 0.08);
+
+  /* inputs / subtle surfaces */
+  --input-bg: rgba(0, 0, 0, 0.04);
+  --input-border: rgba(0, 0, 0, 0.09);
+  --muted-bg: rgba(0, 0, 0, 0.04);
+  --divider: rgba(0, 0, 0, 0.07);
+  --primary-glow: rgba(0, 219, 88, 0.12);
 }
 
 .dark {
@@ -85,6 +92,13 @@ input, textarea, [contenteditable="true"], .selectable {
   /* glass */
   --glass-bg: rgba(23, 25, 23, 0.294);
   --glass-border: rgba(255, 255, 255, 0.08);
+
+  /* inputs / subtle surfaces */
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.10);
+  --muted-bg: rgba(255, 255, 255, 0.05);
+  --divider: rgba(255, 255, 255, 0.08);
+  --primary-glow: rgba(127, 250, 136, 0.12);
 }
 
 body {

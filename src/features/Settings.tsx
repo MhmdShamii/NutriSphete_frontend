@@ -41,22 +41,26 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded"
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded"
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded"
+import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded"
+import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded"
+import { useTheme } from "../hooks/useTheme"
 
 const countries = countriesData as Country[]
 
-type Section = "personal" | "nutrition" | "health" | "coach" | "danger"
+type Section = "personal" | "appearance" | "nutrition" | "health" | "coach" | "danger"
 
 const NAV: { key: Section; label: string; icon: React.ReactNode }[] = [
-    { key: "personal",  label: "Personal Info",       icon: <PersonRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "nutrition", label: "Nutrition Goals",     icon: <LocalFireDepartmentRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "health",    label: "Health Conditions",   icon: <FavoriteRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "coach",     label: "Become a Coach",      icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "danger",    label: "Account",             icon: <WarningAmberRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "personal",   label: "Personal Info",     icon: <PersonRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "appearance", label: "Appearance",        icon: <LightModeRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "nutrition",  label: "Nutrition Goals",   icon: <LocalFireDepartmentRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "health",     label: "Health Conditions", icon: <FavoriteRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "coach",      label: "Become a Coach",    icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "danger",     label: "Account",           icon: <WarningAmberRoundedIcon sx={{ fontSize: 17 }} /> },
 ]
 
 const inputCls =
-    "w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-text outline-none " +
-    "focus:border-primary/60 focus:bg-primary/5 focus:shadow-[0_0_14px_rgba(127,250,136,0.10)] " +
+    "w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-3.5 py-2.5 text-sm text-text outline-none " +
+    "focus:border-primary/60 focus:bg-primary/5 focus:shadow-[0_0_14px_var(--primary-glow)] " +
     "transition-all duration-200 placeholder:text-text-muted/30"
 
 function findScrollContainer(el: HTMLElement | null): HTMLElement | null {
@@ -340,11 +344,11 @@ function NutritionGoalsSection() {
             </div>
 
             <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl"
-                style={{ border: "1px solid rgba(127,250,136,0.15)", background: "rgba(127,250,136,0.06)" }}>
+                style={{ border: "1px solid var(--primary-glow)", background: "var(--primary-glow)" }}>
                 <svg className="flex-shrink-0 mt-px" width="14" height="14" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#7FFA88" strokeWidth="1.5" strokeOpacity="0.6" />
-                    <path d="M10 9v5" stroke="#7FFA88" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
-                    <circle cx="10" cy="6.5" r="0.75" fill="#7FFA88" fillOpacity="0.8" />
+                    <circle cx="10" cy="10" r="9" stroke="var(--primary)" strokeWidth="1.5" strokeOpacity="0.6" />
+                    <path d="M10 9v5" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
+                    <circle cx="10" cy="6.5" r="0.75" fill="var(--primary)" fillOpacity="0.8" />
                 </svg>
                 <p className="text-xs text-primary/70 leading-relaxed">
                     Changes to your nutrition targets will take effect starting{" "}
@@ -875,12 +879,12 @@ function CoachApplicationSection() {
 
             {/* Hero card */}
             <div className="relative overflow-hidden rounded-2xl p-5"
-                style={{ background: "linear-gradient(135deg, rgba(127,250,136,0.12) 0%, rgba(127,250,136,0.04) 60%, transparent 100%)", border: "1px solid rgba(127,250,136,0.2)" }}>
+                style={{ background: "linear-gradient(135deg, var(--primary-glow) 0%, transparent 100%)", border: "1px solid var(--primary-glow)" }}>
                 <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-10"
-                    style={{ background: "radial-gradient(circle, #7FFA88 0%, transparent 70%)" }} />
+                    style={{ background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)" }} />
                 <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
-                        style={{ background: "rgba(127,250,136,0.15)", border: "1px solid rgba(127,250,136,0.25)" }}>
+                        style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
                         <WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} className="text-primary" />
                     </div>
                     <div>
@@ -924,10 +928,10 @@ function CoachApplicationSection() {
                 </label>
                 <div ref={dropRef} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200
-                    ${dragging ? "border-primary/50 bg-primary/8" : "border-dashed border-white/10"}`}>
+                    ${dragging ? "border-primary/50 bg-primary/8" : "border-dashed border-[var(--input-border)]"}`}>
                     <button type="button" onClick={() => fileInputRef.current?.click()}
                         className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium flex-shrink-0
-                        bg-white/6 border border-white/10 text-text-muted hover:text-text hover:border-white/20 transition-all duration-150">
+                        bg-[var(--muted-bg)] border border-[var(--input-border)] text-text-muted hover:text-text hover:border-[var(--input-border)] transition-all duration-150">
                         <UploadFileRoundedIcon sx={{ fontSize: 14 }} />
                         Add files
                     </button>
@@ -960,6 +964,71 @@ function CoachApplicationSection() {
                 </button>
             </div>
         </form>
+    )
+}
+
+// ─── Appearance ───────────────────────────────────────────────────────────────
+
+function AppearanceSection() {
+    const { isDark, setTheme } = useTheme()
+
+    return (
+        <div className="flex flex-col gap-5">
+            <div>
+                <h2 className="text-base font-semibold text-text">Appearance</h2>
+                <p className="text-xs text-text-muted mt-0.5">Choose how NutriSphere looks for you.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                {/* Light */}
+                <button
+                    type="button"
+                    onClick={() => setTheme(false)}
+                    className={`flex flex-col gap-3 p-3 rounded-2xl text-left transition-all duration-200 ${
+                        !isDark ? "ring-2 ring-primary" : "hover:opacity-90"
+                    }`}
+                    style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}
+                >
+                    <div className="w-full rounded-xl overflow-hidden"
+                        style={{ background: "#e6e6e6", border: "1px solid rgba(0,0,0,0.07)" }}>
+                        <div className="h-3" style={{ background: "#ffffff", borderBottom: "1px solid rgba(0,0,0,0.06)" }} />
+                        <div className="p-2 flex flex-col gap-1.5">
+                            <div className="h-1.5 rounded-full w-3/4" style={{ background: "rgba(0,0,0,0.10)" }} />
+                            <div className="h-1.5 rounded-full w-1/2" style={{ background: "rgba(0,219,88,0.45)" }} />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <LightModeRoundedIcon sx={{ fontSize: 13 }} className={!isDark ? "text-primary" : "text-text-muted"} />
+                        <span className={`text-xs font-medium ${!isDark ? "text-text" : "text-text-muted"}`}>Light</span>
+                        {!isDark && <CheckRoundedIcon sx={{ fontSize: 12 }} className="text-primary ml-auto" />}
+                    </div>
+                </button>
+
+                {/* Dark */}
+                <button
+                    type="button"
+                    onClick={() => setTheme(true)}
+                    className={`flex flex-col gap-3 p-3 rounded-2xl text-left transition-all duration-200 ${
+                        isDark ? "ring-2 ring-primary" : "hover:opacity-90"
+                    }`}
+                    style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}
+                >
+                    <div className="w-full rounded-xl overflow-hidden"
+                        style={{ background: "#0A0B0A", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <div className="h-3" style={{ background: "#171917", borderBottom: "1px solid rgba(255,255,255,0.06)" }} />
+                        <div className="p-2 flex flex-col gap-1.5">
+                            <div className="h-1.5 rounded-full w-3/4" style={{ background: "rgba(255,255,255,0.12)" }} />
+                            <div className="h-1.5 rounded-full w-1/2" style={{ background: "rgba(127,250,136,0.45)" }} />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <DarkModeRoundedIcon sx={{ fontSize: 13 }} className={isDark ? "text-primary" : "text-text-muted"} />
+                        <span className={`text-xs font-medium ${isDark ? "text-text" : "text-text-muted"}`}>Dark</span>
+                        {isDark && <CheckRoundedIcon sx={{ fontSize: 12 }} className="text-primary ml-auto" />}
+                    </div>
+                </button>
+            </div>
+        </div>
     )
 }
 
@@ -1010,7 +1079,7 @@ function DangerZoneSection() {
                     </div>
                     <button type="button" onClick={handleLogout}
                         className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium flex-shrink-0
-                        text-text-muted border border-white/10 hover:border-red-400/40 hover:text-red-400
+                        text-text-muted border border-[var(--input-border)] hover:border-red-400/40 hover:text-red-400
                         hover:bg-red-400/8 transition-all duration-200">
                         <LogoutRoundedIcon sx={{ fontSize: 15 }} />
                         Log out
@@ -1030,7 +1099,7 @@ function DangerZoneSection() {
                         {confirmAllDevices && (
                             <button type="button" onClick={() => setConfirmAllDevices(false)}
                                 className="px-3.5 py-2 rounded-xl text-xs font-medium text-text-muted
-                                border border-white/10 hover:border-white/20 hover:text-text transition-all duration-200">
+                                border border-[var(--input-border)] hover:border-[var(--input-border)] hover:text-text transition-all duration-200">
                                 Cancel
                             </button>
                         )}
@@ -1039,7 +1108,7 @@ function DangerZoneSection() {
                             transition-all duration-200 disabled:opacity-50
                             ${confirmAllDevices
                                 ? "bg-red-500/90 text-white hover:bg-red-500"
-                                : "text-text-muted border border-white/10 hover:border-red-400/40 hover:text-red-400 hover:bg-red-400/8"
+                                : "text-text-muted border border-[var(--input-border)] hover:border-red-400/40 hover:text-red-400 hover:bg-red-400/8"
                             }`}>
                             {loadingAll
                                 ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -1056,11 +1125,12 @@ function DangerZoneSection() {
 // ─── Settings Page ────────────────────────────────────────────────────────────
 
 const SECTIONS: { key: Section; component: React.ReactNode }[] = [
-    { key: "personal",  component: <PersonalInfoSection /> },
-    { key: "nutrition", component: <NutritionGoalsSection /> },
-    { key: "health",    component: <HealthSection /> },
-    { key: "coach",     component: <CoachApplicationSection /> },
-    { key: "danger",    component: <DangerZoneSection /> },
+    { key: "personal",   component: <PersonalInfoSection /> },
+    { key: "appearance", component: <AppearanceSection /> },
+    { key: "nutrition",  component: <NutritionGoalsSection /> },
+    { key: "health",     component: <HealthSection /> },
+    { key: "coach",      component: <CoachApplicationSection /> },
+    { key: "danger",     component: <DangerZoneSection /> },
 ]
 
 export default function Settings() {
@@ -1090,7 +1160,7 @@ export default function Settings() {
                             transition-all duration-200 text-left w-full
                             ${active === key
                                 ? "bg-primary/15 text-primary"
-                                : "text-text-muted hover:text-text hover:bg-white/5"
+                                : "text-text-muted hover:text-text hover:bg-[var(--muted-bg)]"
                             }`}>
                             {icon}
                             {label}
