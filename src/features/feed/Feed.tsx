@@ -492,7 +492,8 @@ export default function Feed({ isGuest }: { isGuest?: boolean }) {
     const [cursor,      setCursor]      = useState<string | null | undefined>(undefined)
     const [loading,     setLoading]     = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
-    const sentinelRef = useRef<HTMLDivElement>(null)
+    const sentinelRef  = useRef<HTMLDivElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
 
     const fetchFn = tab === "explore" ? getFeed : getFollowingFeed
 
@@ -526,11 +527,12 @@ export default function Feed({ isGuest }: { isGuest?: boolean }) {
     }, [cursor, loadingMore, fetchFn])
 
     useEffect(() => {
-        const sentinel = sentinelRef.current
+        const sentinel  = sentinelRef.current
+        const container = containerRef.current
         if (!sentinel) return
         const observer = new IntersectionObserver(
             entries => { if (entries[0].isIntersecting) loadMore() },
-            { threshold: 0.1 }
+            { threshold: 0.1, root: container }
         )
         observer.observe(sentinel)
         return () => observer.disconnect()
@@ -541,7 +543,7 @@ export default function Feed({ isGuest }: { isGuest?: boolean }) {
         : "Nothing here yet."
 
     return (
-        <div className="h-full overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+        <div ref={containerRef} className="h-full overflow-y-auto" style={{ scrollbarWidth: "none" }}>
             <div className="w-full max-w-lg mx-auto flex flex-col gap-4 pb-8">
 
                 {/* Tab toggle */}

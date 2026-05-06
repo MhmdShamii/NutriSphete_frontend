@@ -90,7 +90,7 @@ function ModalInput({ label, value, onChange, unit, color }: {
         <div className="flex flex-col gap-1.5">
             <span className="text-xs font-medium" style={{ color }}>{label}</span>
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--glass-border)" }}>
+                style={{ background: "var(--muted-bg)", border: "1px solid var(--glass-border)" }}>
                 <input
                     type="number" value={value}
                     onChange={e => onChange(e.target.value)}
@@ -141,7 +141,7 @@ function UpdateTargetsModal({ onClose }: { onClose: () => void }) {
     return (
         <Modal title="Update Targets" onClose={onClose}>
             <div className="flex flex-col gap-3">
-                <ModalInput label="Daily Calories" value={calories} onChange={setCalories} unit="kcal" color="#7FFA88" />
+                <ModalInput label="Daily Calories" value={calories} onChange={setCalories} unit="kcal" color="var(--primary)" />
                 <ModalInput label="Protein"  value={protein}  onChange={setProtein}  unit="g" color="#4F9CF9" />
                 <ModalInput label="Carbs"    value={carbs}    onChange={setCarbs}    unit="g" color="#FFC107" />
                 <ModalInput label="Fats"     value={fats}     onChange={setFats}     unit="g" color="#FF6B9D" />
@@ -149,10 +149,10 @@ function UpdateTargetsModal({ onClose }: { onClose: () => void }) {
             <button
                 onClick={handleSave}
                 disabled={!valid || loading}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-40"
-                style={{ background: "var(--primary)", boxShadow: "0 0 16px rgba(127,250,136,0.3)" }}>
+                className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: "var(--btn-bg)", color: "var(--btn-text)", boxShadow: `0 0 16px var(--btn-shadow)` }}>
                 {loading
-                    ? <span className="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    ? <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     : "Save Targets"}
             </button>
         </Modal>
@@ -189,7 +189,7 @@ function LogWeightModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
             <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-text-muted">Current weight</span>
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--glass-border)" }}>
+                    style={{ background: "var(--muted-bg)", border: "1px solid var(--glass-border)" }}>
                     <input
                         type="number" placeholder="e.g. 81.5" value={weight}
                         onChange={e => setWeight(e.target.value)}
@@ -217,10 +217,10 @@ function LogWeightModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
 
             <button onClick={handleSave}
                 disabled={!valid || loading}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-40"
-                style={{ background: "var(--primary)", boxShadow: "0 0 16px rgba(127,250,136,0.3)" }}>
+                className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: "var(--btn-bg)", color: "var(--btn-text)", boxShadow: `0 0 16px var(--btn-shadow)` }}>
                 {loading
-                    ? <span className="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    ? <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     : "Log Weight"}
             </button>
         </Modal>
@@ -261,14 +261,14 @@ function WeekNav({ label, onPrev, onNext, isCurrentWeek }: {
     return (
         <div className="flex items-center gap-0.5">
             <button onClick={onPrev}
-                className="p-0.5 rounded-lg text-text-muted hover:text-text transition-colors hover:bg-white/5">
+                className="p-0.5 rounded-lg text-text-muted hover:text-text transition-colors hover:bg-[var(--muted-bg)]">
                 <ChevronLeftRoundedIcon sx={{ fontSize: 16 }} />
             </button>
             <span className="text-[10px] text-text-muted px-1 whitespace-nowrap min-w-[72px] text-center">
                 {label}
             </span>
             <button onClick={onNext} disabled={isCurrentWeek}
-                className="p-0.5 rounded-lg transition-colors hover:bg-white/5"
+                className="p-0.5 rounded-lg transition-colors hover:bg-[var(--muted-bg)]"
                 style={{ color: isCurrentWeek ? "rgba(179,188,181,0.25)" : undefined }}>
                 <ChevronRightRoundedIcon sx={{ fontSize: 16 }} />
             </button>
@@ -296,7 +296,7 @@ function MacroBar({ label, value, max, unit, color, icon }: {
                 </span>
             </div>
             {pct !== null && (
-                <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+                <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bar-track)" }}>
                     <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: color }} />
                 </div>
             )}
@@ -340,7 +340,7 @@ function TodaysMacros({
                 <PanelTitle>Today's Macros</PanelTitle>
                 <button onClick={onEditTargets}
                     className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-text-muted hover:text-text transition-colors"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--glass-border)" }}>
+                    style={{ background: "var(--muted-bg)", border: "1px solid var(--glass-border)" }}>
                     <EditRoundedIcon sx={{ fontSize: 12 }} />
                     Targets
                 </button>
@@ -351,7 +351,7 @@ function TodaysMacros({
                 </div>
             ) : (
                 <div className="flex flex-col gap-2.5 flex-1 justify-center">
-                    <MacroBar label="Calories" value={cal}   max={calMax}  unit="kcal" color="#7FFA88"
+                    <MacroBar label="Calories" value={cal}   max={calMax}  unit="kcal" color="var(--primary)"
                         icon={<LocalFireDepartmentRoundedIcon sx={{ fontSize: 13 }} />} />
                     <MacroBar label="Protein"  value={prot}  max={protMax} unit="g"    color="#4F9CF9"
                         icon={<FitnessCenterRoundedIcon sx={{ fontSize: 13 }} />} />
@@ -434,7 +434,7 @@ function CalorieChart() {
                 <div className="flex items-center gap-2">
                     {goalCal !== null && (
                         <span className="text-[10px] text-primary px-2 py-0.5 rounded-lg"
-                            style={{ background: "rgba(127,250,136,0.08)", border: "1px solid rgba(127,250,136,0.15)" }}>
+                            style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
                             Goal: {goalCal.toLocaleString()}
                         </span>
                     )}
@@ -660,7 +660,7 @@ function WeightChart({ onLogWeight, refreshKey }: { onLogWeight: () => void; ref
                     )}
                     <button onClick={onLogWeight}
                         className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-text-muted hover:text-text transition-colors"
-                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--glass-border)" }}>
+                        style={{ background: "var(--muted-bg)", border: "1px solid var(--glass-border)" }}>
                         <MonitorWeightRoundedIcon sx={{ fontSize: 12 }} />
                         Log
                     </button>
@@ -819,8 +819,8 @@ function LogCard({
 
     return (
         <div
-            className={`flex gap-3 p-3 rounded-2xl transition-all duration-200 hover:bg-white/[0.04] ${isMeal && entry.meal_post ? "cursor-pointer" : ""} ${isPending ? "opacity-70" : ""}`}
-            style={{ border: `1px solid ${isPending ? "rgba(251,146,60,0.25)" : "var(--glass-border)"}`, background: "rgba(255,255,255,0.02)" }}
+            className={`flex gap-3 p-3 rounded-2xl transition-all duration-200 ${isMeal && entry.meal_post ? "cursor-pointer" : ""} ${isPending ? "opacity-70" : ""}`}
+            style={{ border: `1px solid ${isPending ? "rgba(251,146,60,0.25)" : "var(--log-card-border)"}`, background: "var(--log-card-bg)" }}
             onClick={isMeal && entry.meal_post ? () => navigate(`/meals/${entry.meal_post!.id}`) : undefined}>
 
             {/* Thumbnail (meal) or icon (custom/estimate) */}
@@ -847,7 +847,7 @@ function LogCard({
             <div className="flex flex-col gap-1.5 flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-sm font-semibold text-text truncate">{name}</span>
+                        <span className="text-sm font-semibold truncate" style={{ color: "var(--primary)" }}>{name}</span>
                         <span className="text-[9px] text-text-muted/50 flex-shrink-0">
                             {entry.type === "custom" ? "quick log" : entry.type === "estimate" ? "estimation" : "meal"}
                         </span>
@@ -947,13 +947,13 @@ function MealLog({
                     {/* Prev day */}
                     <button
                         onClick={() => setSelectedDate(d => shiftDate(d, -1))}
-                        className="p-1 rounded-lg text-text-muted hover:text-text transition-colors hover:bg-white/5">
+                        className="p-1 rounded-lg text-text-muted hover:text-text transition-colors hover:bg-[var(--muted-bg)]">
                         <ChevronLeftRoundedIcon sx={{ fontSize: 16 }} />
                     </button>
 
                     {/* Date label */}
                     <span className={`text-xs font-semibold px-2 py-1 rounded-lg min-w-[72px] text-center transition-colors ${isToday ? "text-primary" : "text-text"}`}
-                        style={{ background: isToday ? "rgba(127,250,136,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${isToday ? "rgba(127,250,136,0.2)" : "var(--glass-border)"}` }}>
+                        style={{ background: isToday ? "var(--primary-glow)" : "var(--muted-bg)", border: `1px solid ${isToday ? "var(--primary-glow)" : "var(--glass-border)"}` }}>
                         {fmtDateLabel(selectedDate)}
                     </span>
 
@@ -961,7 +961,7 @@ function MealLog({
                     <button
                         onClick={() => setSelectedDate(d => shiftDate(d, 1))}
                         disabled={isToday}
-                        className="p-1 rounded-lg transition-colors hover:bg-white/5"
+                        className="p-1 rounded-lg transition-colors hover:bg-[var(--muted-bg)]"
                         style={{ color: isToday ? "rgba(179,188,181,0.25)" : undefined }}>
                         <ChevronRightRoundedIcon sx={{ fontSize: 16 }} />
                     </button>
@@ -978,7 +978,7 @@ function MealLog({
             ) : isEmpty ? (
                 <div className="flex flex-col items-center gap-3 flex-1 justify-center text-center">
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                        style={{ background: "rgba(127,250,136,0.07)", border: "1px solid rgba(127,250,136,0.13)" }}>
+                        style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
                         <RestaurantRoundedIcon sx={{ fontSize: 22 }} className="text-primary/40" />
                     </div>
                     <div className="flex flex-col gap-1">

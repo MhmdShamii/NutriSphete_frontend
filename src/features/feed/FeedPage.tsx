@@ -30,7 +30,7 @@ export default function FeedPage() {
 
             <div className="flex w-full flex-1 min-h-0 flex-col-reverse gap-3 sm:flex-row sm:gap-5">
                 <NavBar isGuest={!user} onGuestAction={() => setShowGuestPrompt(true)} />
-                <div className="flex-1 min-h-0 overflow-auto no-scrollbar">
+                <div className="flex-1 min-h-0 overflow-hidden">
                     <Feed isGuest={!user} />
                 </div>
             </div>

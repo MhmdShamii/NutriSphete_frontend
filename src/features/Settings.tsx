@@ -236,9 +236,10 @@ function PersonalInfoSection() {
                 <div className="flex justify-end pt-1">
                     <button type="submit" disabled={!dirty || loading}
                         className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold
-                        bg-primary text-black hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200">
+                        hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)" }}>
                         {loading
-                            ? <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                            ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                             : <CheckRoundedIcon sx={{ fontSize: 15 }} />}
                         Save changes
                     </button>
@@ -404,9 +405,10 @@ function NutritionGoalsSection() {
                 <div className="flex justify-end pt-1">
                     <button type="submit" disabled={!dirty || loading}
                         className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold
-                        bg-primary text-black hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200">
+                        hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)" }}>
                         {loading
-                            ? <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                            ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                             : <CheckRoundedIcon sx={{ fontSize: 15 }} />}
                         Save changes
                     </button>
@@ -676,7 +678,7 @@ function PendingView({ application }: { application: CoachApplication }) {
                     <p className="text-xs text-text-muted mt-0.5">Your application is being reviewed.</p>
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary/80 flex-shrink-0"
-                    style={{ background: "rgba(127,250,136,0.10)", border: "1px solid rgba(127,250,136,0.2)" }}>
+                    style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                     Pending review
                 </div>
@@ -706,7 +708,7 @@ function PendingView({ application }: { application: CoachApplication }) {
             </div>
 
             <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
-                style={{ border: "1px solid rgba(127,250,136,0.15)", background: "rgba(127,250,136,0.05)" }}>
+                style={{ border: "1px solid var(--primary-glow)", background: "var(--primary-glow)" }}>
                 <HourglassEmptyRoundedIcon sx={{ fontSize: 15 }} className="text-primary/60 flex-shrink-0 mt-px" />
                 <p className="text-xs text-text-muted leading-relaxed">
                     Our team is reviewing your application. You'll be notified by email once a decision has been made.
@@ -724,9 +726,9 @@ function ApprovedView() {
                 <p className="text-xs text-text-muted mt-0.5">Your application status.</p>
             </div>
             <div className="flex flex-col items-center text-center gap-4 py-10 px-6 rounded-2xl"
-                style={{ border: "1px solid rgba(127,250,136,0.2)", background: "rgba(127,250,136,0.06)" }}>
+                style={{ border: "1px solid var(--primary-glow)", background: "var(--primary-glow)" }}>
                 <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                    style={{ background: "rgba(127,250,136,0.15)", border: "1px solid rgba(127,250,136,0.25)" }}>
+                    style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
                     <CheckCircleRoundedIcon sx={{ fontSize: 28 }} className="text-primary" />
                 </div>
                 <div>
@@ -736,7 +738,7 @@ function ApprovedView() {
                     </p>
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary"
-                    style={{ background: "rgba(127,250,136,0.12)", border: "1px solid rgba(127,250,136,0.25)" }}>
+                    style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
                     <WorkspacePremiumRoundedIcon sx={{ fontSize: 13 }} />
                     Approved
                 </div>
@@ -767,8 +769,8 @@ function RejectedView({ application, onReapply }: { application: CoachApplicatio
             <div className="flex justify-end">
                 <button type="button" onClick={onReapply}
                     className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold
-                    bg-primary text-black hover:bg-primary/90 transition-all duration-200
-                    shadow-[0_0_20px_rgba(127,250,136,0.2)]">
+                    hover:opacity-90 transition-all duration-200"
+                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)", boxShadow: "0 0 20px var(--btn-shadow)" }}>
                     <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />
                     Apply again
                 </button>
@@ -955,10 +957,10 @@ function CoachApplicationSection() {
             <div className="flex justify-end pt-1">
                 <button type="submit" disabled={submitting}
                     className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold
-                    bg-primary text-black hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed
-                    transition-all duration-200 shadow-[0_0_20px_rgba(127,250,136,0.2)]">
+                    hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)", boxShadow: "0 0 20px var(--btn-shadow)" }}>
                     {submitting
-                        ? <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                        ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         : <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />}
                     {submitting ? "Submitting…" : "Submit Application"}
                 </button>

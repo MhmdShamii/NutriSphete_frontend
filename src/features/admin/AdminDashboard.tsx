@@ -380,7 +380,8 @@ function ApplicationCard({
                                 <div className="flex gap-2">
                                     <button onClick={() => onApprove(app.id)}
                                         className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold
-                                        bg-primary text-black hover:bg-primary/90 transition-all">
+                                        hover:opacity-90 transition-all"
+                                        style={{ background: "var(--btn-bg)", color: "var(--btn-text)" }}>
                                         <CheckCircleRoundedIcon sx={{ fontSize: 13 }} />
                                         Approve
                                     </button>
