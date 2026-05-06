@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { useSelector } from "react-redux"
+import GuestSignInPrompt from "../../components/ui/GuestSignInPrompt"
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded"
 import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded"
 import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded"
@@ -18,6 +19,8 @@ import { getFeed, getFollowingFeed, type FeedPost } from "../../services/feed/fe
 import { likeMealApi, unlikeMealApi, logMeal } from "../../services/meals/mealsApis"
 import { followUserApi, unfollowUserApi } from "../../services/social/followApi"
 import { confirmQuickLog, deleteQuickLog } from "../../services/log/quickLogApi"
+import AvatarUI from "../../components/ui/Avatar"
+import LazyImage from "../../components/ui/LazyImage"
 import HealthWarningModal from "../mealCreation/components/HealthWarningModal"
 import CommentsSheet from "../meal/CommentsSheet"
 import type { FlaggedIngredient } from "../mealCreation/types/meal.types"
@@ -32,26 +35,7 @@ function timeAgo(iso: string): string {
     return `${Math.floor(diff / 86400)}d`
 }
 
-function Avatar({ src, name, size = 36 }: { src?: string; name: string; size?: number }) {
-    const initials = name.trim().split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"
-    const palette  = ["#7FFA88", "#4F9CF9", "#FFC107", "#FF6B9D", "#a78bfa"]
-    const color    = palette[(name.charCodeAt(0) || 0) % palette.length]
-    if (src) {
-        return (
-            <img src={src} alt={name} className="rounded-full object-cover flex-shrink-0"
-                style={{ width: size, height: size }} />
-        )
-    }
-    return (
-        <div style={{
-            width: size, height: size, borderRadius: "50%", flexShrink: 0,
-            background: `${color}20`, border: `1.5px solid ${color}50`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-            <span style={{ fontSize: size * 0.36, fontWeight: 700, color }}>{initials}</span>
-        </div>
-    )
-}
+const Avatar = AvatarUI
 
 // ─── Post carousel (image → ingredients → steps) ─────────────────────────────
 
@@ -105,11 +89,20 @@ function PostCarousel({
                     style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none" } as React.CSSProperties}>
 
                     {/* Slide 0: Image */}
-                    <div className="flex-shrink-0 w-full h-full bg-white/5" style={{ scrollSnapAlign: "start" }}>
+                    <div className="flex-shrink-0 w-full h-full relative bg-white/5" style={{ scrollSnapAlign: "start" }}>
                         {imageUrl ? (
-                            <img src={imageUrl} alt={mealName} className="w-full h-full object-cover" />
+                            <LazyImage
+                                src={imageUrl}
+                                alt={mealName}
+                                className="w-full h-full object-cover"
+                                fallback={
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-text-muted/30 text-sm">No image</span>
+                                    </div>
+                                }
+                            />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center">
+                            <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-text-muted/30 text-sm">No image</span>
                             </div>
                         )}
@@ -208,9 +201,11 @@ function PostSkeleton() {
 
 type LogState = "idle" | "logging" | "logged"
 
-function PostCard({ post: initialPost }: { post: FeedPost }) {
+function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: boolean }) {
     const navigate      = useNavigate()
     const currentUserId = useSelector((s: RootState) => s.auth.user?.id ?? null)
+
+    const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
     const authorName = `${initialPost.author.first_name} ${initialPost.author.last_name}`
 
@@ -232,7 +227,13 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
     // Comments sheet
     const [showComments, setShowComments] = useState(false)
 
+    function requireAuth(action: () => void) {
+        if (isGuest) { setShowGuestPrompt(true); return }
+        action()
+    }
+
     async function toggleLike() {
+        if (isGuest) { setShowGuestPrompt(true); return }
         const wasLiked = liked
         setLiked(!wasLiked)
         setLikeCount(c => wasLiked ? c - 1 : c + 1)
@@ -246,6 +247,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
     }
 
     async function toggleFollow() {
+        if (isGuest) { setShowGuestPrompt(true); return }
         if (followLoading) return
         const wasFollowing = following
         setFollowing(!wasFollowing)
@@ -261,6 +263,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
     }
 
     async function handleLog() {
+        if (isGuest) { setShowGuestPrompt(true); return }
         if (logState !== "idle") return
         setLogState("logging")
         try {
@@ -297,6 +300,8 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
 
     return (
         <>
+            {showGuestPrompt && <GuestSignInPrompt onClose={() => setShowGuestPrompt(false)} />}
+
             {showComments && (
                 <CommentsSheet
                     mealId={initialPost.id}
@@ -323,13 +328,13 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
 
                 {/* ── Header ── */}
                 <div className="flex items-center gap-3 px-4 pt-3 pb-2">
-                    <button onClick={() => navigate(`/profile/${initialPost.author.id}`)} className="flex-shrink-0">
+                    <button onClick={() => requireAuth(() => navigate(`/profile/${initialPost.author.id}`))} className="flex-shrink-0">
                         <Avatar src={initialPost.author.avatar} name={authorName} size={38} />
                     </button>
                     <div className="flex flex-col flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => navigate(`/profile/${initialPost.author.id}`)}
+                                onClick={() => requireAuth(() => navigate(`/profile/${initialPost.author.id}`))}
                                 className="text-sm font-semibold text-text leading-tight truncate hover:opacity-75 transition-opacity"
                             >
                                 {authorName}
@@ -400,7 +405,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
                     </button>
 
                     <button
-                        onClick={() => setShowComments(true)}
+                        onClick={() => requireAuth(() => setShowComments(true))}
                         className="p-2 rounded-xl transition-all duration-200 hover:bg-white/5 text-text-muted"
                     >
                         <ChatBubbleOutlineRoundedIcon sx={{ fontSize: 21 }} />
@@ -433,7 +438,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
                     </span>
                     <span className="text-text-muted/30 text-xs">·</span>
                     <button
-                        onClick={() => setShowComments(true)}
+                        onClick={() => requireAuth(() => setShowComments(true))}
                         className="text-xs font-semibold text-text hover:text-primary transition-colors"
                     >
                         {commentCount.toLocaleString()} <span className="font-normal text-text-muted">comments</span>
@@ -464,7 +469,7 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
                         </div>
                         {commentCount > 1 && (
                             <button
-                                onClick={() => setShowComments(true)}
+                                onClick={() => requireAuth(() => setShowComments(true))}
                                 className="text-[11px] text-text-muted/40 hover:text-text-muted transition-colors mt-1"
                             >
                                 View all {commentCount} comments
@@ -481,13 +486,14 @@ function PostCard({ post: initialPost }: { post: FeedPost }) {
 
 type FeedTab = "explore" | "following"
 
-export default function Feed() {
+export default function Feed({ isGuest }: { isGuest?: boolean }) {
     const [tab,         setTab]         = useState<FeedTab>("explore")
     const [posts,       setPosts]       = useState<FeedPost[]>([])
     const [cursor,      setCursor]      = useState<string | null | undefined>(undefined)
     const [loading,     setLoading]     = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
-    const sentinelRef = useRef<HTMLDivElement>(null)
+    const sentinelRef  = useRef<HTMLDivElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
 
     const fetchFn = tab === "explore" ? getFeed : getFollowingFeed
 
@@ -521,11 +527,12 @@ export default function Feed() {
     }, [cursor, loadingMore, fetchFn])
 
     useEffect(() => {
-        const sentinel = sentinelRef.current
+        const sentinel  = sentinelRef.current
+        const container = containerRef.current
         if (!sentinel) return
         const observer = new IntersectionObserver(
             entries => { if (entries[0].isIntersecting) loadMore() },
-            { threshold: 0.1 }
+            { threshold: 0.1, root: container }
         )
         observer.observe(sentinel)
         return () => observer.disconnect()
@@ -536,13 +543,13 @@ export default function Feed() {
         : "Nothing here yet."
 
     return (
-        <div className="h-full overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+        <div ref={containerRef} className="h-full overflow-y-auto" style={{ scrollbarWidth: "none" }}>
             <div className="w-full max-w-lg mx-auto flex flex-col gap-4 pb-8">
 
                 {/* Tab toggle */}
                 <div className="flex items-center p-1 rounded-2xl sticky top-0 z-10"
                     style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)", backdropFilter: "blur(20px)" }}>
-                    {(["explore", "following"] as FeedTab[]).map(t => (
+                    {(["explore", "following"] as FeedTab[]).filter(t => !isGuest || t === "explore").map(t => (
                         <button
                             key={t}
                             onClick={() => setTab(t)}
@@ -567,7 +574,7 @@ export default function Feed() {
                         <span className="text-sm text-text-muted/40">{emptyMessage}</span>
                     </div>
                 ) : (
-                    posts.map(post => <PostCard key={post.id} post={post} />)
+                    posts.map(post => <PostCard key={post.id} post={post} isGuest={isGuest} />)
                 )}
 
                 <div ref={sentinelRef} />

@@ -5,6 +5,8 @@ import QuickLogBasicPanel from "../components/QuickLogBasicPanel"
 import QuickLogInputPanel from "../components/QuickLogInputPanel"
 import QuickLogReviewPanel from "../components/QuickLogReviewPanel"
 import HealthWarningModal from "../components/HealthWarningModal"
+import { useToast } from "../../../context/ToastContext"
+import { extractApiError } from "../../../utils/apiError"
 
 function generateId() {
     return Math.random().toString(36).slice(2)
@@ -16,11 +18,6 @@ const initialForm: QuickLogFormData = {
     ingredients: [{ localId: generateId(), name: "", portion: "", unit: "g" }],
 }
 
-function extractError(err: unknown) {
-    return (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? "Something went wrong. Please try again."
-}
-
 const steps = [
     { n: 1, label: "Meal Details",  sub: "Name & description" },
     { n: 2, label: "Ingredients",   sub: "What goes into your meal" },
@@ -28,11 +25,11 @@ const steps = [
 ]
 
 export default function QuickLog() {
+    const { showError } = useToast()
     const [form, setForm] = useState<QuickLogFormData>(initialForm)
     const [entry, setEntry] = useState<QuickLogEntry | null>(null)
     const [mobileStep, setMobileStep] = useState<0 | 1 | 2>(0)
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
     const [showWarning, setShowWarning] = useState(false)
     const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
 
@@ -49,7 +46,6 @@ export default function QuickLog() {
     async function handleCalculate() {
         if (!submitReady) return
         setLoading(true)
-        setError(null)
         setEntry(null)
         try {
             const res = await createQuickLog(form)
@@ -61,7 +57,8 @@ export default function QuickLog() {
             }
         } catch (err) {
             setEntry(null)
-            setError(extractError(err))
+            if (window.innerWidth < 640) setMobileStep(1)
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -70,14 +67,13 @@ export default function QuickLog() {
     async function handleConfirm() {
         if (!entry) return
         setLoading(true)
-        setError(null)
         try {
             await confirmQuickLog(entry.id)
             setForm(initialForm)
             setEntry(null)
             setMobileStep(0)
         } catch (err) {
-            setError(extractError(err))
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -86,14 +82,13 @@ export default function QuickLog() {
     async function handleDiscard() {
         if (!entry) return
         setLoading(true)
-        setError(null)
         try {
             await deleteQuickLog(entry.id)
             setForm(initialForm)
             setEntry(null)
             setMobileStep(0)
         } catch (err) {
-            setError(extractError(err))
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -161,7 +156,6 @@ export default function QuickLog() {
                             onConfirm={handleConfirm}
                             onDiscard={handleDiscard}
                             loading={loading}
-                            error={error}
                             submitReady={submitReady}
                         />
                     </div>
@@ -200,7 +194,6 @@ export default function QuickLog() {
                         editLabel="Edit Ingredients"
                         isMobile
                         loading={loading}
-                        error={error}
                         submitReady={submitReady}
                     />
                 )}

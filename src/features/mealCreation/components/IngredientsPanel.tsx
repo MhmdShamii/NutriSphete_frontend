@@ -24,11 +24,17 @@ interface IngredientRowProps {
     canRemove: boolean
 }
 
+function isArabic(text: string) {
+    return /[؀-ۿ]/.test(text)
+}
+
 function IngredientRow({ ingredient, index, onUpdate, onRemove, canRemove }: IngredientRowProps) {
     const [results, setResults] = useState<IngredientResult[]>([])
     const [open, setOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    const arabic = isArabic(ingredient.name)
 
     useEffect(() => {
         if (timerRef.current) clearTimeout(timerRef.current)
@@ -72,22 +78,22 @@ function IngredientRow({ ingredient, index, onUpdate, onRemove, canRemove }: Ing
                 {open && (
                     <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-xl overflow-hidden shadow-xl border border-border/30"
                         style={{ background: "var(--surface)" }}>
-                        {results.slice(0, 7).map(r => (
-                            <button
-                                key={r.id}
-                                type="button"
-                                onMouseDown={() => { onUpdate("name", r.name_en); setOpen(false); setResults([]) }}
-                                className="w-full flex items-center justify-between px-3 py-2 hover:bg-primary/10 transition-colors duration-150"
-                            >
-                                <div className="flex items-baseline gap-2 min-w-0">
-                                    <span className="text-sm text-text truncate">{r.name_en}</span>
-                                    <span className="text-[11px] text-text-muted/50 flex-shrink-0">{r.name_ar}</span>
-                                </div>
-                                {r.verified && (
-                                    <CheckCircleRoundedIcon sx={{ fontSize: 14 }} style={{ color: "var(--primary)" }} className="flex-shrink-0 ml-2" />
-                                )}
-                            </button>
-                        ))}
+                        {results.slice(0, 5).map(r => {
+                            const displayName = arabic ? r.name_ar : r.name_en
+                            return (
+                                <button
+                                    key={r.id}
+                                    type="button"
+                                    onMouseDown={() => { onUpdate("name", displayName); setOpen(false); setResults([]) }}
+                                    className="w-full flex items-center justify-between px-3 py-1.5 sm:py-2 hover:bg-primary/10 transition-colors duration-150"
+                                >
+                                    <span className="text-xs sm:text-sm text-text truncate">{displayName}</span>
+                                    {r.verified && (
+                                        <CheckCircleRoundedIcon sx={{ fontSize: 13 }} style={{ color: "var(--primary)" }} className="flex-shrink-0 ml-2" />
+                                    )}
+                                </button>
+                            )
+                        })}
                     </div>
                 )}
             </div>

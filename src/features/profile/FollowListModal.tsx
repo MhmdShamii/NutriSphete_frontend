@@ -8,6 +8,7 @@ import {
     unfollowUserApi,
     type FollowUser,
 } from "../../services/social/followApi"
+import Avatar from "../../components/ui/Avatar"
 
 interface Props {
     userId: number
@@ -119,11 +120,7 @@ export default function FollowListModal({ userId, mode, onClose }: Props) {
                                         onClick={() => { onClose(); navigate(`/profile/${user.id}`) }}
                                         className="flex items-center gap-3 flex-1 min-w-0 text-left"
                                     >
-                                        <img
-                                            src={user.avatar}
-                                            alt={user.first_name}
-                                            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                                        />
+                                        <Avatar src={user.avatar} name={`${user.first_name} ${user.last_name}`} size={40} />
                                         <p className="text-sm font-medium text-text truncate">
                                             {user.first_name} {user.last_name}
                                         </p>

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { completeTargets, fetchMe } from "../../auth/authSlice"
+import { completeTargets, fetchMe, clearError } from "../../auth/authSlice"
 import type { AppDispatch, RootState } from "../../../app/store"
+import { useToast } from "../../../context/ToastContext"
 import type { TargetsPayload } from "../../auth/types"
 import Button from "../../../components/ui/Button"
 import StepHeader from "../components/StepHeader"
@@ -131,7 +132,15 @@ export default function TargetsStep() {
     const navigate = useNavigate()
     const location = useLocation()
     const hasBodyFat = !!(location.state as { hasBodyFat?: boolean } | null)?.hasBodyFat
+    const { showError } = useToast()
     const { loading, error, user } = useSelector((state: RootState) => state.auth)
+
+    useEffect(() => {
+        if (error) {
+            showError(error)
+            dispatch(clearError())
+        }
+    }, [error])
 
     const [aiDone, setAiDone] = useState(false)
     const [form, setForm] = useState<TargetsPayload>({
@@ -231,8 +240,6 @@ export default function TargetsStep() {
                 </div>
 
             </div>
-
-            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
 
             <Button type="submit" disabled={!valid || loading} className="flex items-center justify-center gap-2 w-full">
                 {loading

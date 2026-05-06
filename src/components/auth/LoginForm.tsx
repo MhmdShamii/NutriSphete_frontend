@@ -25,14 +25,15 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
         email: "",
         password: ""
     })
+    const [credError, setCredError] = useState<string | null>(null)
 
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
 
     const loading = useSelector((state: RootState) => state.auth.loading)
-    const error = useSelector((state: RootState) => state.auth.error)
 
     function handleChange<K extends keyof LoginPayload>(field: K, value: LoginPayload[K]) {
+        setCredError(null)
         setLoginForm(prev => ({ ...prev, [field]: value }))
     }
 
@@ -42,7 +43,7 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
             const { user } = await dispatch(login(loginForm)).unwrap()
             navigate(getPostLoginRoute(user.onboarding_step))
         } catch {
-            // error is stored in Redux state, displayed below
+            setCredError("Invalid email or password")
         }
     }
 
@@ -63,7 +64,7 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                     placeholder="Enter your email"
                     value={loginForm.email}
                     onChange={(v) => handleChange("email", v)}
-                    error={!!error}
+                    error={!!credError}
                 />
 
                 <div className="flex flex-col gap-1">
@@ -73,16 +74,16 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
                         placeholder="Enter your password"
                         value={loginForm.password}
                         onChange={(v) => handleChange("password", v)}
-                        error={!!error}
+                        error={!!credError}
                     />
+                    {credError && (
+                        <p className="text-xs text-red-400">{credError}</p>
+                    )}
                     <span className="text-xs w-full text-right text-text-muted hover:text-primary cursor-pointer transition-colors">
                         Forgot password?
                     </span>
                 </div>
 
-                {error && (
-                    <p className="text-xs text-red-400 text-center -mt-2">{error}</p>
-                )}
 
             </div>
 

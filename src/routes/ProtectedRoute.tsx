@@ -19,7 +19,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
 
     if (!user) {
-        return <Navigate to="/auth" />
+        return <Navigate to="/feed" />
     }
 
     return children

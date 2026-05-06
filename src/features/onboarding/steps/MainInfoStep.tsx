@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { completeMainInfo, fetchMe } from "../../auth/authSlice"
+import { completeMainInfo, fetchMe, clearError } from "../../auth/authSlice"
 import type { AppDispatch, RootState } from "../../../app/store"
+import { useToast } from "../../../context/ToastContext"
 import type { MainInfoPayload } from "../../auth/types"
 import { uploadAvatarApi } from "../../../services/auth/authApi"
 import CountryDropdown, { type Country } from "../../../components/ui/CountryDropdown"
@@ -17,7 +18,15 @@ const countries = countriesData as Country[]
 export default function MainInfoStep() {
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
+    const { showError } = useToast()
     const { loading, error } = useSelector((state: RootState) => state.auth)
+
+    useEffect(() => {
+        if (error) {
+            showError(error)
+            dispatch(clearError())
+        }
+    }, [error])
 
     const [form, setForm] = useState<MainInfoPayload>({ first_name: "", last_name: "", country_code: "" })
     const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
@@ -106,8 +115,6 @@ export default function MainInfoStep() {
                     show="name"
                 />
             </div>
-
-            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
 
             <Button type="submit" disabled={!valid || loading} className="flex items-center justify-center gap-2 w-full">
                 {loading

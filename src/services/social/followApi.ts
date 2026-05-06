@@ -76,7 +76,7 @@ export type NotificationData = {
 
 export type NotificationItem = {
     id: number
-    type: "like" | "comment" | "reply" | "relog" | "follow"
+    type: "like" | "comment" | "reply" | "relog" | "follow" | "coach_application"
     actor: NotificationActor
     data: NotificationData
     created_at: string

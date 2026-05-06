@@ -17,7 +17,7 @@ export default function Home() {
     }
 
     return (
-        <div className="flex flex-col w-full h-dvh gap-5 relative p-3 sm:p-5 overflow-hidden safe-area-top safe-area-bottom safe-area-x">
+        <div className="flex flex-col w-full h-full gap-5 relative p-2 sm:p-0 overflow-hidden safe-area-top safe-area-bottom safe-area-x">
             <div className="absolute top-[-150px] sm:top-[-250px] left-[30%] w-[400px] h-[200px] sm:w-[700px] sm:h-[400px] bg-primary/15 blur-[120px] sm:blur-[180px] rounded-full animate-energy pointer-events-none" />
             <div className="absolute top-[-150px] sm:top-[-250px] right-[30%] w-[400px] h-[200px] sm:w-[700px] sm:h-[400px] bg-primary/15 blur-[120px] sm:blur-[180px] rounded-full animate-energy pointer-events-none" />
 

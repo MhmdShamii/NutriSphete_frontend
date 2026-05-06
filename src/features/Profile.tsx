@@ -1,12 +1,8 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
 import type { RootState, AppDispatch } from "../app/store"
-import { fetchMe, updateMe } from "./auth/authSlice"
-import type { UpdateMePayload } from "./auth/types"
-import { uploadAvatarApi, deleteAvatarApi } from "../services/auth/authApi"
-import CountryDropdown, { type Country } from "../components/ui/CountryDropdown"
-import countriesData from "../assets/data/countries.json"
+import { fetchMe } from "./auth/authSlice"
 import isoCountries from "i18n-iso-countries"
 import en from "i18n-iso-countries/langs/en.json"
 import {
@@ -17,19 +13,15 @@ import {
 } from "../services/social/followApi"
 import FollowListModal from "./profile/FollowListModal"
 import ProfileRecipes from "./profile/ProfileRecipes"
+import LazyImage from "../components/ui/LazyImage"
+import AvatarUI from "../components/ui/Avatar"
 import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded"
 import LockRoundedIcon from "@mui/icons-material/LockRounded"
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded"
-import EditRoundedIcon from "@mui/icons-material/EditRounded"
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
-import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
 import PersonAddRoundedIcon from "@mui/icons-material/PersonAddRounded"
 import HowToRegRoundedIcon from "@mui/icons-material/HowToRegRounded"
 
 isoCountries.registerLocale(en)
-
-const countries = countriesData as Country[]
 
 type Tab = "recipes" | "private" | "saved"
 
@@ -102,7 +94,7 @@ function ProfileSkeleton() {
 
 function ProfileBanner({ coverImage }: { coverImage: string | null }) {
     if (coverImage) {
-        return <img src={coverImage} alt="banner" className="w-full h-full object-cover" />
+        return <LazyImage src={coverImage} alt="banner" className="w-full h-full object-cover" />
     }
     return (
         <>
@@ -196,11 +188,11 @@ function VisitedProfile({ userId }: { userId: number }) {
                 {/* Avatar + info — same structure as OwnProfile so the -mt overlap works */}
                 <div className="px-5 sm:px-6 pb-4">
                     <div className="relative w-fit -mt-9 sm:-mt-11 mb-3">
-                        <img
+                        <AvatarUI
                             src={profile.image.avatar}
-                            alt="avatar"
-                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-xl block"
-                            style={{ border: "3px solid var(--background)" }}
+                            name={`${profile.first_name} ${profile.last_name}`}
+                            size={80}
+                            className="shadow-xl sm:!w-24 sm:!h-24"
                         />
                     </div>
 
@@ -275,83 +267,14 @@ function VisitedProfile({ userId }: { userId: number }) {
 
 function OwnProfile() {
     const dispatch = useDispatch<AppDispatch>()
-    const { user, loading, error } = useSelector((state: RootState) => state.auth)
+    const { user, loading } = useSelector((state: RootState) => state.auth)
     const [tab, setTab] = useState<Tab>("recipes")
     const [fetched, setFetched] = useState(false)
-    const [editing, setEditing] = useState(false)
-    const [form, setForm] = useState({ first_name: "", last_name: "" })
-    const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
-    const snapshot = useRef({ first_name: "", last_name: "", country_code: "" })
-
     const [followModal, setFollowModal] = useState<"followers" | "following" | null>(null)
-
-    const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
-    const [avatarLoading, setAvatarLoading] = useState(false)
-    const avatarInputRef = useRef<HTMLInputElement>(null)
-    const avatarMenuRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        function handleOutside(e: MouseEvent) {
-            if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
-                setAvatarMenuOpen(false)
-            }
-        }
-        document.addEventListener("mousedown", handleOutside)
-        return () => document.removeEventListener("mousedown", handleOutside)
-    }, [])
 
     useEffect(() => {
         dispatch(fetchMe()).finally(() => setFetched(true))
     }, [dispatch])
-
-    useEffect(() => {
-        if (!user || !editing) return
-        const first_name = user.first_name ?? ""
-        const last_name = user.last_name ?? ""
-        const country_code = user.country.code ?? ""
-        setForm({ first_name, last_name })
-        setSelectedCountry(countries.find(c => c["alpha-3"] === country_code) ?? null)
-        snapshot.current = { first_name, last_name, country_code }
-    }, [editing, user])
-
-    async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0]
-        if (!file) return
-        e.target.value = ""
-        setAvatarMenuOpen(false)
-        setAvatarLoading(true)
-        try {
-            await uploadAvatarApi(file)
-            await dispatch(fetchMe())
-        } catch { } finally {
-            setAvatarLoading(false)
-        }
-    }
-
-    async function handleAvatarDelete() {
-        setAvatarMenuOpen(false)
-        setAvatarLoading(true)
-        try {
-            await deleteAvatarApi()
-            await dispatch(fetchMe())
-        } catch { } finally {
-            setAvatarLoading(false)
-        }
-    }
-
-    async function handleSave(e: React.FormEvent) {
-        e.preventDefault()
-        const patch: UpdateMePayload = {}
-        if (form.first_name.trim() !== snapshot.current.first_name) patch.first_name = form.first_name.trim()
-        if (form.last_name.trim() !== snapshot.current.last_name) patch.last_name = form.last_name.trim()
-        const newCode = selectedCountry?.["alpha-3"] ?? ""
-        if (newCode !== snapshot.current.country_code) patch.country_code = newCode
-        if (Object.keys(patch).length === 0) { setEditing(false); return }
-        try {
-            await dispatch(updateMe(patch)).unwrap()
-            setEditing(false)
-        } catch { }
-    }
 
     if (!fetched || loading) return <ProfileSkeleton />
     if (!user) return null
@@ -371,142 +294,39 @@ function OwnProfile() {
 
                 {/* Avatar + info */}
                 <div className="px-5 sm:px-6 pb-4">
-                    <div ref={avatarMenuRef} className="relative w-fit -mt-9 sm:-mt-11 mb-3">
-                        <button
-                            type="button"
-                            onClick={() => setAvatarMenuOpen(o => !o)}
-                            className="relative group block rounded-full focus:outline-none"
-                            style={{ border: "3px solid var(--background)", borderRadius: "9999px" }}
-                        >
-                            <img
-                                src={user.image.avatar}
-                                alt="avatar"
-                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-xl block"
-                            />
-                            <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100
-                                transition-opacity duration-200 flex items-center justify-center">
-                                {avatarLoading
-                                    ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    : <PhotoCameraRoundedIcon sx={{ fontSize: 18 }} className="text-white" />}
-                            </div>
-                        </button>
-
-                        {avatarMenuOpen && (
-                            <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl shadow-xl z-50 overflow-hidden"
-                                style={{ background: "var(--surface)", border: "1px solid var(--glass-border)" }}>
-                                <label className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted
-                                    hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer">
-                                    <PhotoCameraRoundedIcon sx={{ fontSize: 16 }} />
-                                    Upload photo
-                                    <input
-                                        ref={avatarInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleAvatarUpload}
-                                    />
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={handleAvatarDelete}
-                                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm
-                                        text-red-400 hover:bg-red-400/10 transition-colors"
-                                >
-                                    <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
-                                    Remove photo
-                                </button>
-                            </div>
-                        )}
+                    <div className="w-fit -mt-9 sm:-mt-11 mb-3"
+                        style={{ border: "3px solid var(--background)", borderRadius: "9999px" }}>
+                        <AvatarUI
+                            src={user.image.avatar}
+                            name={`${user.first_name} ${user.last_name}`}
+                            size={80}
+                            className="shadow-xl sm:!w-24 sm:!h-24"
+                        />
                     </div>
 
                     <div className="flex items-start justify-between gap-3">
-                        <form onSubmit={handleSave} className="flex-1 min-w-0">
-                            {editing ? (
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex gap-2">
-                                        <input
-                                            autoFocus
-                                            value={form.first_name}
-                                            onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))}
-                                            placeholder="First name"
-                                            className="flex-1 min-w-0 text-sm text-text bg-white/5 border border-white/10 rounded-lg
-                                            px-3 py-2 outline-none focus:border-primary/60 focus:bg-primary/5
-                                            focus:shadow-[0_0_12px_rgba(127,250,136,0.12)] transition-all duration-200
-                                            placeholder:text-text-muted/30"
-                                        />
-                                        <input
-                                            value={form.last_name}
-                                            onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))}
-                                            placeholder="Last name"
-                                            className="flex-1 min-w-0 text-sm text-text bg-white/5 border border-white/10 rounded-lg
-                                            px-3 py-2 outline-none focus:border-primary/60 focus:bg-primary/5
-                                            focus:shadow-[0_0_12px_rgba(127,250,136,0.12)] transition-all duration-200
-                                            placeholder:text-text-muted/30"
-                                        />
-                                    </div>
-                                    <CountryDropdown
-                                        countries={countries}
-                                        selected={selectedCountry}
-                                        onSelect={setSelectedCountry}
-                                        show="name"
-                                    />
-                                    <div className="flex items-center gap-2">
-                                        <button type="submit" disabled={loading}
-                                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium
-                                            bg-primary text-black hover:bg-primary/90 disabled:opacity-50 transition-all duration-200">
-                                            {loading
-                                                ? <span className="w-3 h-3 border-[1.5px] border-black border-t-transparent rounded-full animate-spin" />
-                                                : <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                                                    <path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                                </svg>}
-                                            Save
-                                        </button>
-                                        <button type="button" onClick={() => setEditing(false)}
-                                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium
-                                            text-text-muted border border-white/10 hover:border-white/20 hover:text-text transition-all duration-200">
-                                            <CloseRoundedIcon sx={{ fontSize: 12 }} />
-                                            Cancel
-                                        </button>
-                                        {error && <p className="text-xs text-red-400">{error}</p>}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-0.5">
-                                    <div className="flex items-center gap-1.5">
-                                        <h2 className="text-sm font-semibold text-text sm:text-base truncate">
-                                            {user.first_name} {user.last_name}
-                                        </h2>
-                                        {flagCode && (
-                                            <span className={`fi fi-${flagCode} text-sm flex-shrink-0`} />
-                                        )}
-                                        <button type="button" onClick={() => setEditing(true)}
-                                            className="p-1 rounded-md text-text-muted/40 hover:text-primary hover:bg-primary/10 transition-all duration-200 flex-shrink-0">
-                                            <EditRoundedIcon sx={{ fontSize: 12 }} />
-                                        </button>
-                                    </div>
-                                    <p className="hidden sm:block text-xs text-text-muted truncate">{user.email}</p>
-                                    {user.country.name && (
-                                        <p className="hidden sm:block text-xs text-text-muted/40">{user.country.name}</p>
-                                    )}
-                                </div>
+                        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <h2 className="text-sm font-semibold text-text sm:text-base truncate">
+                                    {user.first_name} {user.last_name}
+                                </h2>
+                                {flagCode && <span className={`fi fi-${flagCode} text-sm flex-shrink-0`} />}
+                            </div>
+                            <p className="hidden sm:block text-xs text-text-muted truncate">{user.email}</p>
+                            {user.country.name && (
+                                <p className="hidden sm:block text-xs text-text-muted/40">{user.country.name}</p>
                             )}
-                        </form>
+                        </div>
 
                         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 pt-0.5">
-                            <button
-                                type="button"
-                                onClick={() => setFollowModal("followers")}
-                                className="flex flex-col items-center hover:opacity-70 transition-opacity"
-                            >
+                            <button type="button" onClick={() => setFollowModal("followers")}
+                                className="flex flex-col items-center hover:opacity-70 transition-opacity">
                                 <span className="text-sm font-bold text-text">{user.followers_count.toLocaleString()}</span>
                                 <span className="text-xs text-text-muted">Followers</span>
                             </button>
                             <div className="w-px h-6 bg-border/30" />
-                            <button
-                                type="button"
-                                onClick={() => setFollowModal("following")}
-                                className="flex flex-col items-center hover:opacity-70 transition-opacity"
-                            >
+                            <button type="button" onClick={() => setFollowModal("following")}
+                                className="flex flex-col items-center hover:opacity-70 transition-opacity">
                                 <span className="text-sm font-bold text-text">{user.following_count.toLocaleString()}</span>
                                 <span className="text-xs text-text-muted">Following</span>
                             </button>

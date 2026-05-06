@@ -10,6 +10,7 @@ import {
     getComments, getReplies, postComment, postReply, deleteComment,
     type Comment,
 } from "../../services/comments/commentsApi"
+import AvatarUI from "../../components/ui/Avatar"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -21,28 +22,7 @@ function timeAgo(iso: string): string {
     return `${Math.floor(diff / 86400)}d`
 }
 
-function Avatar({ src, name, size = 32, onClick }: { src?: string; name: string; size?: number; onClick?: () => void }) {
-    const initials = name.trim().split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"
-    const palette  = ["#7FFA88", "#4F9CF9", "#FFC107", "#FF6B9D", "#a78bfa"]
-    const color    = palette[(name.charCodeAt(0) || 0) % palette.length]
-    const clickable = onClick ? "cursor-pointer hover:opacity-80 transition-opacity" : ""
-    if (src) {
-        return (
-            <img src={src} alt={name} onClick={onClick} className={`rounded-full object-cover flex-shrink-0 ${clickable}`}
-                style={{ width: size, height: size }} />
-        )
-    }
-    return (
-        <div onClick={onClick} style={{
-            width: size, height: size, borderRadius: "50%", flexShrink: 0,
-            background: `${color}20`, border: `1.5px solid ${color}50`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: onClick ? "pointer" : undefined,
-        }}>
-            <span style={{ fontSize: size * 0.36, fontWeight: 700, color }}>{initials}</span>
-        </div>
-    )
-}
+const Avatar = AvatarUI
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

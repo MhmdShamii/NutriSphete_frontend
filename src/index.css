@@ -12,8 +12,25 @@
 html, body, #root {
   height: 100dvh;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow: hidden;
   overscroll-behavior: none;
+}
+
+/* Mobile: freeze layout height so keyboard doesn't resize the screen */
+@media (max-width: 639px) {
+  html, body, #root {
+    height: 100svh;
+  }
+  #root {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+@media (min-width: 640px) {
+  #root {
+    padding: 16px;
+  }
 }
 
 body {
@@ -39,19 +56,38 @@ input, textarea, [contenteditable="true"], .selectable {
 }
 
 :root {
-  --background: #ffffff;
-  --surface: #f4f6f5;
-  --border: #d1d5db;
+  --background: #e6e6e6;
+  --surface: #ffffff;
+  --border: #c8c8c8;
 
-  --text: #0A0B0A;
-  --text-muted: #5E625F;
+  --text: #111111;
+  --text-muted: #636b6a;
 
-  --primary: #7FFA88;
-  --primary-hover: #5EF071;
+  --primary: #00db58;
+  --primary-hover: #00c24f;
 
-  /* glass */
-  --glass-bg: rgba(255, 255, 255, 0.685);
-  --glass-border: rgba(194, 194, 194, 0.244);
+  /* glass — near-solid white cards on the gray page */
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(0, 0, 0, 0.07);
+
+  /* inputs / subtle surfaces */
+  --input-bg: rgba(0, 0, 0, 0.04);
+  --input-border: rgba(0, 0, 0, 0.10);
+  --muted-bg: rgba(0, 0, 0, 0.04);
+  --divider: rgba(0, 0, 0, 0.06);
+  --primary-glow: rgba(0, 219, 88, 0.14);
+
+  /* primary buttons — solid green, dark text */
+  --btn-bg: #00db58;
+  --btn-text: #000000;
+  --btn-shadow: rgba(0, 219, 88, 0.22);
+
+  /* stat bar track */
+  --bar-track: #e6e6e6;
+
+  /* log meal cards — clean white with subtle border */
+  --log-card-bg: rgba(255, 255, 255, 0.80);
+  --log-card-border: rgba(0, 0, 0, 0.07);
 }
 
 .dark {
@@ -68,6 +104,25 @@ input, textarea, [contenteditable="true"], .selectable {
   /* glass */
   --glass-bg: rgba(23, 25, 23, 0.294);
   --glass-border: rgba(255, 255, 255, 0.08);
+
+  /* inputs / subtle surfaces */
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.10);
+  --muted-bg: rgba(255, 255, 255, 0.05);
+  --divider: rgba(255, 255, 255, 0.08);
+  --primary-glow: rgba(127, 250, 136, 0.12);
+
+  /* primary buttons */
+  --btn-bg: #7FFA88;
+  --btn-text: #000000;
+  --btn-shadow: rgba(127, 250, 136, 0.25);
+
+  /* stat bar track */
+  --bar-track: rgba(255, 255, 255, 0.08);
+
+  /* log meal cards */
+  --log-card-bg: rgba(255, 255, 255, 0.03);
+  --log-card-border: rgba(255, 255, 255, 0.08);
 }
 
 body {
@@ -121,4 +176,25 @@ body {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+@keyframes toast-exit {
+  from { opacity: 1; transform: translateY(0)    scale(1);    }
+  to   { opacity: 0; transform: translateY(-8px) scale(0.95); }
+}
+
+@media (min-width: 640px) {
+  @keyframes toast-enter {
+    from { opacity: 0; transform: translateX(20px) scale(0.96); }
+    to   { opacity: 1; transform: translateX(0)    scale(1);    }
+  }
+  @keyframes toast-exit {
+    from { opacity: 1; transform: translateX(0)     scale(1);    }
+    to   { opacity: 0; transform: translateX(10px)  scale(0.95); }
+  }
 }

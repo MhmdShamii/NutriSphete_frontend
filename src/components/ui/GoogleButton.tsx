@@ -5,6 +5,7 @@ import { googleLogin } from "../../features/auth/authSlice"
 import type { AppDispatch } from "../../app/store"
 import { getPostLoginRoute } from "../../features/auth/types"
 import { useEffect, useRef, useState } from "react"
+import { useToast } from "../../context/ToastContext"
 
 type GoogleButtonProps = {
     label: string
@@ -14,8 +15,8 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
 
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
+    const { showError } = useToast()
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
     const [hovered, setHovered] = useState(false)
     const overlayRef = useRef<HTMLDivElement>(null)
     const renderedRef = useRef(false)
@@ -36,7 +37,7 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
                             navigate(getPostLoginRoute(user.onboarding_step))
                         } catch (err: unknown) {
                             const msg = (err as { message?: string })?.message
-                            setError(msg || "Google sign-in failed")
+                            showError(msg || "Google sign-in failed")
                         } finally {
                             setLoading(false)
                         }
@@ -57,9 +58,7 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
     }, [dispatch, navigate])
 
     return (
-        <div className="flex flex-col gap-1">
-
-            <div className="relative w-full">
+        <div className="relative w-full">
                 {/* Custom styled button — visual only, not interactive */}
                 <button
                     type="button"
@@ -84,12 +83,6 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
                     onMouseEnter={() => setHovered(true)}
                     onMouseLeave={() => setHovered(false)}
                 />
-            </div>
-
-            {error && (
-                <p className="text-xs text-red-400 text-center">{error}</p>
-            )}
-
         </div>
     )
 }

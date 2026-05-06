@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { completeHealthConditions, fetchMe } from "../../auth/authSlice"
+import { completeHealthConditions, fetchMe, clearError } from "../../auth/authSlice"
 import { getHealthConditionsApi, addHealthConditionApi, removeHealthConditionApi } from "../../../services/auth/authApi"
 import type { AppDispatch, RootState } from "../../../app/store"
 import type { HealthCondition } from "../../auth/types"
 import StepHeader from "../components/StepHeader"
 import Button from "../../../components/ui/Button"
+import { useToast } from "../../../context/ToastContext"
 
 type SelectedItem = {
     userConditionId: number    // id from POST response — used for DELETE
@@ -17,7 +18,15 @@ type SelectedItem = {
 export default function HealthConditionsStep() {
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
+    const { showError } = useToast()
     const { loading, error } = useSelector((state: RootState) => state.auth)
+
+    useEffect(() => {
+        if (error) {
+            showError(error)
+            dispatch(clearError())
+        }
+    }, [error])
 
     const [conditions, setConditions] = useState<HealthCondition[]>([])
     const [selected, setSelected] = useState<SelectedItem[]>([])
@@ -25,7 +34,6 @@ export default function HealthConditionsStep() {
     const [open, setOpen] = useState(false)
     const [adding, setAdding] = useState(false)
     const [removing, setRemoving] = useState<Set<number>>(new Set())
-    const [addError, setAddError] = useState<string | null>(null)
 
     const inputRef = useRef<HTMLInputElement>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -63,12 +71,11 @@ export default function HealthConditionsStep() {
         setOpen(false)
         setQuery("")
         setAdding(true)
-        setAddError(null)
         try {
             const result = await addHealthConditionApi({ health_condition_id: c.id })
             setSelected(prev => [...prev, { userConditionId: result.id, conditionId: c.id, name: c.name }])
         } catch {
-            setAddError("Failed to add condition — please try again")
+            showError("Failed to add condition — please try again")
         } finally {
             setAdding(false)
             inputRef.current?.focus()
@@ -81,12 +88,11 @@ export default function HealthConditionsStep() {
         const text = queryTrimmed
         setQuery("")
         setAdding(true)
-        setAddError(null)
         try {
             const result = await addHealthConditionApi({ custom_condition: text })
             setSelected(prev => [...prev, { userConditionId: result.id, conditionId: null, name: text }])
         } catch {
-            setAddError("Failed to add condition — please try again")
+            showError("Failed to add condition — please try again")
         } finally {
             setAdding(false)
             inputRef.current?.focus()
@@ -99,7 +105,7 @@ export default function HealthConditionsStep() {
             await removeHealthConditionApi(item.userConditionId)
             setSelected(prev => prev.filter(s => s.userConditionId !== item.userConditionId))
         } catch {
-            setAddError("Failed to remove condition — please try again")
+            showError("Failed to remove condition — please try again")
         } finally {
             setRemoving(prev => { const next = new Set(prev); next.delete(item.userConditionId); return next })
         }
@@ -128,7 +134,7 @@ export default function HealthConditionsStep() {
                     <input
                         ref={inputRef}
                         value={query}
-                        onChange={e => { setQuery(e.target.value); setOpen(true); setAddError(null) }}
+                        onChange={e => { setQuery(e.target.value); setOpen(true) }}
                         onFocus={() => setOpen(true)}
                         placeholder={adding ? "Adding..." : "Search or enter a condition..."}
                         disabled={adding}
@@ -170,8 +176,6 @@ export default function HealthConditionsStep() {
                     )}
                 </div>
 
-                {addError && <p className="text-xs text-red-400">{addError}</p>}
-
                 {/* Selected chips */}
                 {selected.length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -201,8 +205,6 @@ export default function HealthConditionsStep() {
                     </div>
                 )}
             </div>
-
-            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
 
             <div className="flex flex-col gap-2">
                 <Button

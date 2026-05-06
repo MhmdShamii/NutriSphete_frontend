@@ -4,11 +4,8 @@ import { estimateMeal, confirmQuickLog, deleteQuickLog } from "../../../services
 import EstimateInputPanel from "../components/EstimateInputPanel"
 import QuickLogReviewPanel from "../components/QuickLogReviewPanel"
 import HealthWarningModal from "../components/HealthWarningModal"
-
-function extractError(err: unknown) {
-    return (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? "Something went wrong. Please try again."
-}
+import { useToast } from "../../../context/ToastContext"
+import { extractApiError } from "../../../utils/apiError"
 
 const steps = [
     { n: 1, label: "Describe Your Meal", sub: "Name & details for AI estimation" },
@@ -16,13 +13,13 @@ const steps = [
 ]
 
 export default function EstimateMeal() {
+    const { showError } = useToast()
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     const [resetKey, setResetKey] = useState(0)
     const [entry, setEntry] = useState<QuickLogEntry | null>(null)
     const [mobileStep, setMobileStep] = useState<0 | 1>(0)
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
     const [showWarning, setShowWarning] = useState(false)
     const [warningIngredients, setWarningIngredients] = useState<FlaggedIngredient[]>([])
 
@@ -31,7 +28,6 @@ export default function EstimateMeal() {
     async function handleEstimate() {
         if (!isReady) return
         setLoading(true)
-        setError(null)
         setEntry(null)
         setMobileStep(1)
         try {
@@ -43,7 +39,8 @@ export default function EstimateMeal() {
             }
         } catch (err) {
             setEntry(null)
-            setError(extractError(err))
+            if (window.innerWidth < 640) setMobileStep(0)
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -60,12 +57,11 @@ export default function EstimateMeal() {
     async function handleConfirm() {
         if (!entry) return
         setLoading(true)
-        setError(null)
         try {
             await confirmQuickLog(entry.id)
             reset()
         } catch (err) {
-            setError(extractError(err))
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -74,12 +70,11 @@ export default function EstimateMeal() {
     async function handleDiscard() {
         if (!entry) return
         setLoading(true)
-        setError(null)
         try {
             await deleteQuickLog(entry.id)
             reset()
         } catch (err) {
-            setError(extractError(err))
+            showError(extractApiError(err))
         } finally {
             setLoading(false)
         }
@@ -150,7 +145,6 @@ export default function EstimateMeal() {
                             onConfirm={handleConfirm}
                             onDiscard={handleDiscard}
                             loading={loading}
-                            error={error}
                             submitReady={isReady}
                             submitLabel="Estimate Macros"
                         />
@@ -185,7 +179,6 @@ export default function EstimateMeal() {
                         editLabel="Edit Estimated Meal"
                         isMobile
                         loading={loading}
-                        error={error}
                         submitReady={isReady}
                     />
                 )}

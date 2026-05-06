@@ -18,8 +18,11 @@ import TargetsStep from "./features/onboarding/steps/TargetsStep"
 import HealthConditionsStep from "./features/onboarding/steps/HealthConditionsStep"
 import CreateMeal from "./features/mealCreation/screens/CreateMeal"
 import MyStats from "./features/MyStats"
-import Feed from "./features/feed/Feed"
+import FeedPage from "./features/feed/FeedPage"
 import MealPage from "./features/meal/MealPage"
+import ComingSoon from "./components/ui/ComingSoon"
+import Settings from "./features/Settings"
+import AdminDashboard from "./features/admin/AdminDashboard"
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -36,6 +39,7 @@ function App() {
         {/* Public */}
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/verify-success" element={<VerifySuccess />} />
+        <Route path="/feed" element={<FeedPage />} />
 
         {/* Onboarding — logged in but not yet complete */}
         <Route element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>}>
@@ -45,16 +49,18 @@ function App() {
           <Route path="/onboarding/health-conditions" element={<HealthConditionsStep />} />
         </Route>
 
+        {/* Admin */}
+        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+
         {/* App — logged in + onboarding complete */}
         <Route element={<ProtectedRoute><OnboardedRoute><Home /></OnboardedRoute></ProtectedRoute>}>
           <Route index path="/" element={<Navigate to="/stats" replace />} />
           <Route path="/stats" element={<MyStats />} />
-          <Route path="/feed" element={<Feed />} />
-          <Route path="/coaches" element={<p className="text-2xl text-primary">Coaches</p>} />
-          <Route path="/personal-trainer" element={<p className="text-2xl text-primary">Personal Trainer</p>} />
+          <Route path="/coaches" element={<ComingSoon title="Coaches" description="Connect with certified nutrition and fitness coaches to guide your journey." />} />
+          <Route path="/personal-trainer" element={<ComingSoon title="Personal Trainer" description="Get personalized workout plans tailored to your goals and fitness level." />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/settings" element={<p className="text-2xl text-primary">Settings</p>} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/create-meal" element={<CreateMeal />} />
           <Route path="/meals/:id" element={<MealPage />} />
         </Route>
