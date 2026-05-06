@@ -11,6 +11,7 @@ import {
     type Comment,
 } from "../../services/comments/commentsApi"
 import AvatarUI from "../../components/ui/Avatar"
+import CoachBadge from "../../components/ui/CoachBadge"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -140,8 +141,8 @@ function CommentItem({
                         <div className="flex-1 min-w-0 break-words">
                             <span
                                 onClick={() => onProfileClick(comment.author.id)}
-                                className="text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
-                            >{authorName} </span>
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer mr-1"
+                            >{authorName}{comment.author.role === "coach" && <CoachBadge size={11} />}</span>
                             <span className="text-xs text-text-muted leading-relaxed">{comment.body}</span>
                         </div>
                         {currentUserId === comment.author.id && (
@@ -192,8 +193,8 @@ function CommentItem({
                                                 <div className="flex-1 min-w-0">
                                                     <span
                                                         onClick={() => onProfileClick(reply.author.id)}
-                                                        className="text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
-                                                    >{replyName} </span>
+                                                        className="inline-flex items-center gap-1 text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer mr-1"
+                                                    >{replyName}{reply.author.role === "coach" && <CoachBadge size={11} />}</span>
                                                     <span className="text-xs text-text-muted leading-relaxed">{reply.body}</span>
                                                 </div>
                                                 {/* Delete only available on fully loaded replies (not preview) */}

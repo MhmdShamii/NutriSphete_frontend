@@ -4,6 +4,7 @@ export type PublicUserProfile = {
     id: number
     first_name: string | null
     last_name: string | null
+    role: string
     country: { code: string | null; name: string | null }
     image: { avatar: string; cover_image: string }
     followers_count: number
@@ -22,6 +23,7 @@ export type FollowUser = {
     first_name: string
     last_name: string
     avatar: string
+    role: string
     is_following: boolean
 }
 
@@ -64,6 +66,7 @@ export type NotificationActor = {
     first_name: string
     last_name: string
     avatar: string
+    role: string
 }
 
 export type NotificationData = {

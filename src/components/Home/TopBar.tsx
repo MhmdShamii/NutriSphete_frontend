@@ -18,6 +18,7 @@ import {
     getNotificationsApi,
     type NotificationItem,
 } from "../../services/social/followApi"
+import CoachBadge from "../ui/CoachBadge"
 
 const BASE_MENU_ITEMS = [
     { label: "Profile",  icon: <PersonRoundedIcon sx={{ fontSize: 16 }} />,   path: "/profile" },
@@ -222,11 +223,14 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                                                 />
                                                 <div className="min-w-0">
                                                     <p className="text-xs text-text leading-snug">
-                                                        <span
-                                                            onClick={e => { e.stopPropagation(); navigate(`/profile/${n.actor.id}`); setNotifOpen(false) }}
-                                                            className="font-semibold hover:text-primary transition-colors cursor-pointer"
-                                                        >
-                                                            {n.actor.first_name} {n.actor.last_name}
+                                                        <span className="inline-flex items-center gap-1 align-middle">
+                                                            <span
+                                                                onClick={e => { e.stopPropagation(); navigate(`/profile/${n.actor.id}`); setNotifOpen(false) }}
+                                                                className="font-semibold hover:text-primary transition-colors cursor-pointer"
+                                                            >
+                                                                {n.actor.first_name} {n.actor.last_name}
+                                                            </span>
+                                                            {n.actor.role === "coach" && <CoachBadge size={12} />}
                                                         </span>
                                                         {" "}{notifMessage(n)}
                                                     </p>
@@ -256,7 +260,10 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                                 <Avatar src={user.image.avatar} name={`${user.first_name} ${user.last_name}`} size={32} ring="rgba(127,250,136,0.3)" />
                                 <span className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
                             </div>
-                            <span className="text-sm font-medium text-text hidden sm:block">{user.first_name}</span>
+                            <span className="hidden sm:flex items-center gap-1">
+                                <span className="text-sm font-medium text-text">{user.first_name}</span>
+                                {user.role === "coach" && <CoachBadge />}
+                            </span>
                             <KeyboardArrowDownRoundedIcon
                                 sx={{ fontSize: 16 }}
                                 className={`text-text-muted transition-transform duration-200 hidden sm:block ${menuOpen ? "rotate-180" : ""}`}
@@ -277,7 +284,10 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                         >
                             {/* User info header */}
                             <div className="px-4 py-3 border-b border-white/8">
-                                <p className="text-sm font-semibold text-text">{user.first_name} {user.last_name}</p>
+                                <div className="flex items-center gap-1.5">
+                                    <p className="text-sm font-semibold text-text">{user.first_name} {user.last_name}</p>
+                                    {user.role === "coach" && <CoachBadge />}
+                                </div>
                                 <p className="text-xs text-text-muted truncate">{user.email}</p>
                             </div>
 

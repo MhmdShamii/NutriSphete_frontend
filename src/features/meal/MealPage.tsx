@@ -19,6 +19,7 @@ import HealthWarningModal from "../mealCreation/components/HealthWarningModal"
 import CommentsSheet from "./CommentsSheet"
 import LazyImage from "../../components/ui/LazyImage"
 import Avatar from "../../components/ui/Avatar"
+import CoachBadge from "../../components/ui/CoachBadge"
 
 function Shimmer({ className }: { className?: string }) {
     return (
@@ -189,8 +190,9 @@ export default function MealPage() {
                     className="flex items-center gap-2.5 w-fit hover:opacity-75 transition-opacity"
                 >
                     <Avatar src={meal.author.avatar} name={`${meal.author.first_name} ${meal.author.last_name}`} size={28} />
-                    <span className="text-xs font-medium text-text-muted">
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
                         {meal.author.first_name} {meal.author.last_name}
+                        {meal.author.role === "coach" && <CoachBadge size={12} />}
                     </span>
                 </button>
             </div>

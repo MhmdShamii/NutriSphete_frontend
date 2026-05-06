@@ -15,6 +15,7 @@ import FollowListModal from "./profile/FollowListModal"
 import ProfileRecipes from "./profile/ProfileRecipes"
 import LazyImage from "../components/ui/LazyImage"
 import AvatarUI from "../components/ui/Avatar"
+import CoachBadge from "../components/ui/CoachBadge"
 import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded"
 import LockRoundedIcon from "@mui/icons-material/LockRounded"
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded"
@@ -201,6 +202,7 @@ function VisitedProfile({ userId }: { userId: number }) {
                             <h2 className="text-base font-bold text-text truncate">
                                 {profile.first_name} {profile.last_name}
                             </h2>
+                            {profile.role === "coach" && <CoachBadge size={15} />}
                             {flagCode && <span className={`fi fi-${flagCode} text-sm flex-shrink-0`} />}
                         </div>
                         {profile.country.name && (
@@ -310,6 +312,7 @@ function OwnProfile() {
                                 <h2 className="text-sm font-semibold text-text sm:text-base truncate">
                                     {user.first_name} {user.last_name}
                                 </h2>
+                                {user.role === "coach" && <CoachBadge size={15} />}
                                 {flagCode && <span className={`fi fi-${flagCode} text-sm flex-shrink-0`} />}
                             </div>
                             <p className="hidden sm:block text-xs text-text-muted truncate">{user.email}</p>

@@ -20,6 +20,7 @@ import { likeMealApi, unlikeMealApi, logMeal } from "../../services/meals/mealsA
 import { followUserApi, unfollowUserApi } from "../../services/social/followApi"
 import { confirmQuickLog, deleteQuickLog } from "../../services/log/quickLogApi"
 import AvatarUI from "../../components/ui/Avatar"
+import CoachBadge from "../../components/ui/CoachBadge"
 import LazyImage from "../../components/ui/LazyImage"
 import HealthWarningModal from "../mealCreation/components/HealthWarningModal"
 import CommentsSheet from "../meal/CommentsSheet"
@@ -339,6 +340,7 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
                             >
                                 {authorName}
                             </button>
+                            {initialPost.author.role === "coach" && <CoachBadge size={13} />}
                             {showFollow && (
                                 <button
                                     onClick={toggleFollow}

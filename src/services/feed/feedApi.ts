@@ -5,6 +5,7 @@ export interface FeedAuthor {
     first_name: string
     last_name: string
     avatar: string
+    role: string
     is_following: boolean
 }
 

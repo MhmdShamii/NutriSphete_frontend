@@ -747,7 +747,19 @@ function ApprovedView() {
     )
 }
 
-function RejectedView({ application, onReapply }: { application: CoachApplication; onReapply: () => void }) {
+function RejectedView({
+    application,
+    cooldownUntil,
+    onReapply,
+}: {
+    application: CoachApplication
+    cooldownUntil: string | null
+    onReapply: () => void
+}) {
+    const formattedDate = cooldownUntil
+        ? new Date(cooldownUntil + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+        : null
+
     return (
         <div className="flex flex-col gap-5">
             <div>
@@ -766,11 +778,29 @@ function RejectedView({ application, onReapply }: { application: CoachApplicatio
                 )}
             </div>
 
+            {/* Cooldown banner */}
+            {formattedDate && (
+                <div className="flex items-start gap-3 p-3.5 rounded-xl"
+                    style={{ border: "1px solid rgba(251,146,60,0.2)", background: "rgba(251,146,60,0.05)" }}>
+                    <span className="text-amber-400 flex-shrink-0 mt-0.5">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <p className="text-xs font-medium text-amber-400">Reapplication on cooldown</p>
+                        <p className="text-xs text-text-muted mt-0.5">
+                            You can submit a new application on <span className="text-text font-medium">{formattedDate}</span>.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <div className="flex justify-end">
-                <button type="button" onClick={onReapply}
+                <button type="button" onClick={onReapply} disabled={!!cooldownUntil}
                     className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold
-                    hover:opacity-90 transition-all duration-200"
-                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)", boxShadow: "0 0 20px var(--btn-shadow)" }}>
+                    hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)", boxShadow: cooldownUntil ? "none" : "0 0 20px var(--btn-shadow)" }}>
                     <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />
                     Apply again
                 </button>
@@ -787,6 +817,7 @@ function CoachApplicationSection() {
     const [initLoading, setInitLoading] = useState(true)
     const [application, setApplication] = useState<CoachApplication | null>(null)
     const [reapplying, setReapplying] = useState(false)
+    const [cooldownUntil, setCooldownUntil] = useState<string | null>(null)
 
     const [description, setDescription] = useState("")
     const [files, setFiles] = useState<File[]>([])
@@ -797,7 +828,13 @@ function CoachApplicationSection() {
 
     useEffect(() => {
         getCoachApplicationApi()
-            .then(setApplication)
+            .then(app => {
+                setApplication(app)
+                if (app?.status === "rejected" && app.can_reapply_at) {
+                    const cooldownActive = new Date(app.can_reapply_at + "T00:00:00") > new Date()
+                    if (cooldownActive) setCooldownUntil(app.can_reapply_at)
+                }
+            })
             .catch(() => showError("Failed to load application status"))
             .finally(() => setInitLoading(false))
     }, [])
@@ -840,8 +877,14 @@ function CoachApplicationSection() {
             setReapplying(false)
             showSuccess("Application submitted successfully!")
         } catch (error: unknown) {
-            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
-            showError(msg ?? "Failed to submit application — please try again")
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ""
+            const cooldownMatch = msg.match(/You can reapply on (\d{4}-\d{2}-\d{2})/)
+            if (cooldownMatch) {
+                setCooldownUntil(cooldownMatch[1])
+                setReapplying(false)
+            } else {
+                showError(msg || "Failed to submit application — please try again")
+            }
         } finally {
             setSubmitting(false)
         }
@@ -868,10 +911,15 @@ function CoachApplicationSection() {
     if (application?.status === "pending") return <PendingView application={application} />
     if (application?.status === "approved") return <ApprovedView />
     if (application?.status === "rejected" && !reapplying) {
-        return <RejectedView application={application} onReapply={() => {
-            setDescription(application.description)
-            setReapplying(true)
-        }} />
+        return <RejectedView
+            application={application}
+            cooldownUntil={cooldownUntil}
+            onReapply={() => {
+                setDescription(application.description)
+                setCooldownUntil(null)
+                setReapplying(true)
+            }}
+        />
     }
 
     // ── Application form ─────────────────────────────────────────────────────
