@@ -29,7 +29,7 @@ const ADMIN_MENU_ITEM = { label: "Dashboard", icon: <DashboardRoundedIcon sx={{ 
 
 function notifTarget(n: NotificationItem): string {
     if (n.type === "follow") return `/profile/${n.actor.id}`
-    if (n.type === "coach_application") return `/settings`
+    if (n.type === "coach_application" || n.type === "coach_application_approved" || n.type === "coach_application_rejected") return `/settings`
     const base = `/meals/${n.data.post_id}`
     if ((n.type === "comment" || n.type === "reply") && n.data.comment_id) {
         return `${base}#comment-${n.data.comment_id}`
@@ -39,12 +39,14 @@ function notifTarget(n: NotificationItem): string {
 
 function notifMessage(n: NotificationItem): string {
     switch (n.type) {
-        case "like":              return `liked your post "${n.data.post_name}"`
-        case "comment":           return `commented on "${n.data.post_name}"`
-        case "reply":             return `replied to your comment on "${n.data.post_name}"`
-        case "relog":             return `relogged your meal "${n.data.post_name}"`
-        case "follow":            return `started following you`
-        case "coach_application": return `submitted a coach application`
+        case "like":                         return `liked your post "${n.data.post_name}"`
+        case "comment":                      return `commented on "${n.data.post_name}"`
+        case "reply":                        return `replied to your comment on "${n.data.post_name}"`
+        case "relog":                        return `relogged your meal "${n.data.post_name}"`
+        case "follow":                       return `started following you`
+        case "coach_application":            return `submitted a coach application`
+        case "coach_application_approved":   return `approved your coach application`
+        case "coach_application_rejected":   return `reviewed your coach application`
     }
 }
 
@@ -213,6 +215,11 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                                                 onClick={() => { navigate(notifTarget(n)); setNotifOpen(false) }}
                                                 className="flex items-start gap-3 px-3 py-2.5 rounded-xl
                                                     hover:bg-primary/5 transition-colors duration-150 cursor-pointer"
+                                                style={n.type === "coach_application_approved"
+                                                    ? { background: "rgba(0,219,88,0.06)", borderRadius: 12 }
+                                                    : n.type === "coach_application_rejected"
+                                                    ? { background: "rgba(248,113,113,0.05)", borderRadius: 12 }
+                                                    : undefined}
                                             >
                                                 <Avatar
                                                     src={n.actor.avatar}
@@ -232,13 +239,24 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                                                             </span>
                                                             {n.actor.role === "coach" && <CoachBadge size={12} />}
                                                         </span>
-                                                        {" "}{notifMessage(n)}
+                                                        {" "}
+                                                        <span className={
+                                                            n.type === "coach_application_approved" ? "text-primary font-medium" :
+                                                            n.type === "coach_application_rejected" ? "text-red-400" : ""
+                                                        }>
+                                                            {notifMessage(n)}
+                                                        </span>
                                                     </p>
-                                                    {n.type === "comment" || n.type === "reply" ? (
+                                                    {(n.type === "comment" || n.type === "reply") && (
                                                         <p className="text-xs text-text-muted mt-0.5 truncate">
                                                             "{n.data.comment_body}"
                                                         </p>
-                                                    ) : null}
+                                                    )}
+                                                    {n.type === "coach_application_rejected" && n.data.reason && (
+                                                        <p className="text-xs text-text-muted/70 mt-0.5 line-clamp-2">
+                                                            {n.data.reason}
+                                                        </p>
+                                                    )}
                                                     <p className="text-[10px] text-text-muted mt-1">{relativeTime(n.created_at)}</p>
                                                 </div>
                                             </div>

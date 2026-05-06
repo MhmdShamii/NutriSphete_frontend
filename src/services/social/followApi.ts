@@ -75,11 +75,12 @@ export type NotificationData = {
     comment_id?: number
     comment_body?: string
     parent_comment_id?: number
+    reason?: string
 }
 
 export type NotificationItem = {
     id: number
-    type: "like" | "comment" | "reply" | "relog" | "follow" | "coach_application"
+    type: "like" | "comment" | "reply" | "relog" | "follow" | "coach_application" | "coach_application_approved" | "coach_application_rejected"
     actor: NotificationActor
     data: NotificationData
     created_at: string
