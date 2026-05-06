@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import Avatar from "../../components/ui/Avatar"
 import Logo from "../../components/ui/Logo"
@@ -15,7 +15,14 @@ import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownR
 import KeyboardArrowUpRoundedIcon from "@mui/icons-material/KeyboardArrowUpRounded"
 import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded"
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded"
-import PersonRoundedIcon from "@mui/icons-material/PersonRounded"
+import ScienceRoundedIcon from "@mui/icons-material/ScienceRounded"
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded"
+import {
+    getUnverifiedIngredientsApi,
+    approveIngredientApi,
+    deleteIngredientApi,
+    type UnverifiedIngredient,
+} from "../../services/admin/ingredientsApi"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,7 +50,7 @@ type MockUser = {
     created_at: string
 }
 
-type AdminSection = "overview" | "applications" | "users"
+type AdminSection = "overview" | "applications" | "ingredients" | "users"
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -542,12 +549,175 @@ function UsersSection() {
     )
 }
 
+// ─── Ingredients Section ──────────────────────────────────────────────────────
+
+function IngredientsSection() {
+    const [items, setItems] = useState<UnverifiedIngredient[]>([])
+    const [nextCursor, setNextCursor] = useState<string | null>(null)
+    const [hasMore, setHasMore] = useState(true)
+    const [loading, setLoading] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [actioningId, setActioningId] = useState<number | null>(null)
+
+    const load = useCallback(async (cursor?: string) => {
+        try {
+            const page = await getUnverifiedIngredientsApi(cursor)
+            setItems(prev => cursor ? [...prev, ...page.data] : page.data)
+            setNextCursor(page.next_cursor)
+            setHasMore(page.has_more)
+        } catch {
+            setError("Failed to load ingredients.")
+        }
+    }, [])
+
+    useEffect(() => {
+        load().finally(() => setLoading(false))
+    }, [load])
+
+    async function loadMore() {
+        if (!nextCursor || loadingMore) return
+        setLoadingMore(true)
+        await load(nextCursor)
+        setLoadingMore(false)
+    }
+
+    async function handleApprove(id: number) {
+        setActioningId(id)
+        try {
+            await approveIngredientApi(id)
+            setItems(prev => prev.filter(i => i.id !== id))
+        } catch {
+            // already verified or error — silently ignore, item stays
+        } finally {
+            setActioningId(null)
+        }
+    }
+
+    async function handleDelete(id: number) {
+        setActioningId(id)
+        try {
+            await deleteIngredientApi(id)
+            setItems(prev => prev.filter(i => i.id !== id))
+        } catch {
+            // not found — remove anyway
+            setItems(prev => prev.filter(i => i.id !== id))
+        } finally {
+            setActioningId(null)
+        }
+    }
+
+    return (
+        <div className="flex flex-col gap-5 p-4 sm:p-8">
+            <div>
+                <h2 className="text-lg font-semibold text-text">Verify Ingredients</h2>
+                <p className="text-xs text-text-muted mt-0.5">User-submitted ingredients awaiting review.</p>
+            </div>
+
+            {loading && (
+                <div className="flex justify-center py-12">
+                    <span className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                </div>
+            )}
+
+            {!loading && error && (
+                <p className="text-xs text-red-400 py-6 text-center">{error}</p>
+            )}
+
+            {!loading && !error && items.length === 0 && (
+                <div className="flex flex-col items-center gap-2 py-12 text-center">
+                    <CheckCircleRoundedIcon sx={{ fontSize: 32 }} className="text-primary/40" />
+                    <p className="text-sm text-text-muted">All caught up — no unverified ingredients.</p>
+                </div>
+            )}
+
+            {!loading && items.length > 0 && (
+                <div className="flex flex-col gap-2">
+                    {/* Header */}
+                    <div className="hidden sm:grid grid-cols-[1fr_1fr_80px_100px] gap-4 px-4 py-2">
+                        {["English Name", "Arabic Name", "Source", "Submitted"].map(h => (
+                            <p key={h} className="text-xs font-medium text-text-muted/50 uppercase tracking-wider">{h}</p>
+                        ))}
+                    </div>
+
+                    {items.map(item => {
+                        const actioning = actioningId === item.id
+                        return (
+                            <div key={item.id}
+                                className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_1fr_80px_100px_auto] gap-3 items-center
+                                px-4 py-3 rounded-xl"
+                                style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
+
+                                <p className="text-sm font-medium text-text truncate">{item.name_en}</p>
+
+                                <p className="hidden sm:block text-sm text-text-muted truncate">
+                                    {item.name_ar ?? <span className="text-text-muted/30 italic text-xs">—</span>}
+                                </p>
+
+                                <div className="hidden sm:block">
+                                    <span className="text-xs px-2 py-0.5 rounded-full border text-blue-400 bg-blue-400/8 border-blue-400/20">
+                                        {item.source}
+                                    </span>
+                                </div>
+
+                                <p className="hidden sm:block text-xs text-text-muted/50">
+                                    {relativeDate(item.submitted_at)}
+                                </p>
+
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <button
+                                        onClick={() => handleApprove(item.id)}
+                                        disabled={actioning}
+                                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold
+                                        hover:opacity-90 disabled:opacity-40 transition-all"
+                                        style={{ background: "var(--btn-bg)", color: "var(--btn-text)" }}>
+                                        {actioning
+                                            ? <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />
+                                            : <CheckCircleRoundedIcon sx={{ fontSize: 13 }} />}
+                                        <span className="hidden sm:inline">Approve</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(item.id)}
+                                        disabled={actioning}
+                                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold
+                                        text-red-400 border border-red-400/20 hover:bg-red-400/10
+                                        disabled:opacity-40 transition-all">
+                                        {actioning
+                                            ? <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />
+                                            : <DeleteRoundedIcon sx={{ fontSize: 13 }} />}
+                                        <span className="hidden sm:inline">Delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )
+                    })}
+
+                    {hasMore && (
+                        <button
+                            onClick={loadMore}
+                            disabled={loadingMore}
+                            className="mt-2 self-center flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-medium
+                            text-text-muted border border-[var(--glass-border)] hover:border-primary/30 hover:text-text
+                            disabled:opacity-50 transition-all">
+                            {loadingMore
+                                ? <span className="w-3.5 h-3.5 rounded-full border border-current border-t-transparent animate-spin" />
+                                : null}
+                            Load more
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
+    )
+}
+
 // ─── Sidebar Nav ──────────────────────────────────────────────────────────────
 
 const NAV: { key: AdminSection; label: string; icon: React.ReactNode }[] = [
-    { key: "overview",      label: "Overview",     icon: <DashboardRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "applications",  label: "Applications", icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "users",         label: "Users",        icon: <PeopleAltRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "overview",     label: "Overview",     icon: <DashboardRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "applications", label: "Applications", icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "ingredients",  label: "Ingredients",  icon: <ScienceRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "users",        label: "Users",        icon: <PeopleAltRoundedIcon sx={{ fontSize: 17 }} /> },
 ]
 
 // ─── Admin Dashboard ──────────────────────────────────────────────────────────
@@ -602,6 +772,7 @@ export default function AdminDashboard() {
                 <main className="flex-1 overflow-y-auto">
                     {section === "overview"     && <OverviewSection onGoToApps={() => setSection("applications")} />}
                     {section === "applications" && <ApplicationsSection />}
+                    {section === "ingredients"  && <IngredientsSection />}
                     {section === "users"        && <UsersSection />}
                 </main>
             </div>
