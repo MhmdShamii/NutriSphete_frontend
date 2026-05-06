@@ -23,22 +23,15 @@ import {
     deleteIngredientApi,
     type UnverifiedIngredient,
 } from "../../services/admin/ingredientsApi"
+import {
+    getAdminApplicationsApi,
+    approveApplicationApi,
+    rejectApplicationApi,
+    type AdminApplication,
+    type AppStatus,
+} from "../../services/admin/coachApplicationsApi"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type AppStatus = "pending" | "approved" | "rejected"
-
-type MockDoc = { id: number; type: "certificate" | "image"; original_name: string }
-
-type MockApplication = {
-    id: number
-    user: { id: number; first_name: string; last_name: string; email: string }
-    description: string
-    status: AppStatus
-    rejection_reason: string | null
-    documents: MockDoc[]
-    submitted_at: string
-}
 
 type MockUser = {
     id: number
@@ -51,69 +44,6 @@ type MockUser = {
 }
 
 type AdminSection = "overview" | "applications" | "ingredients" | "users"
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const INITIAL_APPLICATIONS: MockApplication[] = [
-    {
-        id: 1,
-        user: { id: 10, first_name: "Sarah", last_name: "Mitchell", email: "sarah.m@example.com" },
-        description: "I am a certified nutritionist with 8 years of experience working with athletes and fitness enthusiasts. I hold certifications from the Academy of Nutrition and Dietetics and have helped over 200 clients achieve their health goals. My approach combines evidence-based nutrition science with practical, sustainable meal planning.",
-        status: "pending",
-        rejection_reason: null,
-        documents: [
-            { id: 1, type: "certificate", original_name: "nutritionist-cert.pdf" },
-            { id: 2, type: "image", original_name: "client-results.jpg" },
-        ],
-        submitted_at: "2026-05-06T09:30:00Z",
-    },
-    {
-        id: 2,
-        user: { id: 11, first_name: "James", last_name: "Okonkwo", email: "james.o@example.com" },
-        description: "Personal trainer and sports nutritionist with 5 years of experience. BSc in Sports Science from UCL. Specialized in muscle gain and body recomposition for intermediate to advanced lifters. I have coached over 100 clients both in-person and online.",
-        status: "pending",
-        rejection_reason: null,
-        documents: [
-            { id: 3, type: "certificate", original_name: "pt-license.pdf" },
-        ],
-        submitted_at: "2026-05-05T16:45:00Z",
-    },
-    {
-        id: 3,
-        user: { id: 12, first_name: "Amira", last_name: "Hassan", email: "amira.h@example.com" },
-        description: "Registered dietitian with a focus on gut health and plant-based nutrition. 6 years of clinical experience. Published researcher in dietary interventions for metabolic syndrome. Fluent in Arabic and English.",
-        status: "approved",
-        rejection_reason: null,
-        documents: [
-            { id: 4, type: "certificate", original_name: "dietitian-reg.pdf" },
-            { id: 5, type: "certificate", original_name: "research-paper.pdf" },
-            { id: 6, type: "image", original_name: "clinic-photo.jpg" },
-        ],
-        submitted_at: "2026-05-03T11:00:00Z",
-    },
-    {
-        id: 4,
-        user: { id: 13, first_name: "Tyler", last_name: "Brooks", email: "tyler.b@example.com" },
-        description: "Fitness coach and meal prep enthusiast. I help people lose weight fast with my proven 30-day system.",
-        status: "rejected",
-        rejection_reason: "Application lacks sufficient credentials or professional qualifications. Please reapply with relevant certifications.",
-        documents: [],
-        submitted_at: "2026-05-01T08:00:00Z",
-    },
-    {
-        id: 5,
-        user: { id: 14, first_name: "Priya", last_name: "Nair", email: "priya.n@example.com" },
-        description: "Certified holistic health coach and yoga instructor with 10 years of experience. I specialise in stress-related weight gain, hormonal imbalance, and mindful eating. My clients have seen remarkable transformations through a whole-body approach.",
-        status: "pending",
-        rejection_reason: null,
-        documents: [
-            { id: 7, type: "certificate", original_name: "health-coach-cert.pdf" },
-            { id: 8, type: "certificate", original_name: "yoga-cert.pdf" },
-            { id: 9, type: "image", original_name: "testimonials.jpg" },
-        ],
-        submitted_at: "2026-05-06T07:15:00Z",
-    },
-]
 
 const MOCK_USERS: MockUser[] = [
     { id: 1,  first_name: "Alex",   last_name: "Chen",     email: "alex@example.com",   role: "user",  onboarding_step: "complete",  created_at: "2026-01-15T00:00:00Z" },
@@ -191,7 +121,11 @@ const STATS = [
 ]
 
 function OverviewSection({ onGoToApps }: { onGoToApps: () => void }) {
-    const recentApps = INITIAL_APPLICATIONS.filter(a => a.status === "pending").slice(0, 3)
+    const [recentApps, setRecentApps] = useState<AdminApplication[]>([])
+
+    useEffect(() => {
+        getAdminApplicationsApi("pending").then(page => setRecentApps(page.data.slice(0, 3))).catch(() => {})
+    }, [])
 
     return (
         <div className="flex flex-col gap-6 p-4 sm:p-8">
@@ -224,14 +158,17 @@ function OverviewSection({ onGoToApps }: { onGoToApps: () => void }) {
                     </button>
                 </div>
                 <div className="flex flex-col gap-2">
+                    {recentApps.length === 0 && (
+                        <p className="text-xs text-text-muted/40 py-3 text-center">No pending applications.</p>
+                    )}
                     {recentApps.map(app => (
                         <div key={app.id} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={glassCard}>
-                            <Avatar name={`${app.user.first_name} ${app.user.last_name}`} size={32} />
+                            <Avatar name={`${app.applicant.first_name} ${app.applicant.last_name}`} size={32} />
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-text truncate">
-                                    {app.user.first_name} {app.user.last_name}
+                                    {app.applicant.first_name} {app.applicant.last_name}
                                 </p>
-                                <p className="text-xs text-text-muted truncate">{app.user.email}</p>
+                                <p className="text-xs text-text-muted truncate">{app.applicant.email}</p>
                             </div>
                             <p className="text-xs text-text-muted/50 flex-shrink-0">{relativeTime(app.submitted_at)}</p>
                             <StatusBadge status={app.status} />
@@ -276,37 +213,61 @@ type AppFilter = "all" | AppStatus
 
 function ApplicationCard({
     app,
-    onApprove,
-    onReject,
+    onUpdated,
 }: {
-    app: MockApplication
-    onApprove: (id: number) => void
-    onReject:  (id: number, reason: string) => void
+    app: AdminApplication
+    onUpdated: (updated: AdminApplication) => void
 }) {
     const [expanded, setExpanded] = useState(false)
     const [rejecting, setRejecting] = useState(false)
     const [reason, setReason] = useState("")
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-    function submitReject() {
-        if (!reason.trim()) return
-        onReject(app.id, reason.trim())
-        setRejecting(false)
-        setReason("")
+    async function handleApprove() {
+        setLoading(true)
+        setError(null)
+        try {
+            const updated = await approveApplicationApi(app.id)
+            onUpdated(updated)
+        } catch (e: unknown) {
+            const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+            setError(msg ?? "Failed to approve.")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    async function handleReject() {
+        if (reason.trim().length < 10) return
+        setLoading(true)
+        setError(null)
+        try {
+            const updated = await rejectApplicationApi(app.id, reason.trim())
+            onUpdated(updated)
+            setRejecting(false)
+            setReason("")
+        } catch (e: unknown) {
+            const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+            setError(msg ?? "Failed to reject.")
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
         <div className="flex flex-col rounded-2xl overflow-hidden" style={glassCard}>
             {/* Header row */}
             <div className="flex items-center gap-3 px-4 py-3.5">
-                <Avatar name={`${app.user.first_name} ${app.user.last_name}`} size={36} className="flex-shrink-0" />
+                <Avatar name={`${app.applicant.first_name} ${app.applicant.last_name}`} size={36} className="flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold text-text">
-                            {app.user.first_name} {app.user.last_name}
+                            {app.applicant.first_name} {app.applicant.last_name}
                         </p>
                         <StatusBadge status={app.status} />
                     </div>
-                    <p className="text-xs text-text-muted truncate">{app.user.email} · {relativeDate(app.submitted_at)}</p>
+                    <p className="text-xs text-text-muted truncate">{app.applicant.email} · {relativeDate(app.submitted_at)}</p>
                 </div>
                 <button onClick={() => setExpanded(o => !o)}
                     className="flex-shrink-0 p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-white/5 transition-all">
@@ -326,32 +287,40 @@ function ApplicationCard({
                         <p className="text-sm text-text leading-relaxed break-words">{app.description}</p>
                     </div>
 
-                    {/* Documents */}
+                    {/* Documents — clickable links, open in new tab */}
                     {app.documents.length > 0 && (
                         <div className="flex flex-col gap-2">
                             <p className="text-xs font-medium text-text-muted">Documents</p>
                             <div className="flex flex-wrap gap-2">
                                 {app.documents.map(doc => (
-                                    <div key={doc.id}
-                                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs"
+                                    <a key={doc.id} href={doc.url} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs
+                                        hover:border-primary/30 hover:text-text transition-colors"
                                         style={{ border: "1px solid var(--glass-border)", background: "rgba(255,255,255,0.03)" }}>
                                         {doc.type === "certificate"
                                             ? <PictureAsPdfRoundedIcon sx={{ fontSize: 13 }} className="text-red-400" />
                                             : <ImageRoundedIcon sx={{ fontSize: 13 }} className="text-blue-400" />}
-                                        <span className="text-text-muted max-w-[140px] truncate">{doc.original_name}</span>
-                                    </div>
+                                        <span className="text-text-muted max-w-[140px] truncate">
+                                            {doc.original_name ?? (doc.type === "certificate" ? "Certificate" : "Image")}
+                                        </span>
+                                    </a>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {/* Rejection reason (if already rejected) */}
+                    {/* Rejection reason */}
                     {app.status === "rejected" && app.rejection_reason && (
                         <div className="px-3 py-2.5 rounded-xl text-xs text-red-400/80 leading-relaxed"
                             style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)" }}>
                             <span className="font-medium text-red-400">Rejection reason: </span>
                             {app.rejection_reason}
                         </div>
+                    )}
+
+                    {/* Inline error */}
+                    {error && (
+                        <p className="text-xs text-red-400">{error}</p>
                     )}
 
                     {/* Actions */}
@@ -364,37 +333,44 @@ function ApplicationCard({
                                         rows={2}
                                         value={reason}
                                         onChange={e => setReason(e.target.value)}
-                                        placeholder="Reason for rejection…"
-                                        className="w-full text-xs text-text bg-white/5 border border-white/10 rounded-xl px-3 py-2
-                                        outline-none focus:border-red-400/40 focus:bg-red-400/5 resize-none
-                                        transition-all duration-200 placeholder:text-text-muted/30"
+                                        placeholder="Reason for rejection (min 10 chars)…"
+                                        className="w-full text-xs text-text bg-[var(--input-bg)] border border-[var(--input-border)]
+                                        rounded-xl px-3 py-2 outline-none focus:border-red-400/40 focus:bg-red-400/5
+                                        resize-none transition-all duration-200 placeholder:text-text-muted/30"
                                     />
                                     <div className="flex gap-2">
-                                        <button onClick={submitReject} disabled={!reason.trim()}
+                                        <button onClick={handleReject}
+                                            disabled={reason.trim().length < 10 || loading}
                                             className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold
                                             bg-red-500/90 text-white hover:bg-red-500 disabled:opacity-40 transition-all">
-                                            <CloseRoundedIcon sx={{ fontSize: 13 }} />
+                                            {loading
+                                                ? <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />
+                                                : <CloseRoundedIcon sx={{ fontSize: 13 }} />}
                                             Confirm Reject
                                         </button>
-                                        <button onClick={() => { setRejecting(false); setReason("") }}
+                                        <button onClick={() => { setRejecting(false); setReason(""); setError(null) }}
+                                            disabled={loading}
                                             className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-text-muted
-                                            border border-white/10 hover:border-white/20 hover:text-text transition-all">
+                                            border border-[var(--glass-border)] hover:border-primary/20 hover:text-text transition-all">
                                             Cancel
                                         </button>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="flex gap-2">
-                                    <button onClick={() => onApprove(app.id)}
+                                    <button onClick={handleApprove} disabled={loading}
                                         className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold
-                                        hover:opacity-90 transition-all"
+                                        hover:opacity-90 disabled:opacity-50 transition-all"
                                         style={{ background: "var(--btn-bg)", color: "var(--btn-text)" }}>
-                                        <CheckCircleRoundedIcon sx={{ fontSize: 13 }} />
+                                        {loading
+                                            ? <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />
+                                            : <CheckCircleRoundedIcon sx={{ fontSize: 13 }} />}
                                         Approve
                                     </button>
-                                    <button onClick={() => setRejecting(true)}
+                                    <button onClick={() => { setRejecting(true); setError(null) }} disabled={loading}
                                         className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold
-                                        text-red-400 border border-red-400/20 hover:bg-red-400/10 transition-all">
+                                        text-red-400 border border-red-400/20 hover:bg-red-400/10
+                                        disabled:opacity-50 transition-all">
                                         <CloseRoundedIcon sx={{ fontSize: 13 }} />
                                         Reject
                                     </button>
@@ -409,31 +385,48 @@ function ApplicationCard({
 }
 
 function ApplicationsSection() {
-    const [applications, setApplications] = useState(INITIAL_APPLICATIONS)
+    const [applications, setApplications] = useState<AdminApplication[]>([])
     const [filter, setFilter] = useState<AppFilter>("all")
+    const [nextCursor, setNextCursor] = useState<string | null>(null)
+    const [hasMore, setHasMore] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-    const counts = {
-        all:      applications.length,
-        pending:  applications.filter(a => a.status === "pending").length,
-        approved: applications.filter(a => a.status === "approved").length,
-        rejected: applications.filter(a => a.status === "rejected").length,
+    const load = useCallback(async (f: AppFilter, cursor?: string) => {
+        try {
+            const page = await getAdminApplicationsApi(f, cursor)
+            setApplications(prev => cursor ? [...prev, ...page.data] : page.data)
+            setNextCursor(page.next_cursor)
+            setHasMore(page.has_more)
+        } catch {
+            setError("Failed to load applications.")
+        }
+    }, [])
+
+    useEffect(() => {
+        setLoading(true)
+        setError(null)
+        setApplications([])
+        load(filter).finally(() => setLoading(false))
+    }, [filter, load])
+
+    async function loadMore() {
+        if (!nextCursor || loadingMore) return
+        setLoadingMore(true)
+        await load(filter, nextCursor)
+        setLoadingMore(false)
     }
 
-    const visible = filter === "all" ? applications : applications.filter(a => a.status === filter)
-
-    function handleApprove(id: number) {
-        setApplications(prev => prev.map(a => a.id === id ? { ...a, status: "approved" } : a))
-    }
-
-    function handleReject(id: number, reason: string) {
-        setApplications(prev => prev.map(a => a.id === id ? { ...a, status: "rejected", rejection_reason: reason } : a))
+    function handleUpdated(updated: AdminApplication) {
+        setApplications(prev => prev.map(a => a.id === updated.id ? updated : a))
     }
 
     const FILTERS: { key: AppFilter; label: string }[] = [
-        { key: "all",      label: `All (${counts.all})` },
-        { key: "pending",  label: `Pending (${counts.pending})` },
-        { key: "approved", label: `Approved (${counts.approved})` },
-        { key: "rejected", label: `Rejected (${counts.rejected})` },
+        { key: "all",      label: "All" },
+        { key: "pending",  label: "Pending" },
+        { key: "approved", label: "Approved" },
+        { key: "rejected", label: "Rejected" },
     ]
 
     return (
@@ -444,7 +437,7 @@ function ApplicationsSection() {
             </div>
 
             {/* Filter tabs */}
-            <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--glass-border)" }}>
+            <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--input-bg)", border: "1px solid var(--glass-border)" }}>
                 {FILTERS.map(f => (
                     <button key={f.key} onClick={() => setFilter(f.key)}
                         className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
@@ -456,16 +449,36 @@ function ApplicationsSection() {
                 ))}
             </div>
 
+            {/* States */}
+            {loading && (
+                <div className="flex justify-center py-12">
+                    <span className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                </div>
+            )}
+            {!loading && error && <p className="text-xs text-red-400 py-6 text-center">{error}</p>}
+
             {/* Application list */}
-            <div className="flex flex-col gap-3">
-                {visible.length === 0 ? (
-                    <p className="text-xs text-text-muted/50 py-6 text-center">No applications in this category.</p>
-                ) : (
-                    visible.map(app => (
-                        <ApplicationCard key={app.id} app={app} onApprove={handleApprove} onReject={handleReject} />
-                    ))
-                )}
-            </div>
+            {!loading && !error && (
+                <div className="flex flex-col gap-3">
+                    {applications.length === 0 ? (
+                        <p className="text-xs text-text-muted/50 py-6 text-center">No applications in this category.</p>
+                    ) : (
+                        applications.map(app => (
+                            <ApplicationCard key={app.id} app={app} onUpdated={handleUpdated} />
+                        ))
+                    )}
+
+                    {hasMore && (
+                        <button onClick={loadMore} disabled={loadingMore}
+                            className="mt-1 self-center flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-medium
+                            text-text-muted border border-[var(--glass-border)] hover:border-primary/30 hover:text-text
+                            disabled:opacity-50 transition-all">
+                            {loadingMore && <span className="w-3.5 h-3.5 rounded-full border border-current border-t-transparent animate-spin" />}
+                            Load more
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     )
 }
