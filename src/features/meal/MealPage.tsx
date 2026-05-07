@@ -20,6 +20,7 @@ import CommentsSheet from "./CommentsSheet"
 import LazyImage from "../../components/ui/LazyImage"
 import Avatar from "../../components/ui/Avatar"
 import CoachBadge from "../../components/ui/CoachBadge"
+import { useToast } from "../../context/ToastContext"
 
 function Shimmer({ className }: { className?: string }) {
     return (
@@ -52,6 +53,7 @@ function MealPageSkeleton() {
 export default function MealPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const { showSuccess } = useToast()
 
     const [meal, setMeal] = useState<MealDetail | null>(null)
     const [loading, setLoading] = useState(true)
@@ -104,6 +106,7 @@ export default function MealPage() {
                 setWarningIngredients(res.health_warning.flagged_ingredients)
             } else {
                 setLogged(true)
+                showSuccess("Meal logged successfully!")
             }
         } catch {
             // silent — button resets
@@ -116,6 +119,7 @@ export default function MealPage() {
         setPendingLogId(null)
         setWarningIngredients([])
         setLogged(true)
+        showSuccess("Meal logged successfully!")
     }
 
     async function handleWarningDiscard() {

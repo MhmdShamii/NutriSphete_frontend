@@ -16,6 +16,7 @@ import ProfileRecipes from "./profile/ProfileRecipes"
 import LazyImage from "../components/ui/LazyImage"
 import AvatarUI from "../components/ui/Avatar"
 import CoachBadge from "../components/ui/CoachBadge"
+import ConfirmDialog from "../components/ui/ConfirmDialog"
 import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded"
 import LockRoundedIcon from "@mui/icons-material/LockRounded"
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded"
@@ -126,6 +127,7 @@ function VisitedProfile({ userId }: { userId: number }) {
     const [notFound, setNotFound] = useState(false)
     const [followLoading, setFollowLoading] = useState(false)
     const [followModal, setFollowModal] = useState<"followers" | "following" | null>(null)
+    const [showUnfollowDialog, setShowUnfollowDialog] = useState(false)
 
     useEffect(() => {
         setLoading(true)
@@ -138,25 +140,27 @@ function VisitedProfile({ userId }: { userId: number }) {
 
     async function handleFollowToggle() {
         if (!profile || followLoading) return
+        if (profile.is_following) { setShowUnfollowDialog(true); return }
         setFollowLoading(true)
-        const wasFollowing = profile.is_following
-        setProfile(p => p ? {
-            ...p,
-            is_following: !wasFollowing,
-            followers_count: wasFollowing ? p.followers_count - 1 : p.followers_count + 1,
-        } : p)
+        setProfile(p => p ? { ...p, is_following: true, followers_count: p.followers_count + 1 } : p)
         try {
-            if (wasFollowing) {
-                await unfollowUserApi(userId)
-            } else {
-                await followUserApi(userId)
-            }
+            await followUserApi(userId)
         } catch {
-            setProfile(p => p ? {
-                ...p,
-                is_following: wasFollowing,
-                followers_count: wasFollowing ? p.followers_count + 1 : p.followers_count - 1,
-            } : p)
+            setProfile(p => p ? { ...p, is_following: false, followers_count: p.followers_count - 1 } : p)
+        } finally {
+            setFollowLoading(false)
+        }
+    }
+
+    async function confirmUnfollow() {
+        setShowUnfollowDialog(false)
+        if (!profile) return
+        setFollowLoading(true)
+        setProfile(p => p ? { ...p, is_following: false, followers_count: p.followers_count - 1 } : p)
+        try {
+            await unfollowUserApi(userId)
+        } catch {
+            setProfile(p => p ? { ...p, is_following: true, followers_count: p.followers_count + 1 } : p)
         } finally {
             setFollowLoading(false)
         }
@@ -174,8 +178,21 @@ function VisitedProfile({ userId }: { userId: number }) {
     }
 
     const flagCode = alpha3to2(profile.country.code)
+    const profileName = `${profile.first_name} ${profile.last_name}`
 
     return (
+        <>
+        {showUnfollowDialog && (
+            <ConfirmDialog
+                title={`Unfollow ${profileName}?`}
+                message="They won't be notified."
+                confirmLabel="Unfollow"
+                cancelLabel="Keep following"
+                dangerous
+                onConfirm={confirmUnfollow}
+                onCancel={() => setShowUnfollowDialog(false)}
+            />
+        )}
         <div className="w-full flex flex-col pb-6">
             <div className="w-full flex flex-col"
                 style={{ border: "1px solid var(--glass-border)", borderRadius: "24px 24px 0 0", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}
@@ -262,6 +279,7 @@ function VisitedProfile({ userId }: { userId: number }) {
                 />
             )}
         </div>
+        </>
     )
 }
 
