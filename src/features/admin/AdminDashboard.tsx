@@ -30,35 +30,15 @@ import {
     type AdminApplication,
     type AppStatus,
 } from "../../services/admin/coachApplicationsApi"
+import {
+    getAdminUsersApi,
+    type AdminUser,
+    type AdminUserRole,
+} from "../../services/admin/usersApi"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type MockUser = {
-    id: number
-    first_name: string
-    last_name: string
-    email: string
-    role: "user" | "coach" | "admin"
-    onboarding_step: string
-    created_at: string
-}
-
 type AdminSection = "overview" | "applications" | "ingredients" | "users"
-
-const MOCK_USERS: MockUser[] = [
-    { id: 1,  first_name: "Alex",   last_name: "Chen",     email: "alex@example.com",   role: "user",  onboarding_step: "complete",  created_at: "2026-01-15T00:00:00Z" },
-    { id: 2,  first_name: "Maria",  last_name: "Santos",   email: "maria@example.com",  role: "coach", onboarding_step: "complete",  created_at: "2026-01-20T00:00:00Z" },
-    { id: 3,  first_name: "David",  last_name: "Kim",      email: "david@example.com",  role: "user",  onboarding_step: "complete",  created_at: "2026-02-01T00:00:00Z" },
-    { id: 4,  first_name: "Emma",   last_name: "Wilson",   email: "emma@example.com",   role: "user",  onboarding_step: "targets",   created_at: "2026-02-10T00:00:00Z" },
-    { id: 5,  first_name: "Noah",   last_name: "Patel",    email: "noah@example.com",   role: "user",  onboarding_step: "complete",  created_at: "2026-02-15T00:00:00Z" },
-    { id: 6,  first_name: "Sofia",  last_name: "Rossi",    email: "sofia@example.com",  role: "coach", onboarding_step: "complete",  created_at: "2026-03-01T00:00:00Z" },
-    { id: 7,  first_name: "Lucas",  last_name: "Martin",   email: "lucas@example.com",  role: "user",  onboarding_step: "complete",  created_at: "2026-03-10T00:00:00Z" },
-    { id: 8,  first_name: "Yuki",   last_name: "Tanaka",   email: "yuki@example.com",   role: "user",  onboarding_step: "basic_info",created_at: "2026-04-01T00:00:00Z" },
-    { id: 9,  first_name: "Omar",   last_name: "Farouq",   email: "omar@example.com",   role: "user",  onboarding_step: "complete",  created_at: "2026-04-05T00:00:00Z" },
-    { id: 10, first_name: "Sarah",  last_name: "Mitchell", email: "sarah.m@example.com",role: "user",  onboarding_step: "complete",  created_at: "2026-04-10T00:00:00Z" },
-    { id: 11, first_name: "James",  last_name: "Okonkwo",  email: "james.o@example.com",role: "user",  onboarding_step: "complete",  created_at: "2026-04-12T00:00:00Z" },
-    { id: 12, first_name: "Amira",  last_name: "Hassan",   email: "amira.h@example.com",role: "coach", onboarding_step: "complete",  created_at: "2026-04-15T00:00:00Z" },
-]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -98,14 +78,15 @@ function StatusBadge({ status }: { status: AppStatus }) {
     )
 }
 
-function RoleBadge({ role }: { role: MockUser["role"] }) {
-    const map = {
-        admin: "text-purple-400 bg-purple-400/10 border-purple-400/20",
-        coach: "text-primary bg-primary/10 border-primary/20",
-        user:  "text-text-muted bg-white/5 border-white/10",
+function RoleBadge({ role }: { role: string }) {
+    const map: Record<string, string> = {
+        admin:  "text-purple-400 bg-purple-400/10 border-purple-400/20",
+        coach:  "text-primary bg-primary/10 border-primary/20",
+        client: "text-text-muted bg-[var(--muted-bg)] border-[var(--glass-border)]",
     }
+    const cls = map[role] ?? map.client
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${map[role]}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${cls}`}>
             {role}
         </span>
     )
@@ -142,7 +123,7 @@ function OverviewSection({ onGoToApps }: { onGoToApps: () => void }) {
                             <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                             <p className="text-xs text-text-muted">{s.label}</p>
                         </div>
-                        <p className={`text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
+                        <p className={`text-xl sm:text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
                         <p className="text-xs text-text-muted/50">{s.sub}</p>
                     </div>
                 ))}
@@ -437,16 +418,18 @@ function ApplicationsSection() {
             </div>
 
             {/* Filter tabs */}
-            <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--input-bg)", border: "1px solid var(--glass-border)" }}>
-                {FILTERS.map(f => (
-                    <button key={f.key} onClick={() => setFilter(f.key)}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
-                        ${filter === f.key
-                            ? "bg-primary text-black shadow-sm"
-                            : "text-text-muted hover:text-text"}`}>
-                        {f.label}
-                    </button>
-                ))}
+            <div className="overflow-x-auto no-scrollbar">
+                <div className="flex gap-1 p-1 rounded-xl w-fit min-w-full sm:min-w-0" style={{ background: "var(--input-bg)", border: "1px solid var(--glass-border)" }}>
+                    {FILTERS.map(f => (
+                        <button key={f.key} onClick={() => setFilter(f.key)}
+                            className={`flex-shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
+                            ${filter === f.key
+                                ? "bg-primary text-black shadow-sm"
+                                : "text-text-muted hover:text-text"}`}>
+                            {f.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* States */}
@@ -486,78 +469,156 @@ function ApplicationsSection() {
 // ─── Users Section ────────────────────────────────────────────────────────────
 
 function UsersSection() {
-    const [query, setQuery] = useState("")
+    const [users, setUsers]           = useState<AdminUser[]>([])
+    const [query, setQuery]           = useState("")
+    const [debouncedQuery, setDebouncedQuery] = useState("")
+    const [roleFilter, setRoleFilter] = useState<AdminUserRole | "all">("all")
+    const [nextCursor, setNextCursor] = useState<string | null>(null)
+    const [hasMore, setHasMore]       = useState(false)
+    const [loading, setLoading]       = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [error, setError]           = useState<string | null>(null)
 
-    const filtered = MOCK_USERS.filter(u =>
-        `${u.first_name} ${u.last_name} ${u.email}`.toLowerCase().includes(query.toLowerCase())
-    )
+    // Debounce search so we don't fire on every keystroke
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedQuery(query), 350)
+        return () => clearTimeout(t)
+    }, [query])
+
+    const load = useCallback(async (q: string, role: AdminUserRole | "all", cursor?: string) => {
+        try {
+            const page = await getAdminUsersApi({ search: q || undefined, role, cursor })
+            setUsers(prev => cursor ? [...prev, ...page.data] : page.data)
+            setNextCursor(page.next_cursor)
+            setHasMore(page.has_more)
+        } catch {
+            setError("Failed to load users.")
+        }
+    }, [])
+
+    useEffect(() => {
+        setLoading(true)
+        setError(null)
+        setUsers([])
+        load(debouncedQuery, roleFilter).finally(() => setLoading(false))
+    }, [debouncedQuery, roleFilter, load])
+
+    async function loadMore() {
+        if (!nextCursor || loadingMore) return
+        setLoadingMore(true)
+        await load(debouncedQuery, roleFilter, nextCursor)
+        setLoadingMore(false)
+    }
+
+    const ROLE_FILTERS: { key: AdminUserRole | "all"; label: string }[] = [
+        { key: "all",    label: "All" },
+        { key: "client", label: "Clients" },
+        { key: "coach",  label: "Coaches" },
+        { key: "admin",  label: "Admins" },
+    ]
 
     return (
         <div className="flex flex-col gap-5 p-4 sm:p-8">
             <div>
                 <h2 className="text-lg font-semibold text-text">Users</h2>
-                <p className="text-xs text-text-muted mt-0.5">{MOCK_USERS.length} total members on the platform.</p>
+                <p className="text-xs text-text-muted mt-0.5">Platform members.</p>
             </div>
 
-            {/* Search */}
-            <div className="relative">
-                <SearchRoundedIcon sx={{ fontSize: 16 }}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted/40 pointer-events-none" />
-                <input
-                    value={query}
-                    onChange={e => setQuery(e.target.value)}
-                    placeholder="Search by name or email…"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-text
-                    outline-none focus:border-primary/50 focus:bg-primary/5 transition-all duration-200
-                    placeholder:text-text-muted/30"
-                />
-            </div>
-
-            {/* Table */}
-            <div className="flex flex-col gap-1.5">
-                {/* Header */}
-                <div className="hidden sm:grid grid-cols-[1fr_1.5fr_80px_100px_90px] gap-4 px-4 py-2">
-                    {["User", "Email", "Role", "Status", "Joined"].map(h => (
-                        <p key={h} className="text-xs font-medium text-text-muted/50 uppercase tracking-wider">{h}</p>
-                    ))}
+            {/* Controls */}
+            <div className="flex flex-col gap-3">
+                {/* Search */}
+                <div className="relative">
+                    <SearchRoundedIcon sx={{ fontSize: 16 }}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted/40 pointer-events-none" />
+                    <input
+                        value={query}
+                        onChange={e => setQuery(e.target.value)}
+                        placeholder="Search by name or email…"
+                        className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl pl-9 pr-4 py-2.5 text-sm text-text
+                        outline-none focus:border-primary/50 focus:bg-primary/5 transition-all duration-200
+                        placeholder:text-text-muted/30"
+                    />
                 </div>
 
-                {filtered.map(u => (
-                    <div key={u.id}
-                        className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_1.5fr_80px_100px_90px] gap-4 items-center
-                        px-4 py-3 rounded-xl transition-colors hover:bg-white/3"
-                        style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
-
-                        <div className="flex items-center gap-2.5 min-w-0">
-                            <Avatar name={`${u.first_name} ${u.last_name}`} size={28} className="flex-shrink-0" />
-                            <p className="text-sm font-medium text-text truncate">{u.first_name} {u.last_name}</p>
-                        </div>
-
-                        <p className="hidden sm:block text-xs text-text-muted truncate">{u.email}</p>
-
-                        <div className="hidden sm:block">
-                            <RoleBadge role={u.role} />
-                        </div>
-
-                        <div className="hidden sm:block">
-                            <span className={`text-xs px-2 py-0.5 rounded-full border
-                                ${u.onboarding_step === "complete"
-                                    ? "text-primary/70 bg-primary/8 border-primary/15"
-                                    : "text-amber-400/70 bg-amber-400/8 border-amber-400/15"}`}>
-                                {u.onboarding_step === "complete" ? "Active" : "Onboarding"}
-                            </span>
-                        </div>
-
-                        <p className="text-xs text-text-muted/50">
-                            {new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                        </p>
+                {/* Role filter tabs — scrollable on mobile */}
+                <div className="overflow-x-auto no-scrollbar">
+                    <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--input-bg)", border: "1px solid var(--glass-border)" }}>
+                        {ROLE_FILTERS.map(f => (
+                            <button key={f.key} onClick={() => setRoleFilter(f.key)}
+                                className={`flex-shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
+                                ${roleFilter === f.key ? "bg-primary text-black shadow-sm" : "text-text-muted hover:text-text"}`}>
+                                {f.label}
+                            </button>
+                        ))}
                     </div>
-                ))}
-
-                {filtered.length === 0 && (
-                    <p className="text-xs text-text-muted/50 py-8 text-center">No users match your search.</p>
-                )}
+                </div>
             </div>
+
+            {/* States */}
+            {loading && (
+                <div className="flex justify-center py-12">
+                    <span className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                </div>
+            )}
+            {!loading && error && <p className="text-xs text-red-400 py-6 text-center">{error}</p>}
+
+            {/* Card grid */}
+            {!loading && !error && (
+                <div className="flex flex-col gap-4">
+                    {users.length === 0 ? (
+                        <p className="text-xs text-text-muted/50 py-8 text-center">No users match your filters.</p>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {users.map(u => {
+                                const isActive = u.onboarding_step === "complete"
+                                return (
+                                    <div key={u.id}
+                                        className="flex flex-col items-center gap-2.5 p-4 rounded-2xl text-center"
+                                        style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
+                                        <Avatar
+                                            src={u.image.avatar}
+                                            name={`${u.first_name} ${u.last_name}`}
+                                            size={44}
+                                        />
+                                        <div className="w-full min-w-0">
+                                            <p className="text-sm font-medium text-text truncate">
+                                                {u.first_name} {u.last_name}
+                                            </p>
+                                            {u.country.name && (
+                                                <p className="text-[10px] text-text-muted/40 truncate mt-0.5">{u.country.name}</p>
+                                            )}
+                                        </div>
+                                        <RoleBadge role={u.role} />
+                                        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                                            <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border
+                                                ${isActive
+                                                    ? "text-primary/70 bg-primary/8 border-primary/15"
+                                                    : "text-amber-400/70 bg-amber-400/8 border-amber-400/15"}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-primary" : "bg-amber-400"}`} />
+                                                {isActive ? "Active" : "Onboarding"}
+                                            </span>
+                                            {!u.verified && (
+                                                <span className="text-[10px] text-text-muted/40">unverified</span>
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] text-text-muted/40 truncate w-full">{u.email}</p>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    {hasMore && (
+                        <button onClick={loadMore} disabled={loadingMore}
+                            className="mt-1 self-center flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-medium
+                            text-text-muted border border-[var(--glass-border)] hover:border-primary/30 hover:text-text
+                            disabled:opacity-50 transition-all">
+                            {loadingMore && <span className="w-3.5 h-3.5 rounded-full border border-current border-t-transparent animate-spin" />}
+                            Load more
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     )
 }
@@ -657,26 +718,26 @@ function IngredientsSection() {
                         const actioning = actioningId === item.id
                         return (
                             <div key={item.id}
-                                className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_1fr_80px_100px_auto] gap-3 items-center
-                                px-4 py-3 rounded-xl"
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl"
                                 style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
 
-                                <p className="text-sm font-medium text-text truncate">{item.name_en}</p>
-
-                                <p className="hidden sm:block text-sm text-text-muted truncate">
-                                    {item.name_ar ?? <span className="text-text-muted/30 italic text-xs">—</span>}
-                                </p>
-
-                                <div className="hidden sm:block">
-                                    <span className="text-xs px-2 py-0.5 rounded-full border text-blue-400 bg-blue-400/8 border-blue-400/20">
-                                        {item.source}
-                                    </span>
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-text truncate">{item.name_en}</p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-xs px-1.5 py-px rounded-full border text-blue-400 bg-blue-400/8 border-blue-400/20">
+                                            {item.source}
+                                        </span>
+                                        {item.name_ar && (
+                                            <p className="text-xs text-text-muted truncate">{item.name_ar}</p>
+                                        )}
+                                        <p className="text-xs text-text-muted/40 flex-shrink-0 hidden sm:block">
+                                            {relativeDate(item.submitted_at)}
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <p className="hidden sm:block text-xs text-text-muted/50">
-                                    {relativeDate(item.submitted_at)}
-                                </p>
-
+                                {/* Actions */}
                                 <div className="flex items-center gap-1.5 flex-shrink-0">
                                     <button
                                         onClick={() => handleApprove(item.id)}
@@ -687,7 +748,7 @@ function IngredientsSection() {
                                         {actioning
                                             ? <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />
                                             : <CheckCircleRoundedIcon sx={{ fontSize: 13 }} />}
-                                        <span className="hidden sm:inline">Approve</span>
+                                        <span className="hidden sm:inline ml-0.5">Approve</span>
                                     </button>
                                     <button
                                         onClick={() => handleDelete(item.id)}
@@ -698,7 +759,7 @@ function IngredientsSection() {
                                         {actioning
                                             ? <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />
                                             : <DeleteRoundedIcon sx={{ fontSize: 13 }} />}
-                                        <span className="hidden sm:inline">Delete</span>
+                                        <span className="hidden sm:inline ml-0.5">Delete</span>
                                     </button>
                                 </div>
                             </div>
@@ -726,11 +787,11 @@ function IngredientsSection() {
 
 // ─── Sidebar Nav ──────────────────────────────────────────────────────────────
 
-const NAV: { key: AdminSection; label: string; icon: React.ReactNode }[] = [
-    { key: "overview",     label: "Overview",     icon: <DashboardRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "applications", label: "Applications", icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "ingredients",  label: "Ingredients",  icon: <ScienceRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "users",        label: "Users",        icon: <PeopleAltRoundedIcon sx={{ fontSize: 17 }} /> },
+const NAV: { key: AdminSection; label: string; mobileLabel: string; icon: React.ReactNode }[] = [
+    { key: "overview",     label: "Overview",     mobileLabel: "Overview",  icon: <DashboardRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "applications", label: "Applications", mobileLabel: "Apps",      icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "ingredients",  label: "Ingredients",  mobileLabel: "Verify",    icon: <ScienceRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "users",        label: "Users",        mobileLabel: "Users",     icon: <PeopleAltRoundedIcon sx={{ fontSize: 17 }} /> },
 ]
 
 // ─── Admin Dashboard ──────────────────────────────────────────────────────────
@@ -743,24 +804,24 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 overflow-hidden flex flex-col" style={{ background: "var(--background)", zIndex: 50 }}>
 
             {/* Top bar */}
-            <header className="flex-shrink-0 h-14 px-5 flex items-center justify-between border-b"
+            <header className="flex-shrink-0 h-14 px-4 sm:px-5 flex items-center justify-between border-b"
                 style={{ borderColor: "var(--glass-border)", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                     <Logo />
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-sm tracking-tight">
                             <span className="text-primary">Nutri</span>
                             <span className="text-text">Sphere</span>
                         </span>
-                        <span className="text-text-muted/30 text-sm">·</span>
-                        <span className="text-xs font-medium text-text-muted/60 tracking-wider uppercase">Admin</span>
+                        <span className="text-text-muted/30 text-sm hidden sm:inline">·</span>
+                        <span className="text-xs font-medium text-text-muted/60 tracking-wider uppercase hidden sm:inline">Admin</span>
                     </div>
                 </div>
                 <button onClick={() => navigate("/stats")}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-text-muted
-                    border border-white/10 hover:border-white/20 hover:text-text transition-all duration-200">
+                    border border-[var(--glass-border)] hover:border-primary/30 hover:text-text transition-all duration-200">
                     <ArrowBackRoundedIcon sx={{ fontSize: 13 }} />
-                    Back to app
+                    <span className="hidden sm:inline">Back to app</span>
                 </button>
             </header>
 
@@ -770,7 +831,7 @@ export default function AdminDashboard() {
                 <aside className="hidden sm:flex flex-col w-52 flex-shrink-0 border-r p-3 gap-1 overflow-y-auto"
                     style={{ borderColor: "var(--glass-border)", background: "rgba(255,255,255,0.01)" }}>
                     {NAV.map(({ key, label, icon }) => (
-                        <button key={key} onClick={() => setSection(key)}
+                    <button key={key} onClick={() => setSection(key)}
                             className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium
                             transition-all duration-200 text-left w-full
                             ${section === key
@@ -793,12 +854,12 @@ export default function AdminDashboard() {
             {/* Mobile tab bar */}
             <div className="sm:hidden flex-shrink-0 flex border-t"
                 style={{ borderColor: "var(--glass-border)", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}>
-                {NAV.map(({ key, icon, label }) => (
+                {NAV.map(({ key, icon, mobileLabel }) => (
                     <button key={key} onClick={() => setSection(key)}
                         className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors
                         ${section === key ? "text-primary" : "text-text-muted"}`}>
                         {icon}
-                        <span className="text-[10px]">{label}</span>
+                        <span className="text-[10px]">{mobileLabel}</span>
                     </button>
                 ))}
             </div>
