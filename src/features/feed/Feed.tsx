@@ -20,10 +20,13 @@ import { likeMealApi, unlikeMealApi, logMeal } from "../../services/meals/mealsA
 import { followUserApi, unfollowUserApi } from "../../services/social/followApi"
 import { confirmQuickLog, deleteQuickLog } from "../../services/log/quickLogApi"
 import AvatarUI from "../../components/ui/Avatar"
+import CoachBadge from "../../components/ui/CoachBadge"
 import LazyImage from "../../components/ui/LazyImage"
 import HealthWarningModal from "../mealCreation/components/HealthWarningModal"
 import CommentsSheet from "../meal/CommentsSheet"
+import ConfirmDialog from "../../components/ui/ConfirmDialog"
 import type { FlaggedIngredient } from "../mealCreation/types/meal.types"
+import { useToast } from "../../context/ToastContext"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -204,6 +207,7 @@ type LogState = "idle" | "logging" | "logged"
 function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: boolean }) {
     const navigate      = useNavigate()
     const currentUserId = useSelector((s: RootState) => s.auth.user?.id ?? null)
+    const { showSuccess } = useToast()
 
     const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
@@ -216,8 +220,9 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
     const [relogCount,   setRelogCount]   = useState(initialPost.engagement.relogs_count)
 
     // Follow state
-    const [following,     setFollowing]     = useState(initialPost.author.is_following)
-    const [followLoading, setFollowLoading] = useState(false)
+    const [following,          setFollowing]          = useState(initialPost.author.is_following)
+    const [followLoading,      setFollowLoading]      = useState(false)
+    const [showUnfollowDialog, setShowUnfollowDialog] = useState(false)
 
     // Log (relog) state
     const [logState,           setLogState]           = useState<LogState>("idle")
@@ -249,14 +254,26 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
     async function toggleFollow() {
         if (isGuest) { setShowGuestPrompt(true); return }
         if (followLoading) return
-        const wasFollowing = following
-        setFollowing(!wasFollowing)
+        if (following) { setShowUnfollowDialog(true); return }
+        setFollowing(true)
         setFollowLoading(true)
         try {
-            if (wasFollowing) await unfollowUserApi(initialPost.author.id)
-            else              await followUserApi(initialPost.author.id)
+            await followUserApi(initialPost.author.id)
         } catch {
-            setFollowing(wasFollowing)
+            setFollowing(false)
+        } finally {
+            setFollowLoading(false)
+        }
+    }
+
+    async function confirmUnfollow() {
+        setShowUnfollowDialog(false)
+        setFollowing(false)
+        setFollowLoading(true)
+        try {
+            await unfollowUserApi(initialPost.author.id)
+        } catch {
+            setFollowing(true)
         } finally {
             setFollowLoading(false)
         }
@@ -268,24 +285,30 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
         setLogState("logging")
         try {
             const res = await logMeal(initialPost.id)
-            if (res.health_warning.is_flagged) {
+            if (res.health_warning?.is_flagged) {
                 setPendingLogId(res.logged_meal.id)
                 setWarningIngredients(res.health_warning.flagged_ingredients)
                 setLogState("idle")
             } else {
                 setLogState("logged")
                 setRelogCount(c => c + 1)
+                showSuccess("Meal logged successfully!")
             }
         } catch {
             setLogState("idle")
         }
     }
 
-    function handleWarningIgnore() {
+    async function handleWarningIgnore() {
+        const id = pendingLogId
         setPendingLogId(null)
         setWarningIngredients([])
         setLogState("logged")
         setRelogCount(c => c + 1)
+        if (id) {
+            try { await confirmQuickLog(id) } catch { /* log stays, UI already updated */ }
+        }
+        showSuccess("Meal logged successfully!")
     }
 
     async function handleWarningDiscard() {
@@ -301,6 +324,18 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
     return (
         <>
             {showGuestPrompt && <GuestSignInPrompt onClose={() => setShowGuestPrompt(false)} />}
+
+            {showUnfollowDialog && (
+                <ConfirmDialog
+                    title={`Unfollow ${authorName}?`}
+                    message="They won't be notified."
+                    confirmLabel="Unfollow"
+                    cancelLabel="Keep following"
+                    dangerous
+                    onConfirm={confirmUnfollow}
+                    onCancel={() => setShowUnfollowDialog(false)}
+                />
+            )}
 
             {showComments && (
                 <CommentsSheet
@@ -339,6 +374,7 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
                             >
                                 {authorName}
                             </button>
+                            {initialPost.author.role === "coach" && <CoachBadge size={13} />}
                             {showFollow && (
                                 <button
                                     onClick={toggleFollow}
@@ -492,7 +528,8 @@ export default function Feed({ isGuest }: { isGuest?: boolean }) {
     const [cursor,      setCursor]      = useState<string | null | undefined>(undefined)
     const [loading,     setLoading]     = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
-    const sentinelRef = useRef<HTMLDivElement>(null)
+    const sentinelRef  = useRef<HTMLDivElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
 
     const fetchFn = tab === "explore" ? getFeed : getFollowingFeed
 
@@ -526,11 +563,12 @@ export default function Feed({ isGuest }: { isGuest?: boolean }) {
     }, [cursor, loadingMore, fetchFn])
 
     useEffect(() => {
-        const sentinel = sentinelRef.current
+        const sentinel  = sentinelRef.current
+        const container = containerRef.current
         if (!sentinel) return
         const observer = new IntersectionObserver(
             entries => { if (entries[0].isIntersecting) loadMore() },
-            { threshold: 0.1 }
+            { threshold: 0.1, root: container }
         )
         observer.observe(sentinel)
         return () => observer.disconnect()
@@ -541,7 +579,7 @@ export default function Feed({ isGuest }: { isGuest?: boolean }) {
         : "Nothing here yet."
 
     return (
-        <div className="h-full overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+        <div ref={containerRef} className="h-full overflow-y-auto" style={{ scrollbarWidth: "none" }}>
             <div className="w-full max-w-lg mx-auto flex flex-col gap-4 pb-8">
 
                 {/* Tab toggle */}

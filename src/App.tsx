@@ -22,6 +22,7 @@ import FeedPage from "./features/feed/FeedPage"
 import MealPage from "./features/meal/MealPage"
 import ComingSoon from "./components/ui/ComingSoon"
 import Settings from "./features/Settings"
+import AdminDashboard from "./features/admin/AdminDashboard"
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -47,6 +48,9 @@ function App() {
           <Route path="/onboarding/targets" element={<TargetsStep />} />
           <Route path="/onboarding/health-conditions" element={<HealthConditionsStep />} />
         </Route>
+
+        {/* Admin */}
+        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
 
         {/* App — logged in + onboarding complete */}
         <Route element={<ProtectedRoute><OnboardedRoute><Home /></OnboardedRoute></ProtectedRoute>}>

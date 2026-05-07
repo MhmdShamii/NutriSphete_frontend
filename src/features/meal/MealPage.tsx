@@ -19,6 +19,8 @@ import HealthWarningModal from "../mealCreation/components/HealthWarningModal"
 import CommentsSheet from "./CommentsSheet"
 import LazyImage from "../../components/ui/LazyImage"
 import Avatar from "../../components/ui/Avatar"
+import CoachBadge from "../../components/ui/CoachBadge"
+import { useToast } from "../../context/ToastContext"
 
 function Shimmer({ className }: { className?: string }) {
     return (
@@ -51,6 +53,7 @@ function MealPageSkeleton() {
 export default function MealPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const { showSuccess } = useToast()
 
     const [meal, setMeal] = useState<MealDetail | null>(null)
     const [loading, setLoading] = useState(true)
@@ -98,11 +101,12 @@ export default function MealPage() {
         setLogging(true)
         try {
             const res = await logMeal(meal.id)
-            if (res.health_warning.is_flagged) {
+            if (res.health_warning?.is_flagged) {
                 setPendingLogId(res.logged_meal.id)
                 setWarningIngredients(res.health_warning.flagged_ingredients)
             } else {
                 setLogged(true)
+                showSuccess("Meal logged successfully!")
             }
         } catch {
             // silent — button resets
@@ -111,10 +115,15 @@ export default function MealPage() {
         }
     }
 
-    function handleWarningIgnore() {
+    async function handleWarningIgnore() {
+        const id = pendingLogId
         setPendingLogId(null)
         setWarningIngredients([])
         setLogged(true)
+        if (id) {
+            try { await confirmQuickLog(id) } catch { /* log stays, UI already updated */ }
+        }
+        showSuccess("Meal logged successfully!")
     }
 
     async function handleWarningDiscard() {
@@ -189,8 +198,9 @@ export default function MealPage() {
                     className="flex items-center gap-2.5 w-fit hover:opacity-75 transition-opacity"
                 >
                     <Avatar src={meal.author.avatar} name={`${meal.author.first_name} ${meal.author.last_name}`} size={28} />
-                    <span className="text-xs font-medium text-text-muted">
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
                         {meal.author.first_name} {meal.author.last_name}
+                        {meal.author.role === "coach" && <CoachBadge size={12} />}
                     </span>
                 </button>
             </div>

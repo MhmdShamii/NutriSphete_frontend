@@ -27,21 +27,40 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded"
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded"
 import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded"
+import {
+    getCoachApplicationApi,
+    submitCoachApplicationApi,
+    type CoachApplication,
+    type CoachDocument,
+} from "../services/coach/coachApi"
+import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded"
+import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded"
+import PictureAsPdfRoundedIcon from "@mui/icons-material/PictureAsPdfRounded"
+import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded"
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded"
+import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded"
+import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded"
+import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded"
+import { useTheme } from "../hooks/useTheme"
 
 const countries = countriesData as Country[]
 
-type Section = "personal" | "nutrition" | "health" | "danger"
+type Section = "personal" | "appearance" | "nutrition" | "health" | "coach" | "danger"
 
 const NAV: { key: Section; label: string; icon: React.ReactNode }[] = [
-    { key: "personal",  label: "Personal Info",       icon: <PersonRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "nutrition", label: "Nutrition Goals",     icon: <LocalFireDepartmentRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "health",    label: "Health Conditions",   icon: <FavoriteRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "danger",    label: "Account",             icon: <WarningAmberRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "personal",   label: "Personal Info",     icon: <PersonRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "appearance", label: "Appearance",        icon: <LightModeRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "nutrition",  label: "Nutrition Goals",   icon: <LocalFireDepartmentRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "health",     label: "Health Conditions", icon: <FavoriteRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "coach",      label: "Become a Coach",    icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "danger",     label: "Account",           icon: <WarningAmberRoundedIcon sx={{ fontSize: 17 }} /> },
 ]
 
 const inputCls =
-    "w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-text outline-none " +
-    "focus:border-primary/60 focus:bg-primary/5 focus:shadow-[0_0_14px_rgba(127,250,136,0.10)] " +
+    "w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-3.5 py-2.5 text-sm text-text outline-none " +
+    "focus:border-primary/60 focus:bg-primary/5 focus:shadow-[0_0_14px_var(--primary-glow)] " +
     "transition-all duration-200 placeholder:text-text-muted/30"
 
 function findScrollContainer(el: HTMLElement | null): HTMLElement | null {
@@ -217,9 +236,10 @@ function PersonalInfoSection() {
                 <div className="flex justify-end pt-1">
                     <button type="submit" disabled={!dirty || loading}
                         className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold
-                        bg-primary text-black hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200">
+                        hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)" }}>
                         {loading
-                            ? <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                            ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                             : <CheckRoundedIcon sx={{ fontSize: 15 }} />}
                         Save changes
                     </button>
@@ -325,11 +345,11 @@ function NutritionGoalsSection() {
             </div>
 
             <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl"
-                style={{ border: "1px solid rgba(127,250,136,0.15)", background: "rgba(127,250,136,0.06)" }}>
+                style={{ border: "1px solid var(--primary-glow)", background: "var(--primary-glow)" }}>
                 <svg className="flex-shrink-0 mt-px" width="14" height="14" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#7FFA88" strokeWidth="1.5" strokeOpacity="0.6" />
-                    <path d="M10 9v5" stroke="#7FFA88" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
-                    <circle cx="10" cy="6.5" r="0.75" fill="#7FFA88" fillOpacity="0.8" />
+                    <circle cx="10" cy="10" r="9" stroke="var(--primary)" strokeWidth="1.5" strokeOpacity="0.6" />
+                    <path d="M10 9v5" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
+                    <circle cx="10" cy="6.5" r="0.75" fill="var(--primary)" fillOpacity="0.8" />
                 </svg>
                 <p className="text-xs text-primary/70 leading-relaxed">
                     Changes to your nutrition targets will take effect starting{" "}
@@ -385,9 +405,10 @@ function NutritionGoalsSection() {
                 <div className="flex justify-end pt-1">
                     <button type="submit" disabled={!dirty || loading}
                         className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold
-                        bg-primary text-black hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200">
+                        hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)" }}>
                         {loading
-                            ? <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                            ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                             : <CheckRoundedIcon sx={{ fontSize: 15 }} />}
                         Save changes
                     </button>
@@ -562,6 +583,505 @@ function HealthSection() {
     )
 }
 
+// ─── Coach Application ────────────────────────────────────────────────────────
+
+const MAX_CHARS = 1000
+const MAX_FILES = 8
+const ACCEPTED = ".pdf,image/*"
+
+const PERKS = [
+    "Get discovered by thousands of members looking for guidance",
+    "Build your personal brand and coaching portfolio",
+    "Access exclusive coach tools and analytics",
+]
+
+function formatFileSize(bytes: number) {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+// ── Local file chip (for new uploads, uses object URL preview) ────────────────
+
+function FileChip({ file, onRemove }: { file: File; onRemove: () => void }) {
+    const isPdf = file.type === "application/pdf"
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (!isPdf) {
+            const url = URL.createObjectURL(file)
+            setPreviewUrl(url)
+            return () => URL.revokeObjectURL(url)
+        }
+    }, [file, isPdf])
+
+    return (
+        <div className="relative group flex flex-col rounded-xl overflow-hidden flex-shrink-0"
+            style={{ width: 120, border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
+            <div className="w-full h-16 flex items-center justify-center overflow-hidden flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.03)" }}>
+                {previewUrl
+                    ? <img src={previewUrl} alt={file.name} className="w-full h-full object-cover" />
+                    : <div className="flex flex-col items-center gap-1">
+                        <PictureAsPdfRoundedIcon sx={{ fontSize: 22 }} className="text-red-400" />
+                        <span className="font-bold tracking-wide" style={{ color: "rgba(248,113,113,0.6)", fontSize: 10 }}>PDF</span>
+                      </div>
+                }
+            </div>
+            <div className="px-2 py-1.5">
+                <p className="text-xs font-medium text-text truncate leading-tight">{file.name}</p>
+                <p className="text-xs leading-tight" style={{ color: "var(--text-muted)", opacity: 0.5 }}>{formatFileSize(file.size)}</p>
+            </div>
+            <button type="button" onClick={onRemove}
+                className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-md
+                opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                style={{ background: "rgba(0,0,0,0.65)" }}>
+                <CloseRoundedIcon sx={{ fontSize: 11 }} className="text-white" />
+            </button>
+        </div>
+    )
+}
+
+// ── Submitted doc chip (uses signed URL from API) ─────────────────────────────
+
+function DocChip({ doc }: { doc: CoachDocument }) {
+    const isImage = doc.type === "image"
+    return (
+        <a href={doc.url} target="_blank" rel="noopener noreferrer"
+            className="relative group flex flex-col rounded-xl overflow-hidden flex-shrink-0 cursor-pointer"
+            style={{ width: 120, border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
+            <div className="w-full h-16 flex items-center justify-center overflow-hidden flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.03)" }}>
+                {isImage
+                    ? <img src={doc.url} alt={doc.original_name} className="w-full h-full object-cover" />
+                    : <div className="flex flex-col items-center gap-1">
+                        <PictureAsPdfRoundedIcon sx={{ fontSize: 22 }} className="text-red-400" />
+                        <span className="font-bold tracking-wide" style={{ color: "rgba(248,113,113,0.6)", fontSize: 10 }}>PDF</span>
+                      </div>
+                }
+            </div>
+            <div className="px-2 py-1.5">
+                <p className="text-xs font-medium text-text truncate leading-tight">{doc.original_name}</p>
+                <p className="text-xs leading-tight text-primary/50">View</p>
+            </div>
+        </a>
+    )
+}
+
+// ── Status views ──────────────────────────────────────────────────────────────
+
+function PendingView({ application }: { application: CoachApplication }) {
+    return (
+        <div className="flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                    <p className="text-xs text-text-muted mt-0.5">Your application is being reviewed.</p>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary/80 flex-shrink-0"
+                    style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    Pending review
+                </div>
+            </div>
+
+            <div className="flex flex-col gap-4 p-4 rounded-2xl"
+                style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
+                <div className="flex flex-col gap-1.5">
+                    <p className="text-xs font-medium text-text-muted">Your description</p>
+                    <p className="text-sm text-text leading-relaxed whitespace-pre-wrap break-words min-w-0">{application.description}</p>
+                </div>
+
+                {application.documents.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                        <p className="text-xs font-medium text-text-muted">Submitted documents</p>
+                        <div className="flex flex-wrap gap-2">
+                            {application.documents.map(doc => (
+                                <DocChip key={doc.id} doc={doc} />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                <p className="text-xs text-text-muted/40">
+                    Submitted {new Date(application.submitted_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                </p>
+            </div>
+
+            <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
+                style={{ border: "1px solid var(--primary-glow)", background: "var(--primary-glow)" }}>
+                <HourglassEmptyRoundedIcon sx={{ fontSize: 15 }} className="text-primary/60 flex-shrink-0 mt-px" />
+                <p className="text-xs text-text-muted leading-relaxed">
+                    Our team is reviewing your application. You'll be notified by email once a decision has been made.
+                </p>
+            </div>
+        </div>
+    )
+}
+
+function ApprovedView() {
+    return (
+        <div className="flex flex-col gap-5">
+            <div>
+                <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                <p className="text-xs text-text-muted mt-0.5">Your application status.</p>
+            </div>
+            <div className="flex flex-col items-center text-center gap-4 py-10 px-6 rounded-2xl"
+                style={{ border: "1px solid var(--primary-glow)", background: "var(--primary-glow)" }}>
+                <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                    style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
+                    <CheckCircleRoundedIcon sx={{ fontSize: 28 }} className="text-primary" />
+                </div>
+                <div>
+                    <p className="text-sm font-semibold text-text">You're a Coach!</p>
+                    <p className="text-xs text-text-muted mt-1.5 max-w-xs leading-relaxed">
+                        Your application has been approved. You now have access to coach tools and your profile is visible to members.
+                    </p>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary"
+                    style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
+                    <WorkspacePremiumRoundedIcon sx={{ fontSize: 13 }} />
+                    Approved
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function RejectedView({
+    application,
+    cooldownUntil,
+    onReapply,
+}: {
+    application: CoachApplication
+    cooldownUntil: string | null
+    onReapply: () => void
+}) {
+    const formattedDate = cooldownUntil
+        ? new Date(cooldownUntil + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+        : null
+
+    return (
+        <div className="flex flex-col gap-5">
+            <div>
+                <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                <p className="text-xs text-text-muted mt-0.5">Your application was not approved.</p>
+            </div>
+
+            <div className="flex flex-col gap-3 p-4 rounded-2xl"
+                style={{ border: "1px solid rgba(248,113,113,0.2)", background: "rgba(248,113,113,0.04)" }}>
+                <div className="flex items-center gap-2.5">
+                    <ErrorRoundedIcon sx={{ fontSize: 16 }} className="text-red-400 flex-shrink-0" />
+                    <p className="text-sm font-medium text-text">Application not approved</p>
+                </div>
+                {application.rejection_reason && (
+                    <p className="text-xs text-text-muted leading-relaxed pl-6">{application.rejection_reason}</p>
+                )}
+            </div>
+
+            {/* Cooldown banner */}
+            {formattedDate && (
+                <div className="flex items-start gap-3 p-3.5 rounded-xl"
+                    style={{ border: "1px solid rgba(251,146,60,0.2)", background: "rgba(251,146,60,0.05)" }}>
+                    <span className="text-amber-400 flex-shrink-0 mt-0.5">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <p className="text-xs font-medium text-amber-400">Reapplication on cooldown</p>
+                        <p className="text-xs text-text-muted mt-0.5">
+                            You can submit a new application on <span className="text-text font-medium">{formattedDate}</span>.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex justify-end">
+                <button type="button" onClick={onReapply} disabled={!!cooldownUntil}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold
+                    hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)", boxShadow: cooldownUntil ? "none" : "0 0 20px var(--btn-shadow)" }}>
+                    <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />
+                    Apply again
+                </button>
+            </div>
+        </div>
+    )
+}
+
+// ── Main section ──────────────────────────────────────────────────────────────
+
+function CoachApplicationSection() {
+    const { showError, showSuccess } = useToast()
+
+    const [initLoading, setInitLoading] = useState(true)
+    const [application, setApplication] = useState<CoachApplication | null>(null)
+    const [reapplying, setReapplying] = useState(false)
+    const [cooldownUntil, setCooldownUntil] = useState<string | null>(null)
+
+    const [description, setDescription] = useState("")
+    const [files, setFiles] = useState<File[]>([])
+    const [dragging, setDragging] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const dropRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        getCoachApplicationApi()
+            .then(app => {
+                setApplication(app)
+                if (app?.status === "rejected" && app.can_reapply_at) {
+                    const cooldownActive = new Date(app.can_reapply_at + "T00:00:00") > new Date()
+                    if (cooldownActive) setCooldownUntil(app.can_reapply_at)
+                }
+            })
+            .catch(() => showError("Failed to load application status"))
+            .finally(() => setInitLoading(false))
+    }, [])
+
+    function addFiles(incoming: FileList | null) {
+        if (!incoming) return
+        const MAX_BYTES = 10 * 1024 * 1024
+        const all = Array.from(incoming)
+        const tooBig = all.filter(f => f.size > MAX_BYTES)
+        if (tooBig.length) showError(`${tooBig.map(f => f.name).join(", ")} exceed${tooBig.length === 1 ? "s" : ""} the 10 MB limit`)
+        const valid = all.filter(f => f.size <= MAX_BYTES && (f.type === "application/pdf" || f.type.startsWith("image/")))
+        setFiles(prev => {
+            const existingKeys = new Set(prev.map(f => f.name + f.size))
+            const next = [...prev, ...valid.filter(f => !existingKeys.has(f.name + f.size))]
+            if (next.length > MAX_FILES) { showError(`Max ${MAX_FILES} files allowed`); return next.slice(0, MAX_FILES) }
+            return next
+        })
+    }
+
+    function handleDragOver(e: React.DragEvent) { e.preventDefault(); setDragging(true) }
+    function handleDragLeave(e: React.DragEvent) {
+        if (dropRef.current && !dropRef.current.contains(e.relatedTarget as Node)) setDragging(false)
+    }
+    function handleDrop(e: React.DragEvent) { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files) }
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault()
+        if (!description.trim()) { showError("Please write a short description about yourself"); return }
+        if (description.trim().length < 50) { showError("Description must be at least 50 characters"); return }
+        if (files.length === 0) { showError("Please attach at least one document"); return }
+
+        const formData = new FormData()
+        formData.append("description", description.trim())
+        files.forEach(f => formData.append("documents[]", f))
+
+        setSubmitting(true)
+        try {
+            const result = await submitCoachApplicationApi(formData)
+            setApplication(result)
+            setReapplying(false)
+            showSuccess("Application submitted successfully!")
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ""
+            const cooldownMatch = msg.match(/You can reapply on (\d{4}-\d{2}-\d{2})/)
+            if (cooldownMatch) {
+                setCooldownUntil(cooldownMatch[1])
+                setReapplying(false)
+            } else {
+                showError(msg || "Failed to submit application — please try again")
+            }
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    // ── Loading ──────────────────────────────────────────────────────────────
+
+    if (initLoading) {
+        return (
+            <div className="flex flex-col gap-5">
+                <div>
+                    <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                </div>
+                <div className="flex items-center gap-2 py-6">
+                    <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs text-text-muted">Loading…</span>
+                </div>
+            </div>
+        )
+    }
+
+    // ── Status views ─────────────────────────────────────────────────────────
+
+    if (application?.status === "pending") return <PendingView application={application} />
+    if (application?.status === "approved") return <ApprovedView />
+    if (application?.status === "rejected" && !reapplying) {
+        return <RejectedView
+            application={application}
+            cooldownUntil={cooldownUntil}
+            onReapply={() => {
+                setDescription(application.description)
+                setCooldownUntil(null)
+                setReapplying(true)
+            }}
+        />
+    }
+
+    // ── Application form ─────────────────────────────────────────────────────
+
+    return (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+            {/* Hero card */}
+            <div className="relative overflow-hidden rounded-2xl p-5"
+                style={{ background: "linear-gradient(135deg, var(--primary-glow) 0%, transparent 100%)", border: "1px solid var(--primary-glow)" }}>
+                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-10"
+                    style={{ background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)" }} />
+                <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
+                        style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
+                        <WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} className="text-primary" />
+                    </div>
+                    <div>
+                        <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                        <p className="text-xs text-text-muted mt-0.5 leading-relaxed">Share your expertise and help our community thrive.</p>
+                    </div>
+                </div>
+                <ul className="mt-4 flex flex-col gap-2">
+                    {PERKS.map((perk, i) => (
+                        <li key={i} className="flex items-start gap-2.5 text-xs text-text-muted">
+                            <CheckRoundedIcon sx={{ fontSize: 13 }} className="text-primary flex-shrink-0 mt-px" />
+                            {perk}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Description */}
+            <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-text-muted">About you</label>
+                    <span className={`text-xs tabular-nums transition-colors ${description.length > MAX_CHARS * 0.9 ? "text-amber-400" : "text-text-muted/40"}`}>
+                        {description.length} / {MAX_CHARS}
+                    </span>
+                </div>
+                <textarea
+                    value={description}
+                    onChange={e => setDescription(e.target.value.slice(0, MAX_CHARS))}
+                    rows={5}
+                    placeholder="Tell us about your background, certifications, areas of expertise, and what makes you a great coach…"
+                    className={inputCls + " resize-none leading-relaxed"}
+                />
+                <p className="text-xs text-text-muted/40">Minimum 50 characters.</p>
+            </div>
+
+            {/* File upload */}
+            <div className="flex flex-col gap-2.5">
+                <label className="text-xs font-medium text-text-muted">
+                    Supporting documents
+                    <span className="ml-1.5 text-text-muted/40 font-normal">PDF or images · at least 1, up to {MAX_FILES} files</span>
+                </label>
+                <div ref={dropRef} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200
+                    ${dragging ? "border-primary/50 bg-primary/8" : "border-dashed border-[var(--input-border)]"}`}>
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium flex-shrink-0
+                        bg-[var(--muted-bg)] border border-[var(--input-border)] text-text-muted hover:text-text hover:border-[var(--input-border)] transition-all duration-150">
+                        <UploadFileRoundedIcon sx={{ fontSize: 14 }} />
+                        Add files
+                    </button>
+                    <p className="text-xs text-text-muted/40 truncate">
+                        {dragging ? "Drop to add…" : "PDF, JPG, PNG · up to 10 MB each"}
+                    </p>
+                    <input ref={fileInputRef} type="file" accept={ACCEPTED} multiple className="hidden"
+                        onChange={e => { addFiles(e.target.files); e.target.value = "" }} />
+                </div>
+
+                {files.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        {files.map((file, i) => (
+                            <FileChip key={i} file={file} onRemove={() => setFiles(prev => prev.filter((_, j) => j !== i))} />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Submit */}
+            <div className="flex justify-end pt-1">
+                <button type="submit" disabled={submitting}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold
+                    hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    style={{ background: "var(--btn-bg)", color: "var(--btn-text)", boxShadow: "0 0 20px var(--btn-shadow)" }}>
+                    {submitting
+                        ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        : <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />}
+                    {submitting ? "Submitting…" : "Submit Application"}
+                </button>
+            </div>
+        </form>
+    )
+}
+
+// ─── Appearance ───────────────────────────────────────────────────────────────
+
+function AppearanceSection() {
+    const { isDark, setTheme } = useTheme()
+
+    return (
+        <div className="flex flex-col gap-5">
+            <div>
+                <h2 className="text-base font-semibold text-text">Appearance</h2>
+                <p className="text-xs text-text-muted mt-0.5">Choose how NutriSphere looks for you.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                {/* Light */}
+                <button
+                    type="button"
+                    onClick={() => setTheme(false)}
+                    className={`flex flex-col gap-3 p-3 rounded-2xl text-left transition-all duration-200 ${
+                        !isDark ? "ring-2 ring-primary" : "hover:opacity-90"
+                    }`}
+                    style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}
+                >
+                    <div className="w-full rounded-xl overflow-hidden"
+                        style={{ background: "#e6e6e6", border: "1px solid rgba(0,0,0,0.07)" }}>
+                        <div className="h-3" style={{ background: "#ffffff", borderBottom: "1px solid rgba(0,0,0,0.06)" }} />
+                        <div className="p-2 flex flex-col gap-1.5">
+                            <div className="h-1.5 rounded-full w-3/4" style={{ background: "rgba(0,0,0,0.10)" }} />
+                            <div className="h-1.5 rounded-full w-1/2" style={{ background: "rgba(0,219,88,0.45)" }} />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <LightModeRoundedIcon sx={{ fontSize: 13 }} className={!isDark ? "text-primary" : "text-text-muted"} />
+                        <span className={`text-xs font-medium ${!isDark ? "text-text" : "text-text-muted"}`}>Light</span>
+                        {!isDark && <CheckRoundedIcon sx={{ fontSize: 12 }} className="text-primary ml-auto" />}
+                    </div>
+                </button>
+
+                {/* Dark */}
+                <button
+                    type="button"
+                    onClick={() => setTheme(true)}
+                    className={`flex flex-col gap-3 p-3 rounded-2xl text-left transition-all duration-200 ${
+                        isDark ? "ring-2 ring-primary" : "hover:opacity-90"
+                    }`}
+                    style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}
+                >
+                    <div className="w-full rounded-xl overflow-hidden"
+                        style={{ background: "#0A0B0A", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <div className="h-3" style={{ background: "#171917", borderBottom: "1px solid rgba(255,255,255,0.06)" }} />
+                        <div className="p-2 flex flex-col gap-1.5">
+                            <div className="h-1.5 rounded-full w-3/4" style={{ background: "rgba(255,255,255,0.12)" }} />
+                            <div className="h-1.5 rounded-full w-1/2" style={{ background: "rgba(127,250,136,0.45)" }} />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <DarkModeRoundedIcon sx={{ fontSize: 13 }} className={isDark ? "text-primary" : "text-text-muted"} />
+                        <span className={`text-xs font-medium ${isDark ? "text-text" : "text-text-muted"}`}>Dark</span>
+                        {isDark && <CheckRoundedIcon sx={{ fontSize: 12 }} className="text-primary ml-auto" />}
+                    </div>
+                </button>
+            </div>
+        </div>
+    )
+}
+
 // ─── Danger Zone ──────────────────────────────────────────────────────────────
 
 function DangerZoneSection() {
@@ -609,7 +1129,7 @@ function DangerZoneSection() {
                     </div>
                     <button type="button" onClick={handleLogout}
                         className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium flex-shrink-0
-                        text-text-muted border border-white/10 hover:border-red-400/40 hover:text-red-400
+                        text-text-muted border border-[var(--input-border)] hover:border-red-400/40 hover:text-red-400
                         hover:bg-red-400/8 transition-all duration-200">
                         <LogoutRoundedIcon sx={{ fontSize: 15 }} />
                         Log out
@@ -629,7 +1149,7 @@ function DangerZoneSection() {
                         {confirmAllDevices && (
                             <button type="button" onClick={() => setConfirmAllDevices(false)}
                                 className="px-3.5 py-2 rounded-xl text-xs font-medium text-text-muted
-                                border border-white/10 hover:border-white/20 hover:text-text transition-all duration-200">
+                                border border-[var(--input-border)] hover:border-[var(--input-border)] hover:text-text transition-all duration-200">
                                 Cancel
                             </button>
                         )}
@@ -638,7 +1158,7 @@ function DangerZoneSection() {
                             transition-all duration-200 disabled:opacity-50
                             ${confirmAllDevices
                                 ? "bg-red-500/90 text-white hover:bg-red-500"
-                                : "text-text-muted border border-white/10 hover:border-red-400/40 hover:text-red-400 hover:bg-red-400/8"
+                                : "text-text-muted border border-[var(--input-border)] hover:border-red-400/40 hover:text-red-400 hover:bg-red-400/8"
                             }`}>
                             {loadingAll
                                 ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -655,10 +1175,12 @@ function DangerZoneSection() {
 // ─── Settings Page ────────────────────────────────────────────────────────────
 
 const SECTIONS: { key: Section; component: React.ReactNode }[] = [
-    { key: "personal",  component: <PersonalInfoSection /> },
-    { key: "nutrition", component: <NutritionGoalsSection /> },
-    { key: "health",    component: <HealthSection /> },
-    { key: "danger",    component: <DangerZoneSection /> },
+    { key: "personal",   component: <PersonalInfoSection /> },
+    { key: "appearance", component: <AppearanceSection /> },
+    { key: "nutrition",  component: <NutritionGoalsSection /> },
+    { key: "health",     component: <HealthSection /> },
+    { key: "coach",      component: <CoachApplicationSection /> },
+    { key: "danger",     component: <DangerZoneSection /> },
 ]
 
 export default function Settings() {
@@ -688,7 +1210,7 @@ export default function Settings() {
                             transition-all duration-200 text-left w-full
                             ${active === key
                                 ? "bg-primary/15 text-primary"
-                                : "text-text-muted hover:text-text hover:bg-white/5"
+                                : "text-text-muted hover:text-text hover:bg-[var(--muted-bg)]"
                             }`}>
                             {icon}
                             {label}

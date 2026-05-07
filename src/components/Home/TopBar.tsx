@@ -12,19 +12,24 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded"
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded"
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded"
+import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded"
 import {
     checkNotificationsApi,
     getNotificationsApi,
     type NotificationItem,
 } from "../../services/social/followApi"
+import CoachBadge from "../ui/CoachBadge"
 
-const menuItems = [
-    { label: "Profile", icon: <PersonRoundedIcon sx={{ fontSize: 16 }} />, path: "/profile" },
+const BASE_MENU_ITEMS = [
+    { label: "Profile",  icon: <PersonRoundedIcon sx={{ fontSize: 16 }} />,   path: "/profile" },
     { label: "Settings", icon: <SettingsRoundedIcon sx={{ fontSize: 16 }} />, path: "/settings" },
 ]
 
+const ADMIN_MENU_ITEM = { label: "Dashboard", icon: <DashboardRoundedIcon sx={{ fontSize: 16 }} />, path: "/admin" }
+
 function notifTarget(n: NotificationItem): string {
     if (n.type === "follow") return `/profile/${n.actor.id}`
+    if (n.type === "coach_application" || n.type === "coach_application_approved" || n.type === "coach_application_rejected") return `/settings`
     const base = `/meals/${n.data.post_id}`
     if ((n.type === "comment" || n.type === "reply") && n.data.comment_id) {
         return `${base}#comment-${n.data.comment_id}`
@@ -34,11 +39,14 @@ function notifTarget(n: NotificationItem): string {
 
 function notifMessage(n: NotificationItem): string {
     switch (n.type) {
-        case "like":    return `liked your post "${n.data.post_name}"`
-        case "comment": return `commented on "${n.data.post_name}"`
-        case "reply":   return `replied to your comment on "${n.data.post_name}"`
-        case "relog":   return `relogged your meal "${n.data.post_name}"`
-        case "follow":  return `started following you`
+        case "like":                         return `liked your post "${n.data.post_name}"`
+        case "comment":                      return `commented on "${n.data.post_name}"`
+        case "reply":                        return `replied to your comment on "${n.data.post_name}"`
+        case "relog":                        return `relogged your meal "${n.data.post_name}"`
+        case "follow":                       return `started following you`
+        case "coach_application":            return `submitted a coach application`
+        case "coach_application_approved":   return `approved your coach application`
+        case "coach_application_rejected":   return `reviewed your coach application`
     }
 }
 
@@ -207,6 +215,11 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                                                 onClick={() => { navigate(notifTarget(n)); setNotifOpen(false) }}
                                                 className="flex items-start gap-3 px-3 py-2.5 rounded-xl
                                                     hover:bg-primary/5 transition-colors duration-150 cursor-pointer"
+                                                style={n.type === "coach_application_approved"
+                                                    ? { background: "rgba(0,219,88,0.06)", borderRadius: 12 }
+                                                    : n.type === "coach_application_rejected"
+                                                    ? { background: "rgba(248,113,113,0.05)", borderRadius: 12 }
+                                                    : undefined}
                                             >
                                                 <Avatar
                                                     src={n.actor.avatar}
@@ -217,19 +230,33 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                                                 />
                                                 <div className="min-w-0">
                                                     <p className="text-xs text-text leading-snug">
-                                                        <span
-                                                            onClick={e => { e.stopPropagation(); navigate(`/profile/${n.actor.id}`); setNotifOpen(false) }}
-                                                            className="font-semibold hover:text-primary transition-colors cursor-pointer"
-                                                        >
-                                                            {n.actor.first_name} {n.actor.last_name}
+                                                        <span className="inline-flex items-center gap-1 align-middle">
+                                                            <span
+                                                                onClick={e => { e.stopPropagation(); navigate(`/profile/${n.actor.id}`); setNotifOpen(false) }}
+                                                                className="font-semibold hover:text-primary transition-colors cursor-pointer"
+                                                            >
+                                                                {n.actor.first_name} {n.actor.last_name}
+                                                            </span>
+                                                            {n.actor.role === "coach" && <CoachBadge size={12} />}
                                                         </span>
-                                                        {" "}{notifMessage(n)}
+                                                        {" "}
+                                                        <span className={
+                                                            n.type === "coach_application_approved" ? "text-primary font-medium" :
+                                                            n.type === "coach_application_rejected" ? "text-red-400" : ""
+                                                        }>
+                                                            {notifMessage(n)}
+                                                        </span>
                                                     </p>
-                                                    {n.type === "comment" || n.type === "reply" ? (
+                                                    {(n.type === "comment" || n.type === "reply") && (
                                                         <p className="text-xs text-text-muted mt-0.5 truncate">
                                                             "{n.data.comment_body}"
                                                         </p>
-                                                    ) : null}
+                                                    )}
+                                                    {n.type === "coach_application_rejected" && n.data.reason && (
+                                                        <p className="text-xs text-text-muted/70 mt-0.5 line-clamp-2">
+                                                            {n.data.reason}
+                                                        </p>
+                                                    )}
                                                     <p className="text-[10px] text-text-muted mt-1">{relativeTime(n.created_at)}</p>
                                                 </div>
                                             </div>
@@ -251,7 +278,10 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                                 <Avatar src={user.image.avatar} name={`${user.first_name} ${user.last_name}`} size={32} ring="rgba(127,250,136,0.3)" />
                                 <span className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
                             </div>
-                            <span className="text-sm font-medium text-text hidden sm:block">{user.first_name}</span>
+                            <span className="hidden sm:flex items-center gap-1">
+                                <span className="text-sm font-medium text-text">{user.first_name}</span>
+                                {user.role === "coach" && <CoachBadge />}
+                            </span>
                             <KeyboardArrowDownRoundedIcon
                                 sx={{ fontSize: 16 }}
                                 className={`text-text-muted transition-transform duration-200 hidden sm:block ${menuOpen ? "rotate-180" : ""}`}
@@ -272,13 +302,16 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                         >
                             {/* User info header */}
                             <div className="px-4 py-3 border-b border-white/8">
-                                <p className="text-sm font-semibold text-text">{user.first_name} {user.last_name}</p>
+                                <div className="flex items-center gap-1.5">
+                                    <p className="text-sm font-semibold text-text">{user.first_name} {user.last_name}</p>
+                                    {user.role === "coach" && <CoachBadge />}
+                                </div>
                                 <p className="text-xs text-text-muted truncate">{user.email}</p>
                             </div>
 
                             {/* Menu items */}
                             <div className="p-1.5 flex flex-col gap-0.5">
-                                {menuItems.map(item => (
+                                {[...BASE_MENU_ITEMS, ...(user.role === "admin" ? [ADMIN_MENU_ITEM] : [])].map(item => (
                                     <button
                                         key={item.path}
                                         onClick={() => { navigate(item.path); setMenuOpen(false) }}

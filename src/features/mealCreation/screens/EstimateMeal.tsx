@@ -13,7 +13,7 @@ const steps = [
 ]
 
 export default function EstimateMeal() {
-    const { showError } = useToast()
+    const { showError, showSuccess } = useToast()
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     const [resetKey, setResetKey] = useState(0)
@@ -60,6 +60,7 @@ export default function EstimateMeal() {
         try {
             await confirmQuickLog(entry.id)
             reset()
+            showSuccess("Meal logged successfully!")
         } catch (err) {
             showError(extractApiError(err))
         } finally {
