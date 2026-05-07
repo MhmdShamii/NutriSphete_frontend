@@ -27,7 +27,7 @@ function makeInitialForm(): MealFormData {
 }
 
 export default function CreateMeal() {
-    const { showError, showWarning: toastWarning } = useToast()
+    const { showError, showSuccess, showWarning: toastWarning } = useToast()
     const [view, setView] = useState<"post" | "quick" | "estimate">("post")
     const [form, setForm] = useState<MealFormData>(makeInitialForm)
     const [formKey, setFormKey] = useState(0)
@@ -126,6 +126,7 @@ export default function CreateMeal() {
             }
             resetForm()
             if (logFailed) toastWarning("Meal saved! Couldn't add it to today's log — try logging from your profile.")
+            else showSuccess("Meal logged successfully!")
         } catch (err) {
             showError(extractApiError(err))
         } finally {
@@ -139,6 +140,7 @@ export default function CreateMeal() {
             setPendingLogId(null)
             setShowWarning(false)
             resetForm()
+            showSuccess("Meal logged successfully!")
         } else {
             // "create" context: draft is already set, just close and let user proceed to review
             setShowWarning(false)

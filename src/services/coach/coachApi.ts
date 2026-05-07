@@ -16,6 +16,7 @@ export type CoachApplication = {
     description: string
     rejection_reason: string | null
     reviewed_at: string | null
+    can_reapply_at: string | null
     documents: CoachDocument[]
     submitted_at: string
 }

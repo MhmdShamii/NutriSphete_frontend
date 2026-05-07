@@ -9,6 +9,7 @@ import {
     type FollowUser,
 } from "../../services/social/followApi"
 import Avatar from "../../components/ui/Avatar"
+import CoachBadge from "../../components/ui/CoachBadge"
 
 interface Props {
     userId: number
@@ -121,9 +122,12 @@ export default function FollowListModal({ userId, mode, onClose }: Props) {
                                         className="flex items-center gap-3 flex-1 min-w-0 text-left"
                                     >
                                         <Avatar src={user.avatar} name={`${user.first_name} ${user.last_name}`} size={40} />
-                                        <p className="text-sm font-medium text-text truncate">
-                                            {user.first_name} {user.last_name}
-                                        </p>
+                                        <span className="flex items-center gap-1.5 min-w-0">
+                                            <p className="text-sm font-medium text-text truncate">
+                                                {user.first_name} {user.last_name}
+                                            </p>
+                                            {user.role === "coach" && <CoachBadge size={13} />}
+                                        </span>
                                     </button>
                                     <button
                                         onClick={() => toggleFollow(user)}
