@@ -36,6 +36,11 @@ import {
     type AdminUser,
     type AdminUserRole,
 } from "../../services/admin/usersApi"
+import {
+    getAdminAnalyticsApi,
+    type PlatformAnalytics,
+    type HistoryPoint,
+} from "../../services/admin/analyticsApi"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -95,40 +100,201 @@ function RoleBadge({ role }: { role: string }) {
 
 // ─── Overview Section ─────────────────────────────────────────────────────────
 
-const STATS = [
-    { label: "Total Users",        value: "12,847", sub: "+124 today",        color: "text-primary",    dot: "bg-primary" },
-    { label: "Coach Applications", value: "18",     sub: "3 pending review",  color: "text-amber-400",  dot: "bg-amber-400" },
-    { label: "Meals Logged",       value: "48,291", sub: "+892 today",        color: "text-blue-400",   dot: "bg-blue-400" },
-    { label: "Active Today",       value: "1,203",  sub: "9.4% of users",     color: "text-pink-400",   dot: "bg-pink-400" },
-]
+function fillHistory(history: HistoryPoint[], days: number): { date: string; count: number }[] {
+    const map = new Map(history.map(p => [p.date, p.count]))
+    const result: { date: string; count: number }[] = []
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        const key = d.toISOString().slice(0, 10)
+        result.push({ date: key, count: map.get(key) ?? 0 })
+    }
+    return result
+}
+
+function ChangeChip({ pct }: { pct: number | null }) {
+    if (pct === null) return <span className="text-xs text-text-muted/40">—</span>
+    const up = pct >= 0
+    return (
+        <span className={`text-xs font-medium ${up ? "text-primary" : "text-red-400"}`}>
+            {up ? "↑" : "↓"} {Math.abs(pct).toFixed(1)}%
+        </span>
+    )
+}
+
+function MiniBarChart({ data, color = "rgba(127,250,136," }: { data: { date: string; count: number }[]; color?: string }) {
+    const max = Math.max(...data.map(d => d.count), 1)
+    const today = new Date().toISOString().slice(0, 10)
+    return (
+        <div className="flex items-end gap-px h-12 w-full">
+            {data.map(d => {
+                const isToday = d.date === today
+                const pct = (d.count / max) * 100
+                return (
+                    <div key={d.date} className="flex-1 flex flex-col justify-end group relative">
+                        {d.count > 0 && (
+                            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] text-text whitespace-nowrap
+                                opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                {d.count}
+                            </span>
+                        )}
+                        <div
+                            className="w-full rounded-sm transition-all duration-300"
+                            style={{
+                                height: `${Math.max(pct, d.count > 0 ? 6 : 2)}%`,
+                                background: isToday
+                                    ? `linear-gradient(to top, ${color}0.8), ${color}0.4))`
+                                    : "rgba(255,255,255,0.08)",
+                                opacity: d.count === 0 ? 0.3 : 1,
+                            }}
+                        />
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
 
 function OverviewSection({ onGoToApps }: { onGoToApps: () => void }) {
+    const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null)
+    const [analyticsLoading, setAnalyticsLoading] = useState(true)
     const [recentApps, setRecentApps] = useState<AdminApplication[]>([])
 
+    function fetchAnalytics() {
+        return getAdminAnalyticsApi().then(setAnalytics).catch(() => {})
+    }
+
+    function fetchPending() {
+        return getAdminApplicationsApi("pending")
+            .then(page => setRecentApps(page.data.slice(0, 3)))
+            .catch(() => {})
+    }
+
     useEffect(() => {
-        getAdminApplicationsApi("pending").then(page => setRecentApps(page.data.slice(0, 3))).catch(() => {})
+        Promise.all([fetchAnalytics(), fetchPending()]).finally(() => setAnalyticsLoading(false))
+
+        let timeoutId: ReturnType<typeof setTimeout>
+
+        function scheduleNext() {
+            const delay = Math.floor(Math.random() * 5000) + 10000 // 10–15 s
+            timeoutId = setTimeout(() => {
+                Promise.all([fetchAnalytics(), fetchPending()])
+                scheduleNext()
+            }, delay)
+        }
+
+        scheduleNext()
+        return () => clearTimeout(timeoutId)
     }, [])
+
+    const a = analytics
+
+    const statCards = a ? [
+        {
+            label: "Total Users",
+            value: a.users.total.toLocaleString(),
+            sub: `+${a.users.new_today} today`,
+            change: a.users.change_percent,
+            color: "text-primary",
+            dot: "bg-primary",
+        },
+        {
+            label: "Coach Applications",
+            value: a.coach_applications.total.toLocaleString(),
+            sub: `${a.coach_applications.pending} pending`,
+            change: null as number | null,
+            color: "text-amber-400",
+            dot: "bg-amber-400",
+        },
+        {
+            label: "Meals Logged",
+            value: a.meals_logged.today.toLocaleString(),
+            sub: "today",
+            change: a.meals_logged.change_percent,
+            color: "text-blue-400",
+            dot: "bg-blue-400",
+        },
+        {
+            label: "Active Users",
+            value: a.active_users.yesterday.toLocaleString(),
+            sub: "confirmed a log",
+            change: a.active_users.change_percent,
+            color: "text-pink-400",
+            dot: "bg-pink-400",
+        },
+    ] : null
+
+    const signupHistory  = a ? fillHistory(a.users.history, 14) : []
+    const mealsHistory   = a ? fillHistory(a.meals_logged.history, 14) : []
 
     return (
         <div className="flex flex-col gap-6 p-4 sm:p-8">
-            <div>
-                <h2 className="text-lg font-semibold text-text">Overview</h2>
-                <p className="text-xs text-text-muted mt-0.5">Platform snapshot for today.</p>
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <h2 className="text-lg font-semibold text-text">Overview</h2>
+                    <p className="text-xs text-text-muted mt-0.5">Platform snapshot for today.</p>
+                </div>
+                {a && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl flex-shrink-0"
+                        style={{ background: "rgba(127,250,136,0.08)", border: "1px solid rgba(127,250,136,0.2)" }}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        <span className="text-xs font-medium text-primary">{a.logged_in_users.count} live</span>
+                    </div>
+                )}
             </div>
 
             {/* Stat cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {STATS.map(s => (
-                    <div key={s.label} className="flex flex-col gap-2 p-4 rounded-2xl" style={glassCard}>
-                        <div className="flex items-center gap-1.5">
-                            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                            <p className="text-xs text-text-muted">{s.label}</p>
+            {analyticsLoading ? (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="h-24 rounded-2xl animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
+                    ))}
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {(statCards ?? []).map(s => (
+                        <div key={s.label} className="flex flex-col gap-2 p-4 rounded-2xl" style={glassCard}>
+                            <div className="flex items-center gap-1.5">
+                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.dot}`} />
+                                <p className="text-xs text-text-muted truncate">{s.label}</p>
+                            </div>
+                            <p className={`text-xl sm:text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
+                            <div className="flex items-center justify-between gap-1">
+                                <p className="text-xs text-text-muted/50 truncate">{s.sub}</p>
+                                <ChangeChip pct={s.change} />
+                            </div>
                         </div>
-                        <p className={`text-xl sm:text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
-                        <p className="text-xs text-text-muted/50">{s.sub}</p>
+                    ))}
+                </div>
+            )}
+
+            {/* Charts */}
+            {!analyticsLoading && a && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-3 p-4 sm:p-5 rounded-2xl" style={glassCard}>
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold text-text">New Signups</p>
+                            <span className="text-xs text-text-muted/40">14 days</span>
+                        </div>
+                        <MiniBarChart data={signupHistory} color="rgba(127,250,136," />
+                        <div className="flex justify-between text-[10px] text-text-muted/30">
+                            <span>{signupHistory[0]?.date.slice(5)}</span>
+                            <span>{signupHistory[signupHistory.length - 1]?.date.slice(5)}</span>
+                        </div>
                     </div>
-                ))}
-            </div>
+                    <div className="flex flex-col gap-3 p-4 sm:p-5 rounded-2xl" style={glassCard}>
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold text-text">Meals Logged</p>
+                            <span className="text-xs text-text-muted/40">14 days</span>
+                        </div>
+                        <MiniBarChart data={mealsHistory} color="rgba(96,165,250," />
+                        <div className="flex justify-between text-[10px] text-text-muted/30">
+                            <span>{mealsHistory[0]?.date.slice(5)}</span>
+                            <span>{mealsHistory[mealsHistory.length - 1]?.date.slice(5)}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Pending applications preview */}
             <div className="flex flex-col gap-3">
@@ -156,33 +322,6 @@ function OverviewSection({ onGoToApps }: { onGoToApps: () => void }) {
                             <StatusBadge status={app.status} />
                         </div>
                     ))}
-                </div>
-            </div>
-
-            {/* Mock bar chart */}
-            <div className="flex flex-col gap-3 p-5 rounded-2xl" style={glassCard}>
-                <p className="text-sm font-semibold text-text">New Signups — Last 7 Days</p>
-                <div className="flex items-end gap-2 h-24">
-                    {[28, 45, 32, 61, 48, 74, 124].map((v, i) => {
-                        const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-                        const isToday = i === 6
-                        return (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-                                <div className="w-full rounded-t-md transition-all duration-300 relative group"
-                                    style={{
-                                        height: `${(v / 124) * 80}px`,
-                                        background: isToday
-                                            ? "linear-gradient(to top, rgba(127,250,136,0.7), rgba(127,250,136,0.3))"
-                                            : "rgba(255,255,255,0.06)",
-                                        border: isToday ? "1px solid rgba(127,250,136,0.3)" : "1px solid rgba(255,255,255,0.08)",
-                                    }}>
-                                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-medium opacity-0
-                                        group-hover:opacity-100 transition-opacity text-text whitespace-nowrap">{v}</span>
-                                </div>
-                                <span className={`text-xs ${isToday ? "text-primary" : "text-text-muted/40"}`}>{days[i]}</span>
-                            </div>
-                        )
-                    })}
                 </div>
             </div>
         </div>

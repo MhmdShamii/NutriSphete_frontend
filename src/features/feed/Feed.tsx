@@ -285,7 +285,7 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
         setLogState("logging")
         try {
             const res = await logMeal(initialPost.id)
-            if (res.health_warning.is_flagged) {
+            if (res.health_warning?.is_flagged) {
                 setPendingLogId(res.logged_meal.id)
                 setWarningIngredients(res.health_warning.flagged_ingredients)
                 setLogState("idle")
@@ -299,11 +299,15 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
         }
     }
 
-    function handleWarningIgnore() {
+    async function handleWarningIgnore() {
+        const id = pendingLogId
         setPendingLogId(null)
         setWarningIngredients([])
         setLogState("logged")
         setRelogCount(c => c + 1)
+        if (id) {
+            try { await confirmQuickLog(id) } catch { /* log stays, UI already updated */ }
+        }
         showSuccess("Meal logged successfully!")
     }
 

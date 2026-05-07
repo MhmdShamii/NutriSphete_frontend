@@ -101,7 +101,7 @@ export default function MealPage() {
         setLogging(true)
         try {
             const res = await logMeal(meal.id)
-            if (res.health_warning.is_flagged) {
+            if (res.health_warning?.is_flagged) {
                 setPendingLogId(res.logged_meal.id)
                 setWarningIngredients(res.health_warning.flagged_ingredients)
             } else {
@@ -115,10 +115,14 @@ export default function MealPage() {
         }
     }
 
-    function handleWarningIgnore() {
+    async function handleWarningIgnore() {
+        const id = pendingLogId
         setPendingLogId(null)
         setWarningIngredients([])
         setLogged(true)
+        if (id) {
+            try { await confirmQuickLog(id) } catch { /* log stays, UI already updated */ }
+        }
         showSuccess("Meal logged successfully!")
     }
 

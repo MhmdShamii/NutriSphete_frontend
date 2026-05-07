@@ -25,7 +25,7 @@ const steps = [
 ]
 
 export default function QuickLog() {
-    const { showError } = useToast()
+    const { showError, showSuccess } = useToast()
     const [form, setForm] = useState<QuickLogFormData>(initialForm)
     const [entry, setEntry] = useState<QuickLogEntry | null>(null)
     const [mobileStep, setMobileStep] = useState<0 | 1 | 2>(0)
@@ -72,6 +72,7 @@ export default function QuickLog() {
             setForm(initialForm)
             setEntry(null)
             setMobileStep(0)
+            showSuccess("Meal logged successfully!")
         } catch (err) {
             showError(extractApiError(err))
         } finally {
