@@ -28,6 +28,11 @@ export type UsersFilters = {
     cursor?: string
 }
 
+export const patchAdminUserRoleApi = async (id: number, role: AdminUserRole): Promise<AdminUser> => {
+    const res = await apiClient.patch(`/admin/users/${id}/role`, { role })
+    return res.data.data ?? res.data.user ?? res.data
+}
+
 export const getAdminUsersApi = async (filters: UsersFilters = {}): Promise<UsersPage> => {
     const params: Record<string, string> = {}
     if (filters.search)                                    params.search = filters.search

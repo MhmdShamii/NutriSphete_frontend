@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import Avatar from "../../components/ui/Avatar"
 import Logo from "../../components/ui/Logo"
@@ -32,6 +32,7 @@ import {
 } from "../../services/admin/coachApplicationsApi"
 import {
     getAdminUsersApi,
+    patchAdminUserRoleApi,
     type AdminUser,
     type AdminUserRole,
 } from "../../services/admin/usersApi"
@@ -466,6 +467,107 @@ function ApplicationsSection() {
     )
 }
 
+// ─── User Card ────────────────────────────────────────────────────────────────
+
+const ROLE_OPTIONS: AdminUserRole[] = ["client", "coach", "admin"]
+
+function UserCard({ u, onRoleUpdated }: { u: AdminUser; onRoleUpdated: (updated: AdminUser) => void }) {
+    const [pickingRole, setPickingRole] = useState(false)
+    const [savingRole, setSavingRole] = useState(false)
+    const [roleError, setRoleError] = useState<string | null>(null)
+    const pickerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!pickingRole) return
+        function handleOutside(e: MouseEvent) {
+            if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+                setPickingRole(false)
+                setRoleError(null)
+            }
+        }
+        document.addEventListener("mousedown", handleOutside)
+        return () => document.removeEventListener("mousedown", handleOutside)
+    }, [pickingRole])
+
+    async function changeRole(role: AdminUserRole) {
+        if (role === u.role) { setPickingRole(false); return }
+        setSavingRole(true)
+        setRoleError(null)
+        try {
+            const updated = await patchAdminUserRoleApi(u.id, role)
+            onRoleUpdated(updated)
+            setPickingRole(false)
+        } catch (e: unknown) {
+            const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+            setRoleError(msg ?? "Failed to update role.")
+        } finally {
+            setSavingRole(false)
+        }
+    }
+
+    const isActive = u.onboarding_step === "complete"
+
+    return (
+        <div className="flex flex-col items-center gap-2.5 p-4 rounded-2xl text-center"
+            style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
+
+            <Avatar src={u.image.avatar} name={`${u.first_name} ${u.last_name}`} size={44} />
+
+            <div className="w-full min-w-0">
+                <p className="text-sm font-medium text-text truncate">{u.first_name} {u.last_name}</p>
+                {u.country.name && (
+                    <p className="text-[10px] text-text-muted/40 truncate mt-0.5">{u.country.name}</p>
+                )}
+            </div>
+
+            {/* Role badge — click to change */}
+            <div ref={pickerRef} className="relative">
+                <button
+                    onClick={() => { setPickingRole(o => !o); setRoleError(null) }}
+                    disabled={savingRole}
+                    className="flex items-center gap-1.5 transition-opacity disabled:opacity-50"
+                    title="Change role"
+                >
+                    <RoleBadge role={u.role} />
+                    {savingRole
+                        ? <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin text-text-muted/40" />
+                        : <KeyboardArrowDownRoundedIcon sx={{ fontSize: 12 }} className="text-text-muted/30" />}
+                </button>
+
+                {pickingRole && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 flex flex-col gap-0.5 p-1 rounded-xl z-20 shadow-xl min-w-[90px]"
+                        style={{ background: "var(--surface, var(--glass-bg))", border: "1px solid var(--glass-border)" }}>
+                        {ROLE_OPTIONS.map(r => (
+                            <button key={r} onClick={() => changeRole(r)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors text-left
+                                    ${r === u.role
+                                        ? "text-primary bg-primary/10"
+                                        : "text-text-muted hover:text-text hover:bg-white/5"}`}>
+                                {r}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {roleError && <p className="text-[10px] text-red-400 leading-tight">{roleError}</p>}
+
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border
+                    ${isActive
+                        ? "text-primary/70 bg-primary/8 border-primary/15"
+                        : "text-amber-400/70 bg-amber-400/8 border-amber-400/15"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-primary" : "bg-amber-400"}`} />
+                    {isActive ? "Active" : "Onboarding"}
+                </span>
+                {!u.verified && <span className="text-[10px] text-text-muted/40">unverified</span>}
+            </div>
+
+            <p className="text-[10px] text-text-muted/40 truncate w-full">{u.email}</p>
+        </div>
+    )
+}
+
 // ─── Users Section ────────────────────────────────────────────────────────────
 
 function UsersSection() {
@@ -508,6 +610,10 @@ function UsersSection() {
         setLoadingMore(true)
         await load(debouncedQuery, roleFilter, nextCursor)
         setLoadingMore(false)
+    }
+
+    function handleRoleUpdated(updated: AdminUser) {
+        setUsers(prev => prev.map(u => u.id === updated.id ? updated : u))
     }
 
     const ROLE_FILTERS: { key: AdminUserRole | "all"; label: string }[] = [
@@ -569,42 +675,9 @@ function UsersSection() {
                         <p className="text-xs text-text-muted/50 py-8 text-center">No users match your filters.</p>
                     ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                            {users.map(u => {
-                                const isActive = u.onboarding_step === "complete"
-                                return (
-                                    <div key={u.id}
-                                        className="flex flex-col items-center gap-2.5 p-4 rounded-2xl text-center"
-                                        style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)" }}>
-                                        <Avatar
-                                            src={u.image.avatar}
-                                            name={`${u.first_name} ${u.last_name}`}
-                                            size={44}
-                                        />
-                                        <div className="w-full min-w-0">
-                                            <p className="text-sm font-medium text-text truncate">
-                                                {u.first_name} {u.last_name}
-                                            </p>
-                                            {u.country.name && (
-                                                <p className="text-[10px] text-text-muted/40 truncate mt-0.5">{u.country.name}</p>
-                                            )}
-                                        </div>
-                                        <RoleBadge role={u.role} />
-                                        <div className="flex items-center gap-1.5 flex-wrap justify-center">
-                                            <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border
-                                                ${isActive
-                                                    ? "text-primary/70 bg-primary/8 border-primary/15"
-                                                    : "text-amber-400/70 bg-amber-400/8 border-amber-400/15"}`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-primary" : "bg-amber-400"}`} />
-                                                {isActive ? "Active" : "Onboarding"}
-                                            </span>
-                                            {!u.verified && (
-                                                <span className="text-[10px] text-text-muted/40">unverified</span>
-                                            )}
-                                        </div>
-                                        <p className="text-[10px] text-text-muted/40 truncate w-full">{u.email}</p>
-                                    </div>
-                                )
-                            })}
+                            {users.map(u => (
+                                <UserCard key={u.id} u={u} onRoleUpdated={handleRoleUpdated} />
+                            ))}
                         </div>
                     )}
 
