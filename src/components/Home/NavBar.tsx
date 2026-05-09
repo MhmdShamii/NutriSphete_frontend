@@ -2,7 +2,7 @@ import { NavLink, Link } from "react-router-dom"
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded'
 import FoodBankRoundedIcon from '@mui/icons-material/FoodBankRounded'
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded'
-import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded'
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import GlassCard from "../ui/GlassCard"
 import Avatar from "../ui/Avatar"
 import type { AuthUser } from "../../features/auth/types"
@@ -105,7 +105,7 @@ export default function NavBar({ isGuest, onGuestAction, user }: {
                 flex-row flex-1 justify-around
                 sm:flex-col sm:flex-none sm:w-full sm:justify-between
             ">
-                <NavItem to="/ai-chat" icon={<SmartToyRoundedIcon fontSize="medium" />} label="AI Chat" isGuest={isGuest} onGuestAction={onGuestAction} />
+                <NavItem to="/ai-chat" icon={<AutoAwesomeRoundedIcon fontSize="medium" />} label="AI Chat" isGuest={isGuest} onGuestAction={onGuestAction} />
 
                 {/* Profile */}
                 {isGuest ? (
