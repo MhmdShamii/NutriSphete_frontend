@@ -26,7 +26,7 @@ export default function Home() {
             </div>
 
             <div className="flex w-full flex-1 min-h-0 flex-col-reverse gap-3 sm:flex-row sm:gap-5">
-                <NavBar />
+                <NavBar user={user} />
                 <div className="flex-1 min-h-0 overflow-auto no-scrollbar">
                     <Outlet />
                 </div>
