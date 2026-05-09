@@ -153,7 +153,7 @@ export default function MealPage() {
     ]
 
     return (
-        <div className="flex flex-col pb-12">
+        <div className="h-full flex flex-col pb-12 overflow-y-auto no-scrollbar">
 
             {/* ── Hero image ── */}
             <div className="relative px-4 pt-4">
