@@ -181,7 +181,7 @@ function VisitedProfile({ userId }: { userId: number }) {
     const profileName = `${profile.first_name} ${profile.last_name}`
 
     return (
-        <>
+        <div className="h-full overflow-y-auto no-scrollbar">
         {showUnfollowDialog && (
             <ConfirmDialog
                 title={`Unfollow ${profileName}?`}
@@ -279,7 +279,7 @@ function VisitedProfile({ userId }: { userId: number }) {
                 />
             )}
         </div>
-        </>
+        </div>
     )
 }
 
@@ -302,7 +302,7 @@ function OwnProfile() {
     const flagCode = alpha3to2(user.country.code)
 
     return (
-        <div className="w-full flex flex-col pb-6">
+        <div className="h-full w-full flex flex-col pb-6 overflow-y-auto no-scrollbar">
             <div className="w-full flex flex-col"
                 style={{ border: "1px solid var(--glass-border)", borderRadius: "24px 24px 0 0", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}
             >

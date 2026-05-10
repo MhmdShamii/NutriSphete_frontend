@@ -1055,7 +1055,7 @@ export default function MyStats() {
     }, [])
 
     return (
-        <div className="w-full flex flex-col gap-4 lg:h-full">
+        <div className="w-full h-full flex flex-col gap-4 overflow-y-auto no-scrollbar">
             {showTargets && <UpdateTargetsModal onClose={() => setShowTargets(false)} />}
             {showWeight  && <LogWeightModal     onClose={() => setShowWeight(false)}  onSuccess={() => setWeightRefreshKey(k => k + 1)} />}
 

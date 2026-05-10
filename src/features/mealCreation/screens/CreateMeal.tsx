@@ -235,7 +235,7 @@ export default function CreateMeal() {
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-y-auto no-scrollbar">
             {showWarning && (
                 <HealthWarningModal
                     flaggedIngredients={warningIngredients}

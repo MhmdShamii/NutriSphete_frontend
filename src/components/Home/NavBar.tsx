@@ -2,9 +2,10 @@ import { NavLink, Link } from "react-router-dom"
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded'
 import FoodBankRoundedIcon from '@mui/icons-material/FoodBankRounded'
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded'
-import SportsRoundedIcon from '@mui/icons-material/SportsRounded'
-import FitnessCenterRoundedIcon from '@mui/icons-material/FitnessCenterRounded'
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import GlassCard from "../ui/GlassCard"
+import Avatar from "../ui/Avatar"
+import type { AuthUser } from "../../features/auth/types"
 
 const guestItemClass = "flex items-center justify-center p-2.5 rounded-xl transition-all duration-200 active:scale-95 text-text-muted hover:text-primary hover:bg-primary/10"
 
@@ -41,7 +42,11 @@ function NavItem({ to, icon, label, isGuest, onGuestAction }: {
     )
 }
 
-export default function NavBar({ isGuest, onGuestAction }: { isGuest?: boolean; onGuestAction?: () => void }) {
+export default function NavBar({ isGuest, onGuestAction, user }: {
+    isGuest?: boolean
+    onGuestAction?: () => void
+    user?: AuthUser | null
+}) {
     return (
         <div className="relative flex items-center justify-between gap-2 sm:gap-4
             flex-row w-full
@@ -100,8 +105,34 @@ export default function NavBar({ isGuest, onGuestAction }: { isGuest?: boolean; 
                 flex-row flex-1 justify-around
                 sm:flex-col sm:flex-none sm:w-full sm:justify-between
             ">
-                <NavItem to="/coaches"          icon={<SportsRoundedIcon fontSize="medium" />}       label="Coaches"           isGuest={isGuest} onGuestAction={onGuestAction} />
-                <NavItem to="/personal-trainer" icon={<FitnessCenterRoundedIcon fontSize="medium" />} label="Personal Trainer" isGuest={isGuest} onGuestAction={onGuestAction} />
+                <NavItem to="/ai-chat" icon={<AutoAwesomeRoundedIcon fontSize="medium" />} label="AI Chat" isGuest={isGuest} onGuestAction={onGuestAction} />
+
+                {/* Profile */}
+                {isGuest ? (
+                    <button type="button" title="Profile" onClick={onGuestAction} className={guestItemClass}>
+                        <Avatar src={undefined} name="Guest" size={28} />
+                    </button>
+                ) : (
+                    <NavLink
+                        to="/profile"
+                        title="Profile"
+                        className={({ isActive }) => `
+                            flex items-center justify-center p-2.5 rounded-xl transition-all duration-200
+                            active:scale-95
+                            ${isActive
+                                ? "bg-primary/15 shadow-[0_0_10px_rgba(127,250,136,0.2)]"
+                                : "hover:bg-primary/10"
+                            }
+                        `}
+                    >
+                        <Avatar
+                            src={user?.image?.avatar}
+                            name={user ? `${user.first_name} ${user.last_name}` : ""}
+                            size={28}
+                            ring="rgba(127,250,136,0.3)"
+                        />
+                    </NavLink>
+                )}
             </GlassCard>
         </div>
     )

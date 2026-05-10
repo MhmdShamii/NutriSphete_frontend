@@ -23,6 +23,7 @@ import MealPage from "./features/meal/MealPage"
 import ComingSoon from "./components/ui/ComingSoon"
 import Settings from "./features/Settings"
 import AdminDashboard from "./features/admin/AdminDashboard"
+import AiChat from "./features/aiChat/AiChat"
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -56,8 +57,7 @@ function App() {
         <Route element={<ProtectedRoute><OnboardedRoute><Home /></OnboardedRoute></ProtectedRoute>}>
           <Route index path="/" element={<Navigate to="/stats" replace />} />
           <Route path="/stats" element={<MyStats />} />
-          <Route path="/coaches" element={<ComingSoon title="Coaches" description="Connect with certified nutrition and fitness coaches to guide your journey." />} />
-          <Route path="/personal-trainer" element={<ComingSoon title="Personal Trainer" description="Get personalized workout plans tailored to your goals and fitness level." />} />
+          <Route path="/ai-chat" element={<ComingSoon title="AI Chat" description="Your personal nutrition assistant is on the way. We're putting the finishing touches on it!" />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:id" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />

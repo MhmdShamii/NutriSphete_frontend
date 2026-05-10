@@ -73,7 +73,7 @@ export default function BasicInfoStep() {
                     />
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-row gap-3">
                     <Input id="weight" label="Weight (kg)" placeholder="70"
                         value={form.weight_kg || ""}
                         onChange={(v) => set("weight_kg", Number(v.replace(/\D/g, "")))} />
@@ -116,17 +116,6 @@ export default function BasicInfoStep() {
                     ]}
                 />
 
-                <SelectDropdown
-                    label="Dietary preferences"
-                    value={form.dietary_preferences}
-                    onChange={(v) => set("dietary_preferences", v as BasicInfoPayload["dietary_preferences"])}
-                    options={[
-                        { value: "none",        label: "No preference" },
-                        { value: "vegetarian",  label: "Vegetarian" },
-                        { value: "vegan",       label: "Vegan" },
-                        { value: "pescatarian", label: "Pescatarian" },
-                    ]}
-                />
             </div>
 
             <Button type="submit" disabled={!valid || loading} className="flex items-center justify-center gap-2 w-full">

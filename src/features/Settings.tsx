@@ -54,7 +54,7 @@ const NAV: { key: Section; label: string; icon: React.ReactNode }[] = [
     { key: "appearance", label: "Appearance",        icon: <LightModeRoundedIcon sx={{ fontSize: 17 }} /> },
     { key: "nutrition",  label: "Nutrition Goals",   icon: <LocalFireDepartmentRoundedIcon sx={{ fontSize: 17 }} /> },
     { key: "health",     label: "Health Conditions", icon: <FavoriteRoundedIcon sx={{ fontSize: 17 }} /> },
-    { key: "coach",      label: "Become a Coach",    icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
+    { key: "coach",      label: "Get Your Coach Badge",    icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 17 }} /> },
     { key: "danger",     label: "Account",           icon: <WarningAmberRoundedIcon sx={{ fontSize: 17 }} /> },
 ]
 
@@ -64,7 +64,7 @@ const inputCls =
     "transition-all duration-200 placeholder:text-text-muted/30"
 
 function findScrollContainer(el: HTMLElement | null): HTMLElement | null {
-    let current = el?.parentElement ?? null
+    let current: HTMLElement | null = el
     while (current && current !== document.body) {
         const { overflow, overflowY } = window.getComputedStyle(current)
         if (["auto", "scroll"].includes(overflow) || ["auto", "scroll"].includes(overflowY)) return current
@@ -589,11 +589,6 @@ const MAX_CHARS = 1000
 const MAX_FILES = 8
 const ACCEPTED = ".pdf,image/*"
 
-const PERKS = [
-    "Get discovered by thousands of members looking for guidance",
-    "Build your personal brand and coaching portfolio",
-    "Access exclusive coach tools and analytics",
-]
 
 function formatFileSize(bytes: number) {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
@@ -674,7 +669,7 @@ function PendingView({ application }: { application: CoachApplication }) {
         <div className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                    <h2 className="text-base font-semibold text-text">Get Your Coach Badge</h2>
                     <p className="text-xs text-text-muted mt-0.5">Your application is being reviewed.</p>
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary/80 flex-shrink-0"
@@ -722,7 +717,7 @@ function ApprovedView() {
     return (
         <div className="flex flex-col gap-5">
             <div>
-                <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                <h2 className="text-base font-semibold text-text">Get Your Coach Badge</h2>
                 <p className="text-xs text-text-muted mt-0.5">Your application status.</p>
             </div>
             <div className="flex flex-col items-center text-center gap-4 py-10 px-6 rounded-2xl"
@@ -763,7 +758,7 @@ function RejectedView({
     return (
         <div className="flex flex-col gap-5">
             <div>
-                <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                <h2 className="text-base font-semibold text-text">Get Your Coach Badge</h2>
                 <p className="text-xs text-text-muted mt-0.5">Your application was not approved.</p>
             </div>
 
@@ -896,7 +891,7 @@ function CoachApplicationSection() {
         return (
             <div className="flex flex-col gap-5">
                 <div>
-                    <h2 className="text-base font-semibold text-text">Become a Coach</h2>
+                    <h2 className="text-base font-semibold text-text">Get Your Coach Badge</h2>
                 </div>
                 <div className="flex items-center gap-2 py-6">
                     <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -927,29 +922,10 @@ function CoachApplicationSection() {
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
-            {/* Hero card */}
-            <div className="relative overflow-hidden rounded-2xl p-5"
-                style={{ background: "linear-gradient(135deg, var(--primary-glow) 0%, transparent 100%)", border: "1px solid var(--primary-glow)" }}>
-                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-10"
-                    style={{ background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)" }} />
-                <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
-                        style={{ background: "var(--primary-glow)", border: "1px solid var(--primary-glow)" }}>
-                        <WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} className="text-primary" />
-                    </div>
-                    <div>
-                        <h2 className="text-base font-semibold text-text">Become a Coach</h2>
-                        <p className="text-xs text-text-muted mt-0.5 leading-relaxed">Share your expertise and help our community thrive.</p>
-                    </div>
-                </div>
-                <ul className="mt-4 flex flex-col gap-2">
-                    {PERKS.map((perk, i) => (
-                        <li key={i} className="flex items-start gap-2.5 text-xs text-text-muted">
-                            <CheckRoundedIcon sx={{ fontSize: 13 }} className="text-primary flex-shrink-0 mt-px" />
-                            {perk}
-                        </li>
-                    ))}
-                </ul>
+            {/* Hero header */}
+            <div className="flex items-center gap-3">
+                <WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} className="text-primary flex-shrink-0" />
+                <h2 className="text-base font-semibold text-text">Get Your Coach Badge</h2>
             </div>
 
             {/* Description */}
@@ -1184,8 +1160,12 @@ const SECTIONS: { key: Section; component: React.ReactNode }[] = [
 ]
 
 export default function Settings() {
+    const { user } = useSelector((state: RootState) => state.auth)
     const [active, setActive] = useState<Section>("personal")
     const rootRef = useRef<HTMLDivElement>(null)
+
+    const visibleNav = NAV.filter(item => !(item.key === "coach" && user?.role === "admin"))
+    const visibleSections = SECTIONS.filter(s => !(s.key === "coach" && user?.role === "admin"))
 
     function scrollToSection(key: Section) {
         setActive(key)
@@ -1198,13 +1178,13 @@ export default function Settings() {
     }
 
     return (
-        <div ref={rootRef} className="w-full flex gap-6 pb-10">
+        <div ref={rootRef} className="w-full h-full flex gap-6 pb-10 overflow-y-auto no-scrollbar">
 
             {/* Sidebar — desktop only */}
             <nav className="hidden sm:block w-48 flex-shrink-0">
                 <div className="sticky top-4 flex flex-col gap-1 p-2 rounded-2xl"
                     style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}>
-                    {NAV.map(({ key, label, icon }) => (
+                    {visibleNav.map(({ key, label, icon }) => (
                         <button key={key} type="button" onClick={() => scrollToSection(key)}
                             className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium
                             transition-all duration-200 text-left w-full
@@ -1221,14 +1201,14 @@ export default function Settings() {
 
             {/* All sections stacked */}
             <div className="flex-1 min-w-0 flex flex-col gap-6">
-                {SECTIONS.map(({ key, component }, i) => (
+                {visibleSections.map(({ key, component }, i) => (
                     <div key={key}>
                         <div id={`settings-${key}`}
                             className="p-5 sm:p-6 rounded-2xl"
                             style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}>
                             {component}
                         </div>
-                        {i < SECTIONS.length - 1 && <div className="h-px mt-6" style={{ background: "var(--glass-border)" }} />}
+                        {i < visibleSections.length - 1 && <div className="h-px mt-6" style={{ background: "var(--glass-border)" }} />}
                     </div>
                 ))}
             </div>
