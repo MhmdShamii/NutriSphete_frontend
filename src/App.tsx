@@ -57,7 +57,7 @@ function App() {
         <Route element={<ProtectedRoute><OnboardedRoute><Home /></OnboardedRoute></ProtectedRoute>}>
           <Route index path="/" element={<Navigate to="/stats" replace />} />
           <Route path="/stats" element={<MyStats />} />
-          <Route path="/ai-chat" element={<AiChat />} />
+          <Route path="/ai-chat" element={<ComingSoon title="AI Chat" description="Your personal nutrition assistant is on the way. We're putting the finishing touches on it!" />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:id" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
