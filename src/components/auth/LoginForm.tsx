@@ -1,6 +1,8 @@
 import Input from "../ui/Input"
 import Button from "../ui/Button"
 import PasswordInput from "../ui/PasswordInput"
+const logo = "/logo.png"
+import nutriSphereSvg from "../../assets/NUTRISPHERE.svg"
 
 import { useState } from "react"
 
@@ -49,6 +51,12 @@ function LoginForm({ onSwitchToSignup, className }: LoginFormProps) {
 
     return (
         <form onSubmit={handleSubmit} className={`flex flex-col p-5 sm:p-8 gap-5 sm:gap-7 ${className}`}>
+
+            {/* Brand — mobile only */}
+            <div className="flex items-center gap-2 lg:hidden">
+                <img src={logo} alt="NutriSphere logo" className="h-7 w-7 object-cover rounded-lg" />
+                <img src={nutriSphereSvg} alt="NutriSphere" className="h-4 w-auto" />
+            </div>
 
             <div className="flex flex-col gap-1">
                 <h1 className="text-2xl sm:text-3xl font-bold text-primary">Welcome Back</h1>

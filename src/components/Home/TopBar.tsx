@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import type { AuthUser } from "../../features/auth/types"
 import GlassCard from "../ui/GlassCard"
-import Logo from "../ui/Logo"
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded"
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded"
@@ -13,6 +12,8 @@ import {
 } from "../../services/social/followApi"
 import CoachBadge from "../ui/CoachBadge"
 import Avatar from "../ui/Avatar"
+const logo = "/logo.png"
+import nutriSphereSvg from "../../assets/NUTRISPHERE.svg"
 
 function notifTarget(n: NotificationItem): string {
     if (n.type === "follow") return `/profile/${n.actor.id}`
@@ -26,21 +27,21 @@ function notifTarget(n: NotificationItem): string {
 
 function notifMessage(n: NotificationItem): string {
     switch (n.type) {
-        case "like":                         return `liked your post "${n.data.post_name}"`
-        case "comment":                      return `commented on "${n.data.post_name}"`
-        case "reply":                        return `replied to your comment on "${n.data.post_name}"`
-        case "relog":                        return `relogged your meal "${n.data.post_name}"`
-        case "follow":                       return `started following you`
-        case "coach_application":            return `submitted a coach application`
-        case "coach_application_approved":   return `approved your coach application`
-        case "coach_application_rejected":   return `reviewed your coach application`
+        case "like": return `liked your post "${n.data.post_name}"`
+        case "comment": return `commented on "${n.data.post_name}"`
+        case "reply": return `replied to your comment on "${n.data.post_name}"`
+        case "relog": return `relogged your meal "${n.data.post_name}"`
+        case "follow": return `started following you`
+        case "coach_application": return `submitted a coach application`
+        case "coach_application_approved": return `approved your coach application`
+        case "coach_application_rejected": return `reviewed your coach application`
     }
 }
 
 function relativeTime(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime()
     const m = Math.floor(diff / 60000)
-    if (m < 1)  return "just now"
+    if (m < 1) return "just now"
     if (m < 60) return `${m}m ago`
     const h = Math.floor(m / 60)
     if (h < 24) return `${h}h ago`
@@ -126,11 +127,8 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
 
             {/* Brand */}
             <div className="flex items-center gap-2">
-                <Logo />
-                <span className="font-semibold text-base tracking-tight">
-                    <span className="text-primary">Nutri</span>
-                    <span className="text-text">Sphere</span>
-                </span>
+                <img src={logo} alt="NutriSphere logo" className="h-6 w-6 object-cover rounded-md" />
+                <img src={nutriSphereSvg} alt="NutriSphere" className="h-2 w-auto" />
             </div>
 
             {/* Right side */}
@@ -208,8 +206,8 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                                                 style={n.type === "coach_application_approved"
                                                     ? { background: "rgba(0,219,88,0.06)", borderRadius: 12 }
                                                     : n.type === "coach_application_rejected"
-                                                    ? { background: "rgba(248,113,113,0.05)", borderRadius: 12 }
-                                                    : undefined}
+                                                        ? { background: "rgba(248,113,113,0.05)", borderRadius: 12 }
+                                                        : undefined}
                                             >
                                                 <Avatar
                                                     src={n.actor.avatar}
@@ -232,7 +230,7 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
                                                         {" "}
                                                         <span className={
                                                             n.type === "coach_application_approved" ? "text-primary font-medium" :
-                                                            n.type === "coach_application_rejected" ? "text-red-400" : ""
+                                                                n.type === "coach_application_rejected" ? "text-red-400" : ""
                                                         }>
                                                             {notifMessage(n)}
                                                         </span>
