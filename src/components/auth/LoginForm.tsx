@@ -1,7 +1,7 @@
 import Input from "../ui/Input"
 import Button from "../ui/Button"
 import PasswordInput from "../ui/PasswordInput"
-const logo = "/logo.png"
+const logo = "/logo-64.png"
 import nutriSphereSvg from "../../assets/NUTRISPHERE.svg"
 
 import { useState } from "react"
