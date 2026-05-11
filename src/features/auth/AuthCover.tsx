@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import logo from "../../assets/logo.png"
+const logo = "/logo.png"
 import coverImage from "../../assets/coverImage.png"
 import nutriSphereSvg from "../../assets/NUTRISPHERE.svg"
 import LazyImage from "../../components/ui/LazyImage"

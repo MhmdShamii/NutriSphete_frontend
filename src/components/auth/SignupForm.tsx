@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import logo from "../../assets/logo.png"
+const logo = "/logo.png"
 import nutriSphereSvg from "../../assets/NUTRISPHERE.svg"
 import { checkEmail } from "../../services/auth/authApi"
 import SignUpStepOne from "./SignUpStepOne"

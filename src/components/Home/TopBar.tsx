@@ -12,7 +12,7 @@ import {
 } from "../../services/social/followApi"
 import CoachBadge from "../ui/CoachBadge"
 import Avatar from "../ui/Avatar"
-import logo from "../../assets/logo.png"
+const logo = "/logo.png"
 import nutriSphereSvg from "../../assets/NUTRISPHERE.svg"
 
 function notifTarget(n: NotificationItem): string {
