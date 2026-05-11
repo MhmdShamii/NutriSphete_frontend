@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
 import logo from "../../assets/logo.png"
 import coverImage from "../../assets/coverImage.png"
+import nutriSphereSvg from "../../assets/NUTRISPHERE.svg"
 import LazyImage from "../../components/ui/LazyImage"
+
 
 const messages = [
     "Log meals instantly and track calories with precision.",
@@ -68,7 +70,8 @@ export default function AuthCover({ className = "" }: props) {
                     <div className="relative w-[30px] h-[30px] rounded-md overflow-hidden flex-shrink-0">
                         <LazyImage src={logo} alt="NutriSphere logo" className="h-full w-full object-cover rounded-md" />
                     </div>
-                    <p className="text-white font-semibold">NutriSphere</p>
+                    <img src={nutriSphereSvg} alt="NutriSphere" className="hidden sm:block h-3 w-auto" />
+                    {/* <p className="text-white font-semibold">NutriSphere</p> */}
                 </div>
 
                 <div className="relative text-text-muted text-xs leading-relaxed h-[32px] overflow-hidden">

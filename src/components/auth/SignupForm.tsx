@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react"
+import logo from "../../assets/logo.png"
+import nutriSphereSvg from "../../assets/NUTRISPHERE.svg"
 import { checkEmail } from "../../services/auth/authApi"
 import SignUpStepOne from "./SignUpStepOne"
 import SignUpStepTwo from "./SignUpStepTwo"
@@ -109,6 +111,12 @@ export default function SignupForm({ onSwitchToLogin, className }: SignupFormPro
 
     return (
         <form onSubmit={handleSubmit} className={`flex flex-col p-5 sm:p-8 gap-3 ${className}`}>
+
+            {/* Brand — mobile only */}
+            <div className="flex items-center gap-2 lg:hidden">
+                <img src={logo} alt="NutriSphere logo" className="h-7 w-7 object-cover rounded-lg" />
+                <img src={nutriSphereSvg} alt="NutriSphere" className="h-4 w-auto" />
+            </div>
 
             <div className="flex flex-col gap-1">
                 <h1 className="text-2xl sm:text-3xl font-bold text-primary">Create Account</h1>
