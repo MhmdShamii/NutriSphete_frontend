@@ -532,7 +532,7 @@ function HealthSection() {
                         )}
                         {open && query.length > 0 && (filtered.length > 0 || showAddCustom) && (
                             <div ref={dropdownRef}
-                                className="absolute z-20 top-full mt-1 w-full rounded-2xl shadow-xl overflow-hidden"
+                                className="absolute z-50 top-full mt-1 w-full rounded-2xl shadow-xl overflow-hidden"
                                 style={{ background: "var(--surface)", border: "1px solid var(--glass-border)" }}>
                                 {filtered.slice(0, 8).map(c => (
                                     <button key={c.id} type="button"
@@ -1202,7 +1202,7 @@ export default function Settings() {
             {/* All sections stacked */}
             <div className="flex-1 min-w-0 flex flex-col gap-6">
                 {visibleSections.map(({ key, component }, i) => (
-                    <div key={key}>
+                    <div key={key} style={{ position: "relative", zIndex: visibleSections.length - i }}>
                         <div id={`settings-${key}`}
                             className="p-5 sm:p-6 rounded-2xl"
                             style={{ border: "1px solid var(--glass-border)", background: "var(--glass-bg)", backdropFilter: "blur(20px)" }}>

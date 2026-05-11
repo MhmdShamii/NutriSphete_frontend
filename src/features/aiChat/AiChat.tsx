@@ -4,6 +4,7 @@ import SendRoundedIcon from "@mui/icons-material/SendRounded"
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import GlassCard from "../../components/ui/GlassCard"
+import { sendChatMessageApi, getChatHistoryApi } from "../../services/cahtbot/chatApi"
 
 type Role = "user" | "assistant"
 
@@ -45,9 +46,7 @@ function MessageImages({ images }: { images: string[] }) {
                     <div
                         key={i}
                         onClick={() => setLightbox(src)}
-                        className={`overflow-hidden cursor-zoom-in
-                            ${images.length === 3 && i === 2 ? "col-span-2" : ""}
-                        `}
+                        className={`overflow-hidden cursor-zoom-in ${images.length === 3 && i === 2 ? "col-span-2" : ""}`}
                         style={{ borderRadius: 10 }}
                     >
                         <img
@@ -60,7 +59,6 @@ function MessageImages({ images }: { images: string[] }) {
                 ))}
             </div>
 
-            {/* Lightbox */}
             {lightbox && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
@@ -95,9 +93,8 @@ function ChatMessage({ message }: { message: Message }) {
                         <MessageImages images={message.images} />
                     )}
                     {message.content && (
-                        <div className="px-4 py-2.5 rounded-2xl rounded-br-sm
-                            bg-primary text-black/85 text-sm font-medium leading-relaxed
-                            shadow-[0_0_12px_rgba(127,250,136,0.25)]">
+                        <div className="px-4 py-2.5 rounded-2xl rounded-br-sm bg-primary text-black/85
+                            text-sm font-medium leading-relaxed shadow-[0_0_12px_rgba(127,250,136,0.25)]">
                             {message.content}
                         </div>
                     )}
@@ -120,30 +117,80 @@ function ChatMessage({ message }: { message: Message }) {
 }
 
 export default function AiChat() {
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: 0,
-            role: "assistant",
-            content: "Hi! I'm your NutriSphere AI. Ask me anything about nutrition, meal planning, or your health goals.",
-        },
-    ])
-    const [input, setInput] = useState("")
+    const [messages, setMessages]           = useState<Message[]>([])
+    const [input, setInput]                 = useState("")
     const [attachedImages, setAttachedImages] = useState<{ file: File; url: string }[]>([])
-    const [loading, setLoading] = useState(false)
-    const messagesRef = useRef<HTMLDivElement>(null)
-    const inputRef = useRef<HTMLTextAreaElement>(null)
+    const [loading, setLoading]             = useState(false)
+    const [historyLoading, setHistoryLoading] = useState(true)
+    const [cursor, setCursor]               = useState<string | null>(null)
+    const [hasMore, setHasMore]             = useState(false)
+
+    const messagesRef  = useRef<HTMLDivElement>(null)
+    const inputRef     = useRef<HTMLTextAreaElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    // Load history on mount — newest-first from API, so reverse for display
     useEffect(() => {
+        getChatHistoryApi()
+            .then(res => {
+                const sorted = [...res.data].reverse()
+                setMessages(sorted.map(m => ({ id: m.id, role: m.role, content: m.content })))
+                setCursor(res.meta.next_cursor)
+                setHasMore(res.meta.has_more)
+            })
+            .catch(() => {
+                setMessages([{
+                    id: 0,
+                    role: "assistant",
+                    content: "Hi! I'm your NutriSphere AI. Ask me anything about nutrition, meal planning, or your health goals.",
+                }])
+            })
+            .finally(() => setHistoryLoading(false))
+    }, [])
+
+    // Scroll to bottom after history loads or new message
+    useEffect(() => {
+        if (historyLoading) return
         const el = messagesRef.current
         if (!el) return
         el.scrollTop = el.scrollHeight
-    }, [messages, loading])
+    }, [messages, loading, historyLoading])
 
-    // revoke object URLs on unmount to avoid memory leaks
+    // Revoke object URLs on unmount
     useEffect(() => {
         return () => attachedImages.forEach(img => URL.revokeObjectURL(img.url))
     }, [])
+
+    async function loadOlderMessages() {
+        if (!cursor || !hasMore) return
+        const el = messagesRef.current
+        const prevScrollHeight = el?.scrollHeight ?? 0
+
+        try {
+            const res = await getChatHistoryApi(cursor)
+            const older = [...res.data].reverse()
+            setMessages(prev => [
+                ...older.map(m => ({ id: m.id, role: m.role, content: m.content })),
+                ...prev,
+            ])
+            setCursor(res.meta.next_cursor)
+            setHasMore(res.meta.has_more)
+
+            // Keep scroll position stable after prepending
+            requestAnimationFrame(() => {
+                if (!el) return
+                el.scrollTop = el.scrollHeight - prevScrollHeight
+            })
+        } catch {
+            // silently ignore
+        }
+    }
+
+    function handleScroll() {
+        const el = messagesRef.current
+        if (!el || el.scrollTop > 60) return
+        loadOlderMessages()
+    }
 
     function autoResize() {
         const el = inputRef.current
@@ -196,19 +243,18 @@ export default function AiChat() {
         setMessages(prev => [...prev, userMsg])
         setInput("")
         setAttachedImages([])
-
         if (inputRef.current) inputRef.current.style.height = "auto"
 
         setLoading(true)
         try {
-            // TODO: replace with real API call
-            await new Promise(res => setTimeout(res, 1200))
-            const reply: Message = {
+            const reply = await sendChatMessageApi(text)
+            setMessages(prev => [...prev, { id: Date.now() + 1, role: "assistant", content: reply }])
+        } catch {
+            setMessages(prev => [...prev, {
                 id: Date.now() + 1,
                 role: "assistant",
-                content: "This is a placeholder response. Connect the AI backend to enable real replies.",
-            }
-            setMessages(prev => [...prev, reply])
+                content: "Something went wrong. Please try again.",
+            }])
         } finally {
             setLoading(false)
             inputRef.current?.focus()
@@ -237,13 +283,30 @@ export default function AiChat() {
             {/* Messages */}
             <div
                 ref={messagesRef}
+                onScroll={handleScroll}
                 className="flex-1 min-h-0 overflow-y-auto no-scrollbar rounded-2xl p-4 flex flex-col gap-3 backdrop-blur-3xl shadow-xl"
                 style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}
             >
-                {messages.map(msg => (
-                    <ChatMessage key={msg.id} message={msg} />
-                ))}
-                {loading && <TypingIndicator />}
+                {historyLoading ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <span className="w-5 h-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    </div>
+                ) : (
+                    <>
+                        {hasMore && (
+                            <button
+                                onClick={loadOlderMessages}
+                                className="self-center text-xs text-text-muted hover:text-primary transition-colors py-1"
+                            >
+                                Load older messages
+                            </button>
+                        )}
+                        {messages.map(msg => (
+                            <ChatMessage key={msg.id} message={msg} />
+                        ))}
+                        {loading && <TypingIndicator />}
+                    </>
+                )}
             </div>
 
             {/* Input */}
