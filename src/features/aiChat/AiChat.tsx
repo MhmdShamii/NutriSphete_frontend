@@ -36,8 +36,8 @@ function MessageImages({ images }: { images: string[] }) {
 
     const grid =
         images.length === 1 ? "grid-cols-1" :
-        images.length === 2 ? "grid-cols-2" :
-        "grid-cols-2"
+            images.length === 2 ? "grid-cols-2" :
+                "grid-cols-2"
 
     return (
         <>
@@ -94,7 +94,8 @@ function ChatMessage({ message }: { message: Message }) {
                     )}
                     {message.content && (
                         <div className="px-4 py-2.5 rounded-2xl rounded-br-sm bg-primary text-black/85
-                            text-sm font-medium leading-relaxed shadow-[0_0_12px_rgba(127,250,136,0.25)]">
+                            text-sm font-medium leading-relaxed shadow-[0_0_12px_rgba(127,250,136,0.25)]
+                            break-words whitespace-pre-wrap">
                             {message.content}
                         </div>
                     )}
@@ -108,7 +109,7 @@ function ChatMessage({ message }: { message: Message }) {
             <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
                 <AutoAwesomeRoundedIcon sx={{ fontSize: 12 }} className="text-primary" />
             </div>
-            <div className="max-w-[72%] px-4 py-2.5 rounded-2xl rounded-bl-sm text-sm text-text leading-relaxed"
+            <div className="max-w-[72%] px-4 py-2.5 rounded-2xl rounded-bl-sm text-sm text-text leading-relaxed break-words whitespace-pre-wrap"
                 style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}>
                 {message.content}
             </div>
@@ -117,16 +118,16 @@ function ChatMessage({ message }: { message: Message }) {
 }
 
 export default function AiChat() {
-    const [messages, setMessages]           = useState<Message[]>([])
-    const [input, setInput]                 = useState("")
+    const [messages, setMessages] = useState<Message[]>([])
+    const [input, setInput] = useState("")
     const [attachedImages, setAttachedImages] = useState<{ file: File; url: string }[]>([])
-    const [loading, setLoading]             = useState(false)
+    const [loading, setLoading] = useState(false)
     const [historyLoading, setHistoryLoading] = useState(true)
-    const [cursor, setCursor]               = useState<string | null>(null)
-    const [hasMore, setHasMore]             = useState(false)
+    const [cursor, setCursor] = useState<string | null>(null)
+    const [hasMore, setHasMore] = useState(false)
 
-    const messagesRef  = useRef<HTMLDivElement>(null)
-    const inputRef     = useRef<HTMLTextAreaElement>(null)
+    const messagesRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLTextAreaElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Load history on mount — newest-first from API, so reverse for display
