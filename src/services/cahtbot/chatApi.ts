@@ -15,9 +15,9 @@ export interface ChatHistoryResponse {
     }
 }
 
-export const sendChatMessageApi = async (message: string): Promise<string> => {
+export const sendChatMessageApi = async (message: string): Promise<Record<string, unknown>> => {
     const response = await apiClient.post("/chat", { message })
-    return response.data.chat_response
+    return response.data
 }
 
 export const getChatHistoryApi = async (
