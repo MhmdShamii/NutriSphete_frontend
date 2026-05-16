@@ -56,8 +56,8 @@ export const followUserApi = async (userId: number): Promise<void> => {
 export const unfollowUserApi = async (userId: number): Promise<void> => {
     await apiClient.delete(`/users/${userId}/follow`)
 }
-export const checkNotificationsApi = async (): Promise<{ has_new: boolean }> => {
-    const res = await apiClient.get(`/notifications/check`)
+export const checkNotificationsApi = async (signal?: AbortSignal): Promise<{ has_new: boolean }> => {
+    const res = await apiClient.get(`/notifications/check`, { signal })
     return res.data.data
 }
 

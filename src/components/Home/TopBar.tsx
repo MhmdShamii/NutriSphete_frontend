@@ -67,35 +67,43 @@ export default function TopBar({ user }: { user: AuthUser | null }) {
         return () => document.removeEventListener("mousedown", handleOutside)
     }, [])
 
-    async function checkNotifications() {
-        try {
-            const res = await checkNotificationsApi()
-            setHasNewNotifications(res.has_new)
-            hasNewNotificationsRef.current = res.has_new
-        } catch (error) {
-            console.error("Error checking notifications:", error)
-        }
-    }
-
     useEffect(() => {
         if (!user) return
 
+        const controller = new AbortController()
+        let cancelled = false
         let timeoutId: ReturnType<typeof setTimeout>
+
+        async function checkNotifications() {
+            try {
+                const res = await checkNotificationsApi(controller.signal)
+                if (!cancelled) {
+                    setHasNewNotifications(res.has_new)
+                    hasNewNotificationsRef.current = res.has_new
+                }
+            } catch {
+                // Silently ignore 401 (token not ready) and abort errors (unmount/cleanup)
+            }
+        }
 
         function scheduleNext() {
             const delay = Math.floor(Math.random() * 10000) + 15000
             timeoutId = setTimeout(async () => {
-                if (!hasNewNotificationsRef.current) {
+                if (!hasNewNotificationsRef.current && !cancelled) {
                     await checkNotifications()
                 }
-                scheduleNext()
+                if (!cancelled) scheduleNext()
             }, delay)
         }
 
         checkNotifications()
         scheduleNext()
 
-        return () => clearTimeout(timeoutId)
+        return () => {
+            cancelled = true
+            controller.abort()
+            clearTimeout(timeoutId)
+        }
     }, [user])
 
     async function handleBellClick() {
