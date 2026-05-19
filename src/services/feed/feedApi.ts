@@ -14,6 +14,7 @@ export interface FeedEngagement {
     comments_count: number
     relogs_count: number
     is_liked: boolean
+    is_saved: boolean
 }
 
 export interface FeedFirstComment {

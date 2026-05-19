@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded"
 import SendRoundedIcon from "@mui/icons-material/SendRounded"
-import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded"
 import FitnessCenterRoundedIcon from "@mui/icons-material/FitnessCenterRounded"
@@ -1130,7 +1129,6 @@ function MessageImages({ images }: { images: string[] }) {
 export default function AiChat() {
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
-    const [attachedImages, setAttachedImages] = useState<{ file: File; url: string }[]>([])
     const [loading, setLoading] = useState(false)
     const [historyLoading, setHistoryLoading] = useState(true)
     const [loadingOlder, setLoadingOlder] = useState(false)
@@ -1139,7 +1137,6 @@ export default function AiChat() {
 
     const messagesRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
-    const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Load history — apply parseMessage to every entry
     useEffect(() => {
@@ -1169,10 +1166,6 @@ export default function AiChat() {
         if (!el) return
         el.scrollTop = el.scrollHeight
     }, [messages, loading, historyLoading])
-
-    useEffect(() => {
-        return () => attachedImages.forEach(img => URL.revokeObjectURL(img.url))
-    }, [])
 
     // Shared send — used by both the input and card action buttons
     const sendMessage = useCallback(async (text: string) => {
@@ -1247,33 +1240,15 @@ export default function AiChat() {
         }
     }
 
-    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const files = Array.from(e.target.files ?? [])
-        const images = files
-            .filter(f => f.type.startsWith("image/"))
-            .slice(0, 4 - attachedImages.length)
-            .map(file => ({ file, url: URL.createObjectURL(file) }))
-        setAttachedImages(prev => [...prev, ...images].slice(0, 4))
-        e.target.value = ""
-    }
-
-    function removeImage(index: number) {
-        setAttachedImages(prev => {
-            URL.revokeObjectURL(prev[index].url)
-            return prev.filter((_, i) => i !== index)
-        })
-    }
-
     async function handleSend() {
         const text = input.trim()
-        if ((!text && attachedImages.length === 0) || loading) return
+        if (!text || loading) return
         setInput("")
-        setAttachedImages([])
         if (inputRef.current) inputRef.current.style.height = "auto"
         await sendMessage(text)
     }
 
-    const canSend = (input.trim().length > 0 || attachedImages.length > 0) && !loading
+    const canSend = input.trim().length > 0 && !loading
 
     function handleInputFocus() {
         // On mobile the layout is frozen at 100svh so the keyboard overlaps — scroll input into view
@@ -1331,35 +1306,7 @@ export default function AiChat() {
             {/* Input */}
             <GlassCard className="flex flex-col rounded-2xl px-3 sm:px-4 pt-2.5 sm:pt-3 pb-2.5 sm:pb-3 flex-shrink-0 mt-2 sm:mt-3 gap-2">
 
-                {attachedImages.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
-                        {attachedImages.map((img, i) => (
-                            <div key={i} className="relative group">
-                                <img src={img.url} alt=""
-                                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover"
-                                    style={{ border: "1px solid var(--glass-border)" }} />
-                                <button onClick={() => removeImage(i)}
-                                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-black/70 text-white
-                                        flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
-                                    <CloseRoundedIcon sx={{ fontSize: 12 }} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
                 <div className="flex items-end gap-2">
-                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
-                        onChange={handleFileChange} />
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={attachedImages.length >= 4}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0
-                            text-text-muted hover:text-primary hover:bg-primary/10
-                            disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200">
-                        <AddPhotoAlternateRoundedIcon sx={{ fontSize: 18 }} />
-                    </button>
-
                     <textarea
                         ref={inputRef}
                         rows={1}

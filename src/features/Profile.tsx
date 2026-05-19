@@ -13,6 +13,7 @@ import {
 } from "../services/social/followApi"
 import FollowListModal from "./profile/FollowListModal"
 import ProfileRecipes from "./profile/ProfileRecipes"
+import SavedMeals from "./profile/SavedMeals"
 import LazyImage from "../components/ui/LazyImage"
 import AvatarUI from "../components/ui/Avatar"
 import CoachBadge from "../components/ui/CoachBadge"
@@ -377,7 +378,7 @@ function OwnProfile() {
 
             {tab === "recipes" && <ProfileRecipes userId={user.id} />}
             {tab === "private" && <ProfileRecipes userId={user.id} isPrivate />}
-            {tab === "saved" && <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3" />}
+            {tab === "saved" && <SavedMeals />}
 
             {followModal && (
                 <FollowListModal

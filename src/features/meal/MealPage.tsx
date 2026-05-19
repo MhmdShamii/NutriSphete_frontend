@@ -12,8 +12,10 @@ import GrainRoundedIcon from "@mui/icons-material/GrainRounded"
 import WaterDropRoundedIcon from "@mui/icons-material/WaterDropRounded"
 import SpaRoundedIcon from "@mui/icons-material/SpaRounded"
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded"
+import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded"
+import BookmarkBorderRoundedIcon from "@mui/icons-material/BookmarkBorderRounded"
 import type { MealDetail, FlaggedIngredient } from "../mealCreation/types/meal.types"
-import { getMealApi, likeMealApi, unlikeMealApi, logMeal } from "../../services/meals/mealsApis"
+import { getMealApi, likeMealApi, unlikeMealApi, logMeal, saveMealApi, unsaveMealApi } from "../../services/meals/mealsApis"
 import { confirmQuickLog, deleteQuickLog } from "../../services/log/quickLogApi"
 import HealthWarningModal from "../mealCreation/components/HealthWarningModal"
 import CommentsSheet from "./CommentsSheet"
@@ -61,6 +63,7 @@ export default function MealPage() {
     const [liked, setLiked] = useState(false)
     const [likeCount, setLikeCount] = useState(0)
     const [commentCount, setCommentCount] = useState(0)
+    const [saved, setSaved] = useState(false)
     const [logging, setLogging] = useState(false)
     const [logged, setLogged] = useState(false)
     const [pendingLogId,       setPendingLogId]       = useState<number | null>(null)
@@ -77,6 +80,7 @@ export default function MealPage() {
                 setLiked(data.engagement.is_liked)
                 setLikeCount(data.engagement.likes_count)
                 setCommentCount(data.engagement.comments_count)
+                setSaved(data.engagement.is_saved)
             })
             .catch((err) => {
                 if (err?.response?.status === 404) setNotFound(true)
@@ -96,6 +100,17 @@ export default function MealPage() {
             setLikeCount(c => wasLiked ? c + 1 : c - 1)
         }
     }
+    async function toggleSave() {
+        const wasSaved = saved
+        setSaved(!wasSaved)
+        try {
+            if (wasSaved) await unsaveMealApi(Number(id))
+            else          await saveMealApi(Number(id))
+        } catch {
+            setSaved(wasSaved)
+        }
+    }
+
     async function handleLog() {
         if (logging || logged || !meal) return
         setLogging(true)
@@ -240,6 +255,17 @@ export default function MealPage() {
                             : <PlaylistAddRoundedIcon sx={{ fontSize: 19 }} />
                     }
                     <span className="text-xs font-medium">{logged ? "Logged" : "Log"}</span>
+                </button>
+
+                <button
+                    onClick={toggleSave}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 ml-auto
+                        ${saved ? "text-primary" : "text-text-muted hover:text-text"}`}
+                >
+                    {saved
+                        ? <BookmarkRoundedIcon sx={{ fontSize: 18 }} />
+                        : <BookmarkBorderRoundedIcon sx={{ fontSize: 18 }} />
+                    }
                 </button>
             </div>
 

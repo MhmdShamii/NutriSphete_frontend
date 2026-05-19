@@ -78,6 +78,18 @@ export type ProfileMealsMeta = {
 export const likeMealApi = async (mealId: number) => apiClient.post(`/meals/${mealId}/like`)
 export const unlikeMealApi = async (mealId: number) => apiClient.delete(`/meals/${mealId}/like`)
 
+export const saveMealApi = async (mealId: number) => apiClient.post(`/meals/${mealId}/save`)
+export const unsaveMealApi = async (mealId: number) => apiClient.delete(`/meals/${mealId}/save`)
+
+export const getSavedMealsApi = async (
+    cursor?: string
+): Promise<{ data: ProfileMeal[]; meta: ProfileMealsMeta }> => {
+    const response = await apiClient.get("/users/me/saved-meals", {
+        params: cursor ? { cursor } : {},
+    })
+    return response.data
+}
+
 export const getMealApi = async (mealId: number): Promise<import("../../features/mealCreation/types/meal.types").MealDetail> => {
     const response = await apiClient.get(`/meals/${mealId}`)
     return response.data.meal

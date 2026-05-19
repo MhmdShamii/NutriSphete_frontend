@@ -66,6 +66,7 @@ export interface MealEngagement {
     relogs_count: number
     comments_count: number
     is_liked: boolean
+    is_saved: boolean
 }
 
 export interface MealDetail extends MealDraft {

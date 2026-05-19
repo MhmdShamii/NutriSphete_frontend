@@ -7,7 +7,8 @@ import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded
 import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded"
 import RepeatRoundedIcon from "@mui/icons-material/RepeatRounded"
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded"
-import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded"
+import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded"
+import BookmarkBorderRoundedIcon from "@mui/icons-material/BookmarkBorderRounded"
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded"
 import FitnessCenterRoundedIcon from "@mui/icons-material/FitnessCenterRounded"
 import GrainRoundedIcon from "@mui/icons-material/GrainRounded"
@@ -16,7 +17,7 @@ import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 import type { RootState } from "../../app/store"
 import { getFeed, getFollowingFeed, type FeedPost } from "../../services/feed/feedApi"
-import { likeMealApi, unlikeMealApi, logMeal } from "../../services/meals/mealsApis"
+import { likeMealApi, unlikeMealApi, logMeal, saveMealApi, unsaveMealApi } from "../../services/meals/mealsApis"
 import { followUserApi, unfollowUserApi } from "../../services/social/followApi"
 import { confirmQuickLog, deleteQuickLog } from "../../services/log/quickLogApi"
 import AvatarUI from "../../components/ui/Avatar"
@@ -218,6 +219,7 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
     const [likeCount,    setLikeCount]    = useState(initialPost.engagement.likes_count)
     const [commentCount, setCommentCount] = useState(initialPost.engagement.comments_count)
     const [relogCount,   setRelogCount]   = useState(initialPost.engagement.relogs_count)
+    const [saved,        setSaved]        = useState(initialPost.engagement.is_saved)
 
     // Follow state
     const [following,          setFollowing]          = useState(initialPost.author.is_following)
@@ -248,6 +250,18 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
         } catch {
             setLiked(wasLiked)
             setLikeCount(c => wasLiked ? c + 1 : c - 1)
+        }
+    }
+
+    async function toggleSave() {
+        if (isGuest) { setShowGuestPrompt(true); return }
+        const wasSaved = saved
+        setSaved(!wasSaved)
+        try {
+            if (wasSaved) await unsaveMealApi(initialPost.id)
+            else          await saveMealApi(initialPost.id)
+        } catch {
+            setSaved(wasSaved)
         }
     }
 
@@ -392,9 +406,6 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
                         </div>
                         <span className="text-[11px] text-text-muted">{timeAgo(initialPost.posted_at)}</span>
                     </div>
-                    <button className="text-text-muted hover:text-text transition-colors p-1 rounded-lg hover:bg-white/5">
-                        <MoreHorizRoundedIcon sx={{ fontSize: 20 }} />
-                    </button>
                 </div>
 
                 {/* ── Macros bar ── */}
@@ -460,6 +471,16 @@ function PostCard({ post: initialPost, isGuest }: { post: FeedPost; isGuest?: bo
                         ) : (
                             <RepeatRoundedIcon sx={{ fontSize: 22 }} className="text-text-muted" />
                         )}
+                    </button>
+
+                    <button
+                        onClick={toggleSave}
+                        className="p-2 rounded-xl transition-all duration-200 hover:bg-white/5 active:scale-90 ml-auto"
+                        style={{ color: saved ? "var(--primary)" : undefined }}
+                    >
+                        {saved
+                            ? <BookmarkRoundedIcon sx={{ fontSize: 22 }} />
+                            : <BookmarkBorderRoundedIcon sx={{ fontSize: 22 }} className="text-text-muted" />}
                     </button>
                 </div>
 
