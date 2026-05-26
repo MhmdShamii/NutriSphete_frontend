@@ -24,6 +24,15 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
 
     const isNative = Capacitor.isNativePlatform()
 
+    useEffect(() => {
+        if (!isNative) return
+        GoogleAuth.initialize({
+            clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            scopes: ['profile', 'email'],
+            grantOfflineAccess: true,
+        })
+    }, [isNative])
+
     const handleNativeGoogleLogin = async () => {
         if (loading) return
         setLoading(true)
