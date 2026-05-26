@@ -6,8 +6,14 @@ import type { AppDispatch } from "../../app/store"
 import { getPostLoginRoute } from "../../features/auth/types"
 import { useEffect, useRef, useState } from "react"
 import { useToast } from "../../context/ToastContext"
-import { Capacitor } from "@capacitor/core"
-import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth"
+import { Capacitor, registerPlugin } from "@capacitor/core"
+
+interface NativeGoogleAuthPlugin {
+    signIn(options: { clientId: string }): Promise<{ idToken: string }>
+    signOut(): Promise<void>
+}
+
+const NativeGoogleAuth = registerPlugin<NativeGoogleAuthPlugin>("NativeGoogleAuth")
 
 type GoogleButtonProps = {
     label: string
@@ -24,27 +30,19 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
 
     const isNative = Capacitor.isNativePlatform()
 
-    useEffect(() => {
-        if (!isNative) return
-        GoogleAuth.initialize({
-            clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            scopes: ['profile', 'email'],
-            grantOfflineAccess: true,
-        })
-    }, [isNative])
-
     const handleNativeGoogleLogin = async () => {
         if (loading) return
         setLoading(true)
         try {
-            const googleUser = await GoogleAuth.signIn()
-            const idToken = googleUser.authentication.idToken
+            const { idToken } = await NativeGoogleAuth.signIn({
+                clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            })
             if (!idToken) throw new Error("No ID token returned from Google")
             const { user } = await dispatch(googleLogin(idToken)).unwrap()
             navigate(getPostLoginRoute(user.onboarding_step))
         } catch (err: unknown) {
             const msg = (err as { message?: string })?.message
-            if (msg && !msg.includes("canceled")) {
+            if (msg && !msg.toLowerCase().includes("cancel")) {
                 showError(msg || "Google sign-in failed")
             }
         } finally {
