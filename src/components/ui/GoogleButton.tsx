@@ -6,13 +6,14 @@ import type { AppDispatch } from "../../app/store"
 import { getPostLoginRoute } from "../../features/auth/types"
 import { useEffect, useRef, useState } from "react"
 import { useToast } from "../../context/ToastContext"
+import { Capacitor } from "@capacitor/core"
+import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth"
 
 type GoogleButtonProps = {
     label: string
 }
 
 export default function GoogleButton({ label }: GoogleButtonProps) {
-
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
     const { showError } = useToast()
@@ -21,7 +22,31 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
     const overlayRef = useRef<HTMLDivElement>(null)
     const renderedRef = useRef(false)
 
+    const isNative = Capacitor.isNativePlatform()
+
+    const handleNativeGoogleLogin = async () => {
+        if (loading) return
+        setLoading(true)
+        try {
+            const googleUser = await GoogleAuth.signIn()
+            const idToken = googleUser.authentication.idToken
+            if (!idToken) throw new Error("No ID token returned from Google")
+            const { user } = await dispatch(googleLogin(idToken)).unwrap()
+            navigate(getPostLoginRoute(user.onboarding_step))
+        } catch (err: unknown) {
+            const msg = (err as { message?: string })?.message
+            if (msg && !msg.includes("canceled")) {
+                showError(msg || "Google sign-in failed")
+            }
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Web-only: render the invisible GIS overlay button
     useEffect(() => {
+        if (isNative) return
+
         let attempts = 0
         const interval = setInterval(() => {
             const gis = (window as any).google?.accounts?.id
@@ -55,34 +80,54 @@ export default function GoogleButton({ label }: GoogleButtonProps) {
         }, 100)
 
         return () => clearInterval(interval)
-    }, [dispatch, navigate])
+    }, [dispatch, navigate, isNative])
+
+    if (isNative) {
+        return (
+            <button
+                type="button"
+                disabled={loading}
+                onClick={handleNativeGoogleLogin}
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => setHovered(false)}
+                className={`flex items-center justify-center gap-2 w-full border border-border/40 text-text rounded-lg py-3 px-4 transition-colors
+                    ${hovered && !loading ? "bg-surface border-primary/60" : ""}
+                    ${loading ? "opacity-50" : ""}`}
+            >
+                {loading ? (
+                    <span className="animate-spin w-4 h-4 border-2 border-text border-t-transparent rounded-full" />
+                ) : (
+                    <GoogleIcon fontSize="small" />
+                )}
+                {label}
+            </button>
+        )
+    }
 
     return (
         <div className="relative w-full">
-                {/* Custom styled button — visual only, not interactive */}
-                <button
-                    type="button"
-                    disabled={loading}
-                    className={`pointer-events-none flex items-center justify-center gap-2 w-full border border-border/40 text-text rounded-lg py-3 px-4 transition-colors
-                        ${hovered && !loading ? "bg-surface border-primary/60" : ""}
-                        ${loading ? "opacity-50" : ""}`}
-                >
-                    {loading ? (
-                        <span className="animate-spin w-4 h-4 border-2 border-text border-t-transparent rounded-full" />
-                    ) : (
-                        <GoogleIcon fontSize="small" />
-                    )}
-                    {label}
-                </button>
+            <button
+                type="button"
+                disabled={loading}
+                className={`pointer-events-none flex items-center justify-center gap-2 w-full border border-border/40 text-text rounded-lg py-3 px-4 transition-colors
+                    ${hovered && !loading ? "bg-surface border-primary/60" : ""}
+                    ${loading ? "opacity-50" : ""}`}
+            >
+                {loading ? (
+                    <span className="animate-spin w-4 h-4 border-2 border-text border-t-transparent rounded-full" />
+                ) : (
+                    <GoogleIcon fontSize="small" />
+                )}
+                {label}
+            </button>
 
-                {/* Transparent Google button overlay — handles actual auth, invisible to user */}
-                <div
-                    ref={overlayRef}
-                    className="absolute inset-0 overflow-hidden rounded-lg cursor-pointer"
-                    style={{ opacity: 0.01 }}
-                    onMouseEnter={() => setHovered(true)}
-                    onMouseLeave={() => setHovered(false)}
-                />
+            <div
+                ref={overlayRef}
+                className="absolute inset-0 overflow-hidden rounded-lg cursor-pointer"
+                style={{ opacity: 0.01 }}
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => setHovered(false)}
+            />
         </div>
     )
 }
