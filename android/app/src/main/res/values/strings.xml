@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NutriSphere</string>
+    <string name="title_activity_main">NutriSphere</string>
+    <string name="package_name">com.nutrisphere.app</string>
+    <string name="custom_url_scheme">com.nutrisphere.app</string>
+</resources>
